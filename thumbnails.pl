@@ -47,10 +47,10 @@ $start = time;
 $counter = 1;
 $column = 1;
 $row = 1;
-$DJPEG = '/usr/bin/djpeg';
-$CJPEG = '/usr/bin/cjpeg';
-$WRJPGCOM = '/usr/bin/wrjpgcom';
-$RDJPGCOM = 'usr/bin/rdjpgcom';
+$DJPEG = "/usr/bin/djpeg";
+$CJPEG = "/usr/bin/cjpeg";
+$WRJPGCOM = "/usr/bin/wrjpgcom";
+$RDJPGCOM = "/usr/bin/rdjpgcom";
 
 $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
 
@@ -59,12 +59,13 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
     if ( exists $opts{d} ) { $DEBUG = 1; }
 
     # check for existence of cjpeg and djpeg, and wrjpegcom
-    if ( ! -x $DJPEG || ! -x $CJPEG || ! -x $WRJPGCOM ) {
+    if ( ! -x $DJPEG || ! -x $CJPEG || ! -x $WRJPGCOM || ! -x $RDJPGCOM) {
         warn    "Sorry you are missing the following files that this script\n" .
                 "needs to run:\n";
         if ( ! -x $DJPEG ) { warn "missing $DJPEG"; }
         if ( ! -x $CJPEG ) { warn "missing $CJPEG"; }
         if ( ! -x $WRJPGCOM ) { warn "missing $WRJPGCOM"; }
+        if ( ! -x $RDJPGCOM ) { warn "missing $RDJPGCOM"; }
         warn    "Please install the missing files, and re-run this script.\n";
     } # if ( ! -x $DJPEG || ! -x $CJPEG || ! -x $WRJPGCOM )
     
@@ -85,15 +86,13 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
     print OUT "<BODY>\n\n";
 
     print OUT   "<h3>Thumbnail Page - Click on any of below links to get a " .
-                "larger image.</h3>";
+                "larger image.</h3>\n\n";
 
     # add table borders if we are debugging
     if ( $DEBUG ) {
-        #print OUT "<TABLE BORDER=1 WIDTH=\"90%\" BGCOLOR=\"#ffd3c1\">";
-        print OUT "<center><table border=1 width=\"95%\">";
+        print OUT "<center><table border=1 cols=3 width=\"95%\" >";
     } else {
-        #print OUT "<TABLE BORDER=0 WIDTH=\"90%\" BGCOLOR=\"#ffd3c1\">";
-        print OUT "<center><table border=0 width=\"95%\">";
+        print OUT "<center><table border=0 cols=3 width=\"95%\" >";
     } # if ( $DEBUG )
     
     print OUT "<tr valign=top>\n";
@@ -101,6 +100,7 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
     # loop the directory, converting all the files found
     foreach $oldname (@filedir) {
         if ( $oldname !~ /.*half.jpg$/ && $oldname !~ /.*8th.jpg$/ ) {
+            print "\n==================================================\n";
             warn "\noldname is $oldname; converting";
     	    $halfname = $eigthname = $oldname;
         	$halfname =~ s/\.jpg\b/.half.jpg/i;			# the token file
@@ -108,7 +108,7 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
             # don't do the thumbnail loop if the halfname or 8thname files exist
             # or if we are just rebuilding the index page
             if ( ! exists $opts{n} ) {
-                print "\n==================================================\n";
+
                 if ( ! -e $halfname ) {
                     warn "$halfname does not exist, converting" if $DEBUG;
 	                system("$DJPEG -scale 1/2 $oldname| $CJPEG >$halfname");
@@ -131,13 +131,18 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
 
             # a table cell that holds the thumbnail and the 2nd table
             print OUT "<td align=\"center\">\n";
-            print OUT "<a href=\"$oldname\" target=\"_new\">";
+            print OUT "<a href=\"$oldname\" target=\"_new\">\n";
             print OUT "<img src=\"$eigthname\" ";
-            print OUT  &imagesizes($eightname) . ">";
-            print OUT "</a><br>";
+            print OUT  &imagesizes($eigthname);
+            if ( defined $captions{$oldname} ) {
+                print OUT "alt=\"" . $captions{$oldname} . "\">\n";
+            } else {
+                print OUT ">\n";
+            } # if ( defined $captions{$oldname} )
+            print OUT "</a><br>\n\n";
             #print OUT "<span class=\"pixnum\">";
             # second table with the text and links about the thumbnail
-            print OUT "<table width=\"100%\">";
+            print OUT "<table width=\"100%\">\n";
             # the image number and mtime
             print OUT "<tr><td class=\"pixnum\">";
             print OUT "#$counter - ";
@@ -149,7 +154,7 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
             print OUT "<tr><td class=\"pixlinks\">\n";
             print OUT "<a href=\"$oldname\" target=\"_new\">";
             print OUT "Link to full size image</a> (";
-            print OUT &filesize($oldname) . "kB) <br>";
+            print OUT &filesize($oldname) . "kB) <br>\n";
             print OUT "<a href=\"$halfname\" target=\"_new\">";
             print OUT "Link to half size image</a> (";
             print OUT &filesize($halfname) . "kB) ";
@@ -160,17 +165,19 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
                 #print OUT   "<br><span class=\"pixcap\">" . 
                 #            $captions{$oldname} . "</span>";
                 print OUT "<tr><td class=\"pixcap\">" . $captions{$oldname};
-                print OUT "\n</td></tr>\n";
+                print OUT "</td></tr>\n";
             } # if ( exists $captions{$oldname} )
             # close the 2nd table
-            print OUT "</table>";
+            print OUT "</table>\n";
             # close this cell
             print OUT "</td>\n";
             $column++;
             $counter++;
             # see if this is the end of a row of cells (3 cells to a row)
             if ($column == 4) {
-                print OUT "</tr>\n\n<tr valign=top>\n";
+                print OUT "</tr>\n\n";
+                print OUT "<!-- this is row #$row-->\n";
+                print OUT "<tr valign=top>\n";
                 $column = 1;
                 $row++; 
             } # if $column == 4
@@ -182,7 +189,7 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
     print OUT "</body>\n</html>";
 
     $end = time - $start;
-    warn "Converted $counter jpegs in $end seconds";
+    warn "Converted " . ($counter - 1) . " jpegs in $end seconds";
 
 ### end of main script ###
 
@@ -235,6 +242,7 @@ sub read_captions {
             $capkey = (split(/==/, $line))[0];
             warn "capkey is $capkey" if $DEBUG;
             $captions{$capkey} = (split(/==/, $line))[1];
+            chomp($captions{$capkey});
         } # if ( $line !~ /^#/ )
     } # foreach $line (<CAPS>)
 
@@ -246,19 +254,21 @@ sub imagesizes {
 # calls system(rdjpgcom -verbose) on a thumbnail to get width and height
 
     # some variables
-    my ($line, @splitvar, $width, $height);
+    my ($line, @splitvar, $width, $height, @output);
 
     # capture the output of rdjpgcom, so we can get the width and height
-    @output = `$RDJPGCOM $_[0]`;
+    @output = `$RDJPGCOM -verbose $_[0]`;
     foreach $line ( @output ) {
         if ( $line =~ /^JPEG image/ ) {
             @splitvar = split(/ /, $line);
             $splitvar[3] =~ s/w$//;
-            $splitvar[5] =~ s/h$//;
+            $splitvar[5] =~ s/h,$//;
             warn "$_[0]: width is $splitvar[3], height is $splitvar[5]" 
                 if $DEBUG;
+            # leave an extra space at the end of the string for other text that
+            # may follow this text
             return "width=\"" . $splitvar[3] . 
-                    "\" height=\"" . $splitvar[5] . "\"";
+                    "\" height=\"" . $splitvar[5] . "\" ";
         } # if ( $line =~ /^JPEG image/ )
     } # foreach $line ( @output )
 } # sub imagesizes
