@@ -29,8 +29,9 @@
 # the path and filename
 # - year and genre fields will have to be prompted for
 # use directives
-use Getopt::Std;
-use strict;
+use Getopt::Std; # parse command line parameters
+use strict; # strictness is good
+my $ID3 = "/usr/bin/id3"; # path to the id3 binary
 
 ### begin main script body ###
 
@@ -64,20 +65,19 @@ my $start_time = time; # time we started processing files
 	foreach my $file (@files) {  
 		chomp($file); # remove any trailing EOL's
 
-		$_ =~ s/ /\\ /g;
-		$_ =~ s/\(/\\\(/g;
-		$_ =~ s/\)/\\\)/g;
-		$_ =~ s/\,/\\\,/g;
-		$_ =~ s/\&/\\\&/g;
-		$_ =~ s/\'/\\\'/g;
-#		$_ =~ s/\\/\\\\/g;
+		# now format the filename so it doesn't make the shell barf
+		# add in extra backwhacks to hide shell metacharacters
+		$file =~ s/ /\\ /g;
+		$file =~ s/\(/\\\(/g;
+		$file =~ s/\)/\\\)/g;
+		$file =~ s/\,/\\\,/g;
+		$file =~ s/\&/\\\&/g;
+		$file =~ s/\'/\\\'/g;
+#		$file =~ s/\\/\\\\/g;
 
-#		chop ($_);
-#		chop ($_);
-
-
+		# are we displaying tags, or modifying tags?
 		if ($show eq "show") {
-			system("id3 -l $_");
+			system("id3 -l $file");
 			if ($total_lines % 5 == 0 and $total_lines != 0) {
 				print "Line $total_lines; Press any key to continue";
 				$answer = <STDIN>;
@@ -85,13 +85,13 @@ my $start_time = time; # time we started processing files
 			}
 		}	
 		elsif ($show eq "verbose") {
-			print "Showing $_\n";
-			system("id3 -l $_");
+			print "Showing $file\n";
+			system("id3 -l $file");
 		}
 		else { 
 
 			#system("id3 -c  \"SpicyJack's Stash, (R)2000\" $_");	
-			my $id3cmd = "-c  \"SpicyJack's Stash, (R)2000\" ";
+			my $id3cmd = "id3 -c  \"SpicyJack's Stash, (R)2000\" ";
 			system("id3 -c  \"SpicyJack's Stash, (R)2000\" $_");	
 		}
 	# update total files changed
