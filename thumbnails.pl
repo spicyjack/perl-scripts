@@ -21,11 +21,21 @@
 # - add a switch that allows you to create 'thumbnails' of other file types,
 # i.e. ASF files.  This would let you apply comments to the movie files,
 # detailing what the movie file contains
+# - instead of adding a switch for thumbnails of other file types, build a
+# plugin system; as new filetypes are found, new plugins can be written or
+# existing plugins tied to the new file type
+# - the plugin for the Canon CRW format will need the 'dcraw' program, as well
+# as the 'netpbm' package for PPM->JPG conversion
+
 # - add a switch that specifies two columns of thumbnails or three; the Canon
 # thumbnails are good for two columns, the Kodak is good for 3; or maybe change
 # the size of the pictures somehow; the canon movie thumbnails are 160x120,
 # make the regular thumbnails that size as well, so that all of the thumbnails
 # from either camera look the same
+# - add switches to specify the size of the thumbnails; this goes along with
+# the above todo in that if you specify smaller thumbnails, you can make more
+# columns of thumbnails
+
 # - add the original pixel size of the image to the file size of the image
 # links
 # - add the file name to the orignal date line in the HTML output
@@ -34,6 +44,9 @@
 # - lowercase filenames
 # - split conversion from writing the web page, so that all of the files are
 # converted first and stored in an array/hash, then written to a web page
+
+# shell one-liner file extension renamer:
+# for x in *.THM; do y=`ls ${x} | sed 's/THM$/JPG/'`; mv $x $y; done
 
 # use directives
 use Getopt::Std;
@@ -57,24 +70,6 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
 
     # check for command line options
 	if ( exists $opts{h} ) {
-		warn "Usage: thubmnails.pl [options]\n";
-		warn "[options] may consist of\n";
-		warn " -h show this help\n";
-		warn " -d run in debug mode (extra noisy output)\n";
-		warn " -n don't re-do thumbnails, just re-generate index.html page\n";
-        warn " -p path to libjpeg binaries\n";
-        warn " (djpeg, cjpeg, wrjpgcom, rdjpgcom)\n";
-		warn " -c comments file; you can put comments into a file, and\n" . 
-			 "    this script will read from that file and match filenames\n" .
-			 "    with comments, and output the comments in the correct\n" .
-			 "    place in the HTML.  The file format goes like this:\n\n" .
-			 "# this is a comment line\n".
-			 "filename.jpg==this is the comment that will be applied to " .
-			 "the picture to the left of the double-equals to the left\n\n" .
-			 "    NOTE: comments must be all one line, so you must use a\n" .
-			 "    a text editor that does not wrap words for thie comments\n" .
-			 "    file to work correctly\n\n";
-		exit 0;
 	} # if ( exists $opts{h} )
 
     if ( exists $opts{c} ) { &read_captions; }
@@ -82,8 +77,8 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
 
     # check for existence of cjpeg and djpeg, and wrjpegcom
     if ( ! -x $DJPEG || ! -x $CJPEG || ! -x $WRJPGCOM || ! -x $RDJPGCOM) {
-        warn    "Sorry you are missing the following files that this script\n" .
-                "needs to run:\n";
+        warn "Sorry, you are missing the following files that this script\n"
+                . "needs to run:\n";
         if ( ! -x $DJPEG ) { warn "missing $DJPEG"; }
         if ( ! -x $CJPEG ) { warn "missing $CJPEG"; }
         if ( ! -x $WRJPGCOM ) { warn "missing $WRJPGCOM"; }
@@ -92,7 +87,7 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
     } # if ( ! -x $DJPEG || ! -x $CJPEG || ! -x $WRJPGCOM )
     
     # open the output HTML page
-    open (OUT, "> index.html");
+    open (OUT, "> index.html") || die "Can't open 'index.html for writing";
 
     # add the required HTML code
     print OUT "<HTML>\n<HEAD>\n";
@@ -232,6 +227,27 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
     warn "Converted " . ($counter - 1) . " jpegs in $end seconds";
 
 ### end of main script ###
+
+sub ShowHelp { 
+		warn "Usage: thubmnails.pl [options]\n";
+		warn "[options] may consist of\n";
+		warn " -h show this help\n";
+		warn " -d run in debug mode (extra noisy output)\n";
+		warn " -n don't re-do thumbnails, just re-generate index.html page\n";
+        warn " -p path to libjpeg binaries\n";
+        warn " (djpeg, cjpeg, wrjpgcom, rdjpgcom)\n";
+		warn " -c comments file; you can put comments into a file, and\n" . 
+			 "    this script will read from that file and match filenames\n" .
+			 "    with comments, and output the comments in the correct\n" .
+			 "    place in the HTML.  The file format goes like this:\n\n" .
+			 "# this is a comment line\n".
+			 "filename.jpg==this is the comment that will be applied to " .
+			 "the picture to the left of the double-equals to the left\n\n" .
+			 "    NOTE: comments must be all one line, so you must use a\n" .
+			 "    a text editor that does not wrap words for thie comments\n" .
+			 "    file to work correctly\n\n";
+		exit 0;
+} # sub ShowHelp
 
 sub filesize {
     @filestat = stat ($_[0]);
