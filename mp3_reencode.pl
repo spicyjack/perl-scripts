@@ -2,35 +2,45 @@
 
 # script to reencode MP3's at a different bitrate
 
+# TODO
+# fix the variables to all be delcared before use
+# add a use strict directive
+# change all the prints to warns
+
+use Getopt::Std; # parsing command line switches
+
+my %opts; # hash for command line options
+&getopts("f:l:w", \%opts); # go get the command line options
+
 	# set the output directory, no trailng slash please!
 	$outdir = "/home/brian/mp3";
 
 	# make sure we were passed a path to search for MP3's
-#	print "argv[0] is $ARGV[0]\n";
-#	if ( $ARGV[0] ne "-l" || $ARGV[0] ne "-f") { 
-#		print "mp3_reencode.pl (c) 2001 Brian Manning\n";
-#		print "Usage:\n";
-#		print "mp3_reencode.pl [-f|-l] <parameter> \n";
-#		print "-f: system(find) *.mp3 on <parameter> and reencode\n";
-#		print "-l: read the file <parameter> and reencode each file found\n";
-#		exit 1;
-#	}	
+	if ( ! ($opts{f} || $opts{l}) ) { 
+		print "mp3_reencode.pl (c) 2001 Brian Manning\n";
+		print "Usage:\n";
+		print "mp3_reencode.pl [-f|-l] <parameter> \n";
+		print "-f: system(find) *.mp3 on <parameter> and reencode\n";
+		print "-l: read the file <parameter> and reencode each file found\n";
+		print "-w: output to a .wav file (for burning audio CD's)\n";
+		exit 1;
+	}	
 	
 	# here's where we get the list of files to reencode
-	if ( $ARGV[0] eq "-f" ) {
+	if ( exists $opts{f} ) {
 		# call system(find $path) to get a list of MP3's		
 		print "Executing system(find)...\n";
 		@filelist = `find $ARGV[1] -name \"*.mp3\" -print`;
 	} else {
 		# or open the passed in list of files
-		open (MP3LIST, "$ARGV[1]");
+		open (MP3LIST, "$opts{l}");
 		@filelist = <MP3LIST>;
 		close (MP3LIST);
 	} # if $ARGV[0]
 
 	# open the database connection
 
-	$total_files = 0; # set a line counter 
+	$total_files = 1; # set a line counter 
 	$start_time = time; # set the overall start time 
 	
 	# read in each line of the 'find', then run it against the database
@@ -61,6 +71,7 @@
 			$command .= "\"$file\" \"$outdir/$artist/$album/$song\"";
 		} else {
 			# output to a wav file
+			$song =~ s/mp3$/wav/i;
 			$command = "/usr/local/bin/lame --decode ";
 			$command .= "\"$file\" \"$outdir/$song\"";
 		} # if ( ! $opts{w} )
