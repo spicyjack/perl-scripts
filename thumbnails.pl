@@ -253,7 +253,7 @@ sub filedate {
 } # sub filedate
 
 sub jpegtag {
-    $JPEGTAG = "(c)" . &filedate($_[0], "year") . " " . $TAG;
+    $JPEGTAG = "Copyright (c)" . &filedate($_[0], "year") . " " . $TAG;
     $origdate = &filedate($_[0], "mtime");
     warn  "tag will be $JPEGTAG" if $DEBUG;
     warn  "renaming $_[0] to tmp$_[0]";
