@@ -1,11 +1,10 @@
 #!/usr/bin/perl -w
 
-# program that strips words from a filename
-# it also now removes bad things from the filename
+# script to run unrtf on a Rich Text File
 
-# usage: filename_strip.pl /path/to/mp3s word_to_strip
+# usage: 
 #
-# (c)2000 Brian Manning
+# (c)2003 Brian Manning
 
 # external modules
 use Getopt::Std;
@@ -18,6 +17,7 @@ my @filelist; # list of files, built with glob or a real list of files
 my ($file, $newname); # a file from @filelist, new file name
 my @splitname; # full path split up
 my $unrtf="/usr/bin/unrtf";
+my $read; # read in variable, not used for anything
 
 	### begin script ###
 	
@@ -87,13 +87,12 @@ my $unrtf="/usr/bin/unrtf";
 		$newname =~ s/ /_/g;
 		$splitname[-1] = $newname;
 
-		if ( $opts{d} ) { 
-			warn "would have renamed $file\n to new name " . 
-				join("/",@splitname) . "\n\n";
-		} else {	
-			if ( $opts{v} ) { 
-				warn "renaming $file\nto " . join("/",@splitname);
-			} # if ( $opts{v} )
-			system("$unrtf -t ps $file | ps2pdf - $newname");
+		if ( $opts{v} || $opts{d} ) { 
+			warn "renaming $file\nto " . join("/",@splitname);
+		} # if ( $opts{v} )
+		system("$unrtf -t ps $file | ps2pdf - $newname");
+		if ( $opts{d} ) {
+			warn "unrtf conversion complete; hit <ENTER> to continue\n";
+			$read = <STDIN>;
 		} # if ( $opts{d} )
 	} # foreach
