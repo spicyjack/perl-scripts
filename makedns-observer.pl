@@ -42,7 +42,7 @@ if ( exists $opts{h} ) {
 } # if ( exists $opts{h} )
 
 # set up %dnsinfo
-%dnsinfo = (	serial => "2004101301", # serial number
+%dnsinfo = (	serial => "2004110501", # serial number
 				refresh => "3H", # refresh
 				retry => "45M", # how often to retry when initial try fails
 				expire => "8D", # max time to cache the zone
@@ -79,6 +79,8 @@ if ( exists $opts{h} ) {
 				"hobartrax.com"			=> { 	internal => "n",
 													primary => "observer"},
 				"obstreetboards.com"			=> { 	internal => "n",
+													primary => "observer"},
+				"capeshow.com"			=> { 	internal => "n",
 													primary => "observer"},
 			);
 
