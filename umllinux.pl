@@ -26,7 +26,8 @@ my $umlbinary = "/usr/local/src/antlinux/uml/linux";
             'umid=s' => \$uml_id, 'i=s' => \$uml_id,
             'single' => \$singleuser, 's' => \$singleuser,
             'append=s' => \$append, 
-            'umlbin=s' => \$umlbin, 'b=s' => $umlbin,
+            'umlbin=s' => \$umlbin, 'x=s' => $umlbin,
+            'base=s' => \$umlbase, 'b=s' => $umlbase,
             );
 
 #/usr/local/src/antlinux/uml/linux \
