@@ -21,7 +21,10 @@ while (1) {
 	#@ls = split(/\s+/, $ls_out);
 	$date = `$datecmd +\"\%T \%Z\"`;
 	chomp($date);
-	$wc_out = `$grep \"^From\" $spool | $grep -v \"^From:\" | $wc -l`;	
+	$spooltest = "$grep \"^From\" $spool | $grep -v \"^From:\"";
+	$spooltest .= " | grep -v \"^From MAILER-DAEMON\" | $wc -l";
+	#$wc_out = `$grep \"^From\" $spool | $grep -v \"^From:\" | $wc -l`;	
+	$wc_out = `$spooltest`;
 	chomp($wc_out);
 	$wc_out =~ s/\s//g;
 	# $ls[4] is filesize
