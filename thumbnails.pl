@@ -29,8 +29,9 @@
 # - add the original pixel size of the image to the file size of the image
 # links
 # - add the file name to the orignal date line in the HTML output
-# - detect the canon movie thumbnails, rename them and add a movie icon in the
-# description for the file
+# - detect the canon movie thumbnails, rename/symlink them and add a movie icon
+# in the description for the file
+# - lowercase filenames
 
 # use directives
 use Getopt::Std;
@@ -122,7 +123,13 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
 		if ( $oldname =~ /.*jpg$/i &&
 			($oldname !~ /.*half.jpg$/i && $oldname !~ /.*8th.jpg$/i) ) {
             warn "\n==================================================\n";
-            warn "\noldname is $oldname; converting";
+            warn "oldname is $oldname; converting\n";
+			$renamecheck = lc($oldname);
+			if ($renamecheck ne $oldname) {
+				warn "lowercasing $oldname to $renamecheck\n";
+				rename ($oldname, $renamecheck);
+				$oldname = $renamecheck;
+			} # if ($renamecheck != $oldname)
     	    $halfname = $eigthname = $oldname;
         	$halfname =~ s/\.jpg\b/.half.jpg/i;			# the token file
             $eigthname =~ s/\.jpg\b/.8th.jpg/i;
