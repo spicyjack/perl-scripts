@@ -7,12 +7,8 @@
 &DefineColors;
 
 $spool = "/var/mail/manningb";
-#$grep = "/usr/bin/grep";
-$grep = "/bin/grep";
-$wc = "/usr/bin/wc";
 $datecmd = "/bin/date";
-#$date = "/usr/bin/date";
-$lscmd = "/bin/ls";
+$fetchcmd = "/users/staff/m/manningb/bin/fetchmail";
 
 # start the endless loop
 while (1) {
@@ -21,25 +17,21 @@ while (1) {
 	#@ls = split(/\s+/, $ls_out);
 	$date = `$datecmd +\"\%T \%Z\"`;
 	chomp($date);
-	$spooltest = "$grep \"^From\" $spool | $grep -v \"^From:\"";
-	$spooltest .= " | grep -v \"^From MAILER-DAEMON\" | $wc -l";
+	$spooltest = `$fetchcmd -c`;
 	#$wc_out = `$grep \"^From\" $spool | $grep -v \"^From:\" | $wc -l`;	
-	$wc_out = `$spooltest`;
-	chomp($wc_out);
-	$wc_out =~ s/\s//g;
-	# $ls[4] is filesize
-	# $ls[5] is month
-	# $ls[6] is date
-	# $ls[7] is time
-	# $ls[8] is filename
-	if ( $wc_out == 0 ) { 
+	chomp($spooltest);
+	@fetchmail_out = split(/ /, $spooltest);
+	# $fetchmail_out[0] is the number of messages
+	# $fetchmail_out[6] is the number of octets
+	if ( $fetchmail_out[0] == 0 ) { 
 		print $color{reverse} . $date .  $color{normal} . ":" . 
 		$color{b_green} .  "You have no mail messages" . 
 		$color{normal} . "\n";
 	} else {
 		print $color{reverse} . $date .  $color{normal} . ":" .
-	       	$color{cyan} . " You have " .  $color{b_yellow} .  $wc_out .
-	      	$color{cyan} .  " messages " .  $color{normal} . "\n";
+	      	$color{cyan} . " You have " .  $color{b_yellow} .  
+		$fetchmail_out[0] .  $color{cyan} .  " messages " . 
+	       	$color{normal} . "\n";
 	} # if ( $wc_out == 0 )
 	sleep 60;
 } # while (1)
