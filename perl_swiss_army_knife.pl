@@ -4,7 +4,7 @@ my $i=0;	# a counter
 
 # print the runtime environment
 print "##################################################################\n";
-print "# Perl Runtime Environment                                       #\n";
+print "# Perl Runtime Environment (\%ENV)                                #\n";
 print "##################################################################\n";
 while (($key, $val) = each %ENV) {
     print "$i $key = $val\n";
@@ -16,7 +16,7 @@ $i=0;	# reset counter
 
 # print the @INC array
 print "##################################################################\n";
-print "# Perl Module Include Paths                                      #\n";
+print "# Perl Module Include Paths (\@INC)                               #\n";
 print "##################################################################\n";
 printf "%d %s\n", $i++, $_ for @INC;
 print "\n";
@@ -26,7 +26,7 @@ $i=0;	# reset counter
 
 # print installed modules
 print "##################################################################\n";
-print "# Installed Perl Modules                                         #\n";
+print "# Installed Perl Modules (\&modules in \@INC)                      #\n";
 print "##################################################################\n";
 # NOTES
 #   1. Prune man, pod, etc. directories
