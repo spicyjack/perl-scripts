@@ -6,6 +6,8 @@
 # fix the variables to all be delcared before use
 # add a use strict directive
 # change all the prints to warns
+# add an output path option, but use the default $outdir if one is not passed
+# in
 
 use Getopt::Std; # parsing command line switches
 
@@ -19,9 +21,9 @@ my %opts; # hash for command line options
 	if ( ! ($opts{f} || $opts{l}) ) { 
 		print "mp3_reencode.pl (c) 2001 Brian Manning\n";
 		print "Usage:\n";
-		print "mp3_reencode.pl [-f|-l] <parameter> \n";
-		print "-f: system(find) *.mp3 on <parameter> and reencode\n";
-		print "-l: read the file <parameter> and reencode each file found\n";
+		print "mp3_reencode.pl [-f path] [-l filename]\n";
+		print "-f: system(find) *.mp3 on a path and reencode\n";
+		print "-l: reencode each file listed in filename\n";
 		print "-w: output to a .wav file (for burning audio CD's)\n";
 		exit 1;
 	}	
