@@ -19,7 +19,9 @@ $sqlpass = 'password';	    #SQL password
 	$total_lines = 0; # set a line counter 
 
 	# the SQL select statement
-	$selectsql = "SELECT distinct artist from mp3main order by artist";
+	$selectsql = "SELECT DISTINCT artist FROM mp3main";
+	$selectsql .= " WHERE artist NOT LIKE 'Audio Adrenaline'";
+	$selectsql .= "	ORDER BY artist";
 
 	# run the select query
 	$sthselect = $dbh->prepare($selectsql);
