@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 # created 07/21/01 for resizing images
-# (C) 1999 by Brian Manning <brian@sunset-cliffs.org>
+# (C) 2003 by Brian Manning <brian {at} antlinux.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,6 +21,9 @@
 # - add a switch that allows you to create 'thumbnails' of other file types,
 # i.e. ASF files.  This would let you apply comments to the movie files,
 # detailing what the movie file contains
+# - add a switch that specifies two columns of thumbnails or three; the Canon
+# thumbnails are good for two columns, the Kodak is good for 3; or maybe change
+# the size of the pictures somehow
 
 # use directives
 use Getopt::Std;
