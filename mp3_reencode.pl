@@ -13,7 +13,7 @@ my %opts; # hash for command line options
 &getopts("f:l:w", \%opts); # go get the command line options
 
 	# set the output directory, no trailng slash please!
-	$outdir = "/home/brian/mp3";
+	$outdir = "/home/brian/out";
 
 	# make sure we were passed a path to search for MP3's
 	if ( ! ($opts{f} || $opts{l}) ) { 
@@ -68,13 +68,15 @@ my %opts; # hash for command line options
 		if ( ! $opts{w} ) {
 			# re-encode at a lower bitrate
 			$command = "/usr/local/bin/lame -h -S -b 128 ";
-			$command .= "\"$file\" \"$outdir/$artist/$album/$song\"";
+
 		} else {
 			# output to a wav file
 			$song =~ s/mp3$/wav/i;
 			$command = "/usr/local/bin/lame --decode ";
-			$command .= "\"$file\" \"$outdir/$song\"";
 		} # if ( ! $opts{w} )
+
+		# the extra part of the command string that gives the file to re-encode
+		$command .= "\"$file\" \"$outdir/$artist/$album/$song\"";
 		$encode_time = time - $song_time;
 		system($command);
 		print "reencoded $artist/$album/$song in $encode_time secs\n";

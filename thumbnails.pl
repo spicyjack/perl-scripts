@@ -18,6 +18,9 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA 
 
 # TODO's 
+# - add a switch that allows you to create 'thumbnails' of other file types,
+# i.e. ASF files.  This would let you apply comments to the movie files,
+# detailing what the movie file contains
 
 # use directives
 use Getopt::Std;

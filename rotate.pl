@@ -18,6 +18,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA 
 
+# TODO
+# - write a switch that you can turn on that will rotate all files with the
+# base dcp_#### name, instead of individual files
+
 # use directives
 use Getopt::Std;
 
