@@ -21,7 +21,7 @@ while (1) {
 	#@ls = split(/\s+/, $ls_out);
 	$date = `$datecmd +\"\%T \%Z\"`;
 	chomp($date);
-	$wc_out = `$grep From: $spool | $wc -l`;	
+	$wc_out = `$grep \"^From\" $spool | $grep -v \"^From:\" | $wc -l`;	
 	chomp($wc_out);
 	$wc_out =~ s/\s//g;
 	# $ls[4] is filesize
@@ -30,15 +30,15 @@ while (1) {
 	# $ls[7] is time
 	# $ls[8] is filename
 	if ( $wc_out == 0 ) { 
-		print $color{reverse} . $color{normal} . $date . $color{normal} . ":" .
-			$color{b_green} .  "You have no mail messages" .  
-			$color{normal} . "\n";
+		print $color{reverse} . $date .  $color{normal} . ":" . 
+		$color{b_green} .  "You have no mail messages" . 
+		$color{normal} . "\n";
 	} else {
-		print $color{reverse} . $color{normal} . $date . $color{normal} . ":" .
-		$color{cyan} . " You have " .  $color{b_yellow} .  $wc_out . 
-		$color{cyan} . " messages " .  $color{normal} . "\n";
+		print $color{reverse} . $date .  $color{normal} . ":" .
+	       	$color{cyan} . " You have " .  $color{b_yellow} .  $wc_out .
+	      	$color{cyan} .  " messages " .  $color{normal} . "\n";
 	} # if ( $wc_out == 0 )
-	sleep 5;
+	sleep 60;
 } # while (1)
 
 sub DefineColors {

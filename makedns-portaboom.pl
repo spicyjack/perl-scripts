@@ -42,7 +42,7 @@ if ( exists $opts{h} ) {
 } # if ( exists $opts{h} )
 
 # set up %dnsinfo
-%dnsinfo = (	serial => "2003051801", # serial number
+%dnsinfo = (	serial => "2003090702", # serial number
 				refresh => "3H", # refresh
 				retry => "45M", # how often to retry when initial try fails
 				expire => "8D", # max time to cache the zone
@@ -80,6 +80,8 @@ if ( exists $opts{h} ) {
 			"www"		=> {	alias => "observer",
 								public => "y"},
 			"dns"		=> {	alias => "naranja",
+								public => "y"},
+			"kpri"		=> {	alias => "observer",
 								public => "y"},
 			"doom"		=> {	alias => "observer",
 								public => "y"},
