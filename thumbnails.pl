@@ -25,7 +25,7 @@ use Getopt::Std;
 # begin
 my (%opts, %captions);
 &getopts("dhnc:", \%opts);
-@filedir= <*.jpg>;
+@filedir= <*>;
 $start = time;
 $counter = 1;
 $column = 1;
@@ -42,7 +42,7 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
 		warn "Usage: thubmnails.pl [options]\n";
 		warn "[options] may consist of\n";
 		warn " -h show this help\n";
-		warn " -d run in debug mode (iextra noisy output)\n";
+		warn " -d run in debug mode (extra noisy output)\n";
 		warn " -n don't re-do thumbnails, just re-generate index.html page\n";
 		warn " -c comments file; you can put comments into a file, and\n" . 
 			 "    this script will read from that file and match filenames\n" .
@@ -101,8 +101,11 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
 
     # loop the directory, converting all the files found
     foreach $oldname (@filedir) {
-        if ( $oldname !~ /.*half.jpg$/ && $oldname !~ /.*8th.jpg$/ ) {
-            print "\n==================================================\n";
+		if ( $oldname =~ /.*jpg$/i &&
+			($oldname !~ /.*half.jpg$/i && $oldname !~ /.*8th.jpg$/i) ) {
+
+        #if ( $oldname !~ /.*half.jpg$/ && $oldname !~ /.*8th.jpg$/ ) {
+            warn "\n==================================================\n";
             warn "\noldname is $oldname; converting";
     	    $halfname = $eigthname = $oldname;
         	$halfname =~ s/\.jpg\b/.half.jpg/i;			# the token file

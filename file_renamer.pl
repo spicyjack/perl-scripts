@@ -69,7 +69,7 @@ my @splitname; # full path split up
 				$newname =~ s/$opts{w}//;
 			} # if ( $opts{C} )
 		} # if ( exists $opts{e} )
-		$newname =~ s/\&/-n-/g;
+		$newname =~ s/&/-n-/g;
 		$newname =~ s/ /_/g;
 		$splitname[-1] = $newname;
 
@@ -80,7 +80,7 @@ my @splitname; # full path split up
 			if ( $opts{v} ) { 
 				warn "renaming $file\nto " . join("/",@splitname);
 			} # if ( $opts{v} )
-			rename ( $file, join("/",@splitname) ) || 
+			rename ( "$file", join("/",@splitname) ) || 
 				die "Couldn't rename $file : $!";
 		} # if ( $opts{d} )
 	} # foreach
