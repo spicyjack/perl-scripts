@@ -19,7 +19,7 @@ use DBI;
 $dbserver = 'localhost'; 
 $dbport = '3306';
 $dbuser = 'nobody';	
-$dbpass = 'password';	
+$dbpass = 'efilnikcufecin';
 $mp3db = 'mp3db';
 $sum = 0;
 $filesize = 0;
@@ -46,7 +46,7 @@ while ( @top10row = $sth->fetchrow() ) {
 	$filesize += $filestat[7]; 
 	# write it to a file if ($DEBUG)
 	if ($DEBUG) {
-		print COPYLIST "$sum: $filename \n";
+		print COPYLIST "$filename \n";
 	} else {
 		print "$sum: $filename \n";
 	}
