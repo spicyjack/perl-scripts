@@ -26,11 +26,15 @@ use Pod::Usage;
 use strict;
 
 ### script-wide variables ###
+my ($DEBUG, $umlcmd);
+# command line options
+my (%disk, %console, $memsize, $umlid, $singleuser, $append, $umlbin, $umlbase);
+
 # script defaults
 # always start a UML session with more than 32M
 my $minmem = 32;
 # UML binary to use, can be overridden from the command line
-my $umlbinary = "/usr/local/src/antlinux/uml/linux";
+my $umlbinarylocation = "/usr/local/src/antlinux/uml/linux";
 
 # command line options
 my (%ubd, %eth, %console);
@@ -40,8 +44,8 @@ my ($DEBUG, $memsize, $uml_id, $singleuser, $append, $umlbin, $umlbase);
 # get command line options
 &GetOptions('h' => \&ShowHelp, 'help' => \&ShowHelp, 
         'longhelp' => \&ShowHelp, 
-        'debug' => \$DEBUG, 'd' => \$DEBUG,
-        'ubd=s' => \%ubd, 'u=s' => \%ubd, # UML Disks
+        'debug' => \$DEBUG, 'D' => \$DEBUG,
+        'disk=s' => \%ubd, 'd=s' => \%ubd, # UML Disks
         'eth=s' => \%eth, 'e=s' => \%eth, # UML ethernet devices
         'con=s' => \%console, 'c=s' => \%console, # UML console devices
         'mem=i' => \$memsize, 'm=i' => \$memsize, # UML memory size
@@ -52,6 +56,13 @@ my ($DEBUG, $memsize, $uml_id, $singleuser, $append, $umlbin, $umlbase);
         'base=s' => \$umlbase, 'b=s' => $umlbase, # base path to UML files
         );
 
+# FIXME add a check for $umlbase here and in the file tests below; if it
+# exists, it changes all of the below paths
+
+# FIXME use --con for console and --ssl for serial console.  See
+# http://user-mode-linux.sourceforge.net/input.html for more information on how
+# each style of console works
+
 #/usr/local/src/antlinux/uml/linux \
 #mem=128m umid=initrd con=pty con0=fd:0,fd:1 con1=port:8998 con2=port:8999 \
 #ubd2=/usr/local/src/antlinux/uml/Debian-3.0r0.ext2 \
@@ -61,7 +72,6 @@ my ($DEBUG, $memsize, $uml_id, $singleuser, $append, $umlbin, $umlbase);
 # before we can start a UML session, we need:
 # - uml binary (checked above)
 # - at least one uml disk device
-#
 # optional:
 # - additional uml disk devices
 # - uml console devices (network or serial)
@@ -69,8 +79,8 @@ my ($DEBUG, $memsize, $uml_id, $singleuser, $append, $umlbin, $umlbase);
 # - memory for UML session
 # - networking
 # - kernel options such as single user mode and/or other appended options
-# end main script
-
+    
+    # FIXME double check the below section, it got caught in a merging conflict
 	# check for the UML binary
 	if ( ! -x $umlbin ) {
         if ( -x "/usr/local/src/antlinux/uml/linux" ) {
@@ -91,6 +101,67 @@ my ($DEBUG, $memsize, $uml_id, $singleuser, $append, $umlbin, $umlbase);
     } else {
         foreach 
 	} # if ( ! -x $umlbin )
+
+	# check for the UML binary
+	if ( ! -x $umlbin ) {
+        # if it doesn't exist, check to see if the hardcoded binary is there
+        if ( -x $umlbinarylocation ) {
+            # yes, use it
+            $umlbin = $umlbinarylocation; 
+        } else {
+            # no, exit
+    		die "ERROR: no UML binary defined; use --umlbin <UML binary>\n";
+        } # if ( -x $umlbinarylocation )
+	} # if ( ! -x $umlbin )
+    
+    # add the binary to the command line
+    $umlcmd = $umlbin;
+
+    # check for the root disk
+    if ( ! defined $disk{0} && ! -r $disk{0} ) {
+        die "ERROR: UML root disk not defined or not readable;\n" 
+            . "use --disk 0=<path to disk image>\n";
+    } # if ( ! defined $disk{0} )
+    
+    # add the root disk
+    $umlcmd .= " ubd0=" . $disk{0};
+
+    # check each disk image file to make sure it exists and is readable
+    # add disks to the command line that can be read from
+    foreach my $file ( sort( keys(%disk) ) ) { 
+        if ( ! -r $file ) {
+            die "Warning: UML disk image $file not readable\n";
+        } else {
+            # add the key/disk image to the command line, as long as it's not
+            # the 0 disk image (the root disk image already added above)
+            if ($file != 0) {
+                $umlcmd .= " ubd$file=" . $disk{$file};
+            } # if ($file != 0)
+        }# if ( ! -r $file )
+    } # foreach my $file ( keys{%disk} )
+            
+    # check for console switch
+    # hmm, looks like con=pty gets hosed if you use a hash for keying multiple
+    # console switches.  hardcode it???
+    $umlcmd .= " con=pty";
+    foreach my $confd ( sort ( keys(%console) ) ) {
+        # just pass these verbatim.  we trust our users!
+        $umlcmd .= " con$confd=" . $console{$confd};
+    } # foreach my $confd ( sort ( keys(%console) )
+
+    # check for memory switch
+    # check for uml ID switch
+    # check for singleuser switch
+    
+    # run the command
+    if ( $DEBUG ) {
+        print "command is:\n" . $umlcmd . "\n";
+    } else {
+        print "command is:\n" . $umlcmd . "\n";
+    } # if ( $DEBUG )
+    
+    exit 0
+### fin ###
 
 sub ShowHelp {
 # shows the POD documentation (short or long version)
@@ -281,9 +352,3 @@ perl trafficshape.pl --ipstart 192.168.0.1 --clients 5
 Brian Manning <bmanning@qualcomm.com>
 
 =cut
-
-# Links to related documents
-# http://www.tldp.org/HOWTO/IP-Alias/commands.html
-# http://www.knowplace.org/shaper/requirements.html#compiling
-# http://iptables-tutorial.frozentux.net/chunkyhtml/index.html
-# http://pingu.salk.edu/LDP/HOWTO/Adv-Routing-HOWTO/lartc.adv-filter.html
