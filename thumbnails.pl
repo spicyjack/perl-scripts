@@ -24,8 +24,8 @@
 # - add a switch that specifies two columns of thumbnails or three; the Canon
 # thumbnails are good for two columns, the Kodak is good for 3; or maybe change
 # the size of the pictures somehow
-# - rename the canon static movie images to .jpg, and then use that image when
-# you create the HTML
+# - detect the canon movie thumbnails, rename them and add a movie icon in the
+# description for the file
 
 # use directives
 use Getopt::Std;
