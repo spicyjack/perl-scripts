@@ -1,49 +1,62 @@
 #!/usr/bin/perl -W
 
+# Copyright (c)2004 Brian Manning
+# brian (at) antlinux dot com
+
+# runs an instance of User Mode Linux, based on the option switches passed into
+# the script
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA 
+
 # external modules and compiler directives
 use Getopt::Long;
 use Pod::Usage;
 use strict;
 
-# script-wide variables
-# command line options
-my (%ubd, %console, $memsize, $uml_id, $singleuser, $append, $umlbin);
-
+### script-wide variables ###
 # script defaults
 # always start a UML session with more than 32M
 my $minmem = 32;
 # UML binary to use, can be overridden from the command line
 my $umlbinary = "/usr/local/src/antlinux/uml/linux";
 
-# begin
+# command line options
+my (%ubd, %eth, %console);
+my ($DEBUG, $memsize, $uml_id, $singleuser, $append, $umlbin, $umlbase);
+
+### begin ###
 # get command line options
 &GetOptions('h' => \&ShowHelp, 'help' => \&ShowHelp, 
-            'longhelp' => \&ShowHelp, 
-            'debug' => \$DEBUG, 'd' => \$DEBUG,
-			'ubd=i' => \%ubd, 'u=i' => \%ubd, 
-            'mem=i' => \$memsize, 'm=i' => \$memsize,
-            'con=s' => \%console, 'c=s' => \%console,
-            'umid=s' => \$uml_id, 'i=s' => \$uml_id,
-            'single' => \$singleuser, 's' => \$singleuser,
-            'append=s' => \$append, 
-            'umlbin=s' => \$umlbin, 'x=s' => $umlbin,
-            'base=s' => \$umlbase, 'b=s' => $umlbase,
-            );
+        'longhelp' => \&ShowHelp, 
+        'debug' => \$DEBUG, 'd' => \$DEBUG,
+        'ubd=s' => \%ubd, 'u=s' => \%ubd, # UML Disks
+        'eth=s' => \%eth, 'e=s' => \%eth, # UML ethernet devices
+        'con=s' => \%console, 'c=s' => \%console, # UML console devices
+        'mem=i' => \$memsize, 'm=i' => \$memsize, # UML memory size
+        'umid=s' => \$uml_id, 'i=s' => \$uml_id, # UML ID for uml_mconsole
+        'single' => \$singleuser, 's' => \$singleuser, # start VM in single
+        'append=s' => \$append,  # append strings for the UML kernel
+        'umlbin=s' => \$umlbin, 'x=s' => $umlbin, # path to UML binary
+        'base=s' => \$umlbase, 'b=s' => $umlbase, # base path to UML files
+        );
 
 #/usr/local/src/antlinux/uml/linux \
 #mem=128m umid=initrd con=pty con0=fd:0,fd:1 con1=port:8998 con2=port:8999 \
 #ubd2=/usr/local/src/antlinux/uml/Debian-3.0r0.ext2 \
 #ubd1=/usr/local/src/antlinux/bf-uml/initrd \
 #ubd0=/usr/local/src/antlinux/sid-base.img single
-
-	# check for the UML binary
-    # FIXME change the paths below to use $umlbinary
-	if ( ! -x $umlbin ) {
-        if ( -x "/usr/local/src/antlinux/uml/linux" ) {
-            $umlbin = "/usr/local/src/antlinux/uml/linux"; 
-        } else {
-    		die "Error: no UML binary defined; use --umlbin <UML binary>\n>";
-	} # if ( ! -x $umlbin )
 
 # before we can start a UML session, we need:
 # - uml binary (checked above)
@@ -57,6 +70,27 @@ my $umlbinary = "/usr/local/src/antlinux/uml/linux";
 # - networking
 # - kernel options such as single user mode and/or other appended options
 # end main script
+
+	# check for the UML binary
+	if ( ! -x $umlbin ) {
+        if ( -x "/usr/local/src/antlinux/uml/linux" ) {
+            $umlbin = "/usr/local/src/antlinux/uml/linux"; 
+        } else {
+    		die "ERROR: Can't find UML binary, or UML binary not executable.\n" 
+                . "Use --umlbin <UML binary> to specify correct UML binary\n>";
+	} # if ( ! -x $umlbin )
+
+
+	# check for one or more block devices
+	if ( keys(%ubd) == 0 ) {
+        die "ERROR: No UML block devices specified.\n" 
+            . "Use --ubd <device #>=<block file> to specify device ID "
+            . "and block device file\n"
+            . "A 'block file' can be a file formatted with a valid "
+            . "filesystem\n, or an ISO image file.\n";
+    } else {
+        foreach 
+	} # if ( ! -x $umlbin )
 
 sub ShowHelp {
 # shows the POD documentation (short or long version)
