@@ -60,7 +60,6 @@
 		print "reencoded $artist/$album/$song in $encode_time secs\n";
 		# update total input lines parsed
 		$total_files++;
-		exit 1;
 	} # foreach $file (@filelist)
 
 
