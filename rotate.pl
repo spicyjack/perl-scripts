@@ -34,7 +34,7 @@ $JPEGTRAN="/usr/bin/jpegtran";
 
     # check for existence of jpegtrans
     if ( ! -x $JPEGTRAN ) {
-        warn    "Please install jpegtran, and re-run this script.\n";
+        warn "Please install jpegtran, and re-run this script.\n";
     } # if ( ! -x $JPEGTRAN )
 
 	if ( exists $opts{f} && 
@@ -42,21 +42,27 @@ $JPEGTRAN="/usr/bin/jpegtran";
 		# pull the file date for putting back on later
 		$filedate = &FileDate($opts{f}, "mtime");
 		# move the old file to a new file with a temp name
+		warn "rotate.pl: creating tempfile \"tmp$opts{f}\"" if $DEBUG;
 		rename($opts{f}, "tmp$opts{f}");
 		# how far are we rotating?
 		if ( exists $opts{1} ) {
 			# rotate 180
+			warn "rotate.pl: Rotating $opts{f} 180 degrees" if $DEBUG;
 			system("$JPEGTRAN -rot 180 -trim tmp$opts{f} > $opts{f}");
 		} elsif ( exists $opts{2} ) {
 			#rotate 270
+			warn "rotate.pl: Rotating $opts{f} 270 degrees" if $DEBUG;
 			system("$JPEGTRAN -rot 270 -trim tmp$opts{f} > $opts{f}");
 		} elsif ( exists $opts{9} ) {
 			#rotate 90 
+			warn "rotate.pl: Rotating $opts{f} 90 degrees" if $DEBUG;
 			system("$JPEGTRAN -rot 90 -trim tmp$opts{f} > $opts{f}");
 		} # if (  exists $opts{1} )
 		# remove the temp file
+		warn "rotate.pl: deleting \"tmp$opts{f}\"" if $DEBUG;
 		unlink("tmp$opts{f}");
 		# re-date the newly rotated file
+		warn "rotate.pl: resetting timestamp on $opts{f}" if $DEBUG;
 		utime($filedate, $filedate, $opts{f});
 	} else {
 		&ShowHelp;
