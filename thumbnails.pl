@@ -90,12 +90,12 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
 
     # add table borders if we are debugging
     if ( $DEBUG ) {
-        print OUT "<center><table border=1 cols=3 width=\"95%\" >";
+        print OUT "<center><table border=1 cols=3 width=\"95%\" >\n";
     } else {
-        print OUT "<center><table border=0 cols=3 width=\"95%\" >";
+        print OUT "<center><table border=0 cols=3 width=\"95%\" >\n";
     } # if ( $DEBUG )
     
-    print OUT "<tr valign=top>\n";
+    print OUT "<tr align=\"center\" valign=\"center\">\n";
 
     # loop the directory, converting all the files found
     foreach $oldname (@filedir) {
@@ -130,54 +130,56 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
                  "to html file in row $row, column $column";
 
             # a table cell that holds the thumbnail and the 2nd table
-            print OUT "<td align=\"center\">\n";
+            print OUT "<td>\n";
             print OUT "<a href=\"$oldname\" target=\"_new\">\n";
             print OUT "<img src=\"$eigthname\" ";
             print OUT  &imagesizes($eigthname);
             if ( defined $captions{$oldname} ) {
-                print OUT "alt=\"" . $captions{$oldname} . "\">\n";
+                print OUT "alt=\"" . $captions{$oldname} . "\">";
             } else {
-                print OUT ">\n";
+                print OUT ">";
             } # if ( defined $captions{$oldname} )
-            print OUT "</a><br>\n\n";
-            #print OUT "<span class=\"pixnum\">";
+            print OUT "</a>";
             # second table with the text and links about the thumbnail
-            print OUT "<table width=\"100%\">\n";
+			$textrow .= "<!-- begin text table --><td valign=top>\n";
+			$textrow .= "<table width=\"100%\">\n<tr><td class=\"pixnum\">";
             # the image number and mtime
-            print OUT "<tr><td class=\"pixnum\">";
-            print OUT "#$counter - ";
-            print OUT &filedate($oldname, "fulldate");
-            print OUT "\n</td></tr>\n";
-            #print OUT "</span><br>\n";
-            #print OUT "<span class=\"pixlinks\">";
+            $textrow .= "#$counter - " . &filedate($oldname, "fulldate");
+            $textrow .= "\n</td></tr>\n";
             # the links 
-            print OUT "<tr><td class=\"pixlinks\">\n";
-            print OUT "<a href=\"$oldname\" target=\"_new\">";
-            print OUT "Link to full size image</a> (";
-            print OUT &filesize($oldname) . "kB) <br>\n";
-            print OUT "<a href=\"$halfname\" target=\"_new\">";
-            print OUT "Link to half size image</a> (";
-            print OUT &filesize($halfname) . "kB) ";
-            print OUT "\n</td></tr>\n";
-            #print OUT "</span>";
+            $textrow .= "<tr><td class=\"pixlinks\">\n";
+            $textrow .= "<a href=\"$oldname\" target=\"_new\">";
+            $textrow .= "Link to full size image</a> (";
+            $textrow .= &filesize($oldname) . "kB) <br>\n";
+            $textrow .= "<a href=\"$halfname\" target=\"_new\">";
+            $textrow .= "Link to half size image</a> (";
+            $textrow .= &filesize($halfname) . "kB) ";
+            $textrow .= "\n</td></tr>\n";
             # and the caption, if one exists
             if ( exists $captions{$oldname} ) {
-                #print OUT   "<br><span class=\"pixcap\">" . 
-                #            $captions{$oldname} . "</span>";
-                print OUT "<tr><td class=\"pixcap\">" . $captions{$oldname};
-                print OUT "</td></tr>\n";
+                $textrow .= "<tr><td class=\"pixcap\">" . $captions{$oldname};
+                $textrow .= "</td></tr>\n";
             } # if ( exists $captions{$oldname} )
             # close the 2nd table
-            print OUT "</table>\n";
+            $textrow .= "</table>\n";
+			$textrow .= "</td><!-- end of text table -->\n";
             # close this cell
             print OUT "</td>\n";
             $column++;
             $counter++;
             # see if this is the end of a row of cells (3 cells to a row)
             if ($column == 4) {
-                print OUT "</tr>\n\n";
+				# close out the current row
+                print OUT "</tr>\n";
+				# print out the text row
+				print OUT "<!-- this is the text row for row #$row-->\n";
+				print OUT "<tr>\n$textrow\n</tr>\n\n";
+				print OUT "<tr><td colspan=\"3\">&nbsp;</td></tr>\n";
+				# reset the textrow string
+				$textrow = "";
+				# start a new row
                 print OUT "<!-- this is row #$row-->\n";
-                print OUT "<tr valign=top>\n";
+    			print OUT "<tr align=\"center\" valign=\"center\">\n";
                 $column = 1;
                 $row++; 
             } # if $column == 4
@@ -185,6 +187,8 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
     } # foreach $oldname
 
     # end the table and HTML document
+	print OUT "<!-- this is the text row for row #$row-->\n";
+	print OUT "<tr>\n$textrow\n\n";
     print OUT "</tr>\n</table></center>\n";
     print OUT "</body>\n</html>";
 
