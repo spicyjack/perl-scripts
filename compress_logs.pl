@@ -32,7 +32,6 @@ $opts{d} = $ENV{DEBUG};
 # set $count to 0
 $count = 0;
 
-if ( exists $opts{d} ) { print $opts{d} . "\n";}
 # get all the named.conf files in the directory
 if ( defined $opts{f} ) {
 	warn "File spec passed in; searching for " . $opts{f} if defined $opts{d};
