@@ -21,7 +21,7 @@ my @splitname; # full path split up
 	### begin script ###
 	
 	# get the command line switches
-	&getopts("dhCve:l:p:w:", \%opts);
+	&getopts("dhlCve:f:p:w:", \%opts);
 
 	if ( exists $opts{h} ) {
 		warn "Usage: file_renamer.pl [options]\n";
@@ -33,9 +33,10 @@ my @splitname; # full path split up
 		warn " -w word to replace in the filename " . 
 			" (cannot be combined with -f)\n";
 		warn " -C be case sensitve in matching words to replace\n";
-		warn " -l filename to a list of files to parse/rename\n";
+		warn " -f filename containing a list of files to parse/rename\n";
 		warn " -e filename extension to match when not using a filelist\n";
 		warn " -p path to files when not using a filelist\n";
+		warn " -l just lowercase the filenames found with -e and -p\n";
 		# exit out
 		exit 0;
 	} # if ( exists $opts{h} )
@@ -43,12 +44,12 @@ my @splitname; # full path split up
 	# was a filename extension passed in?
 	if ( exists $opts{e} && exists $opts{p} ) {	
 		@filelist = <$opts{p}/*.$opts{e}>;
-	} elsif ( exists $opts{l} ) {
-		open (LIST, $opts{l});
+	} elsif ( exists $opts{f} ) {
+		open (LIST, $opts{f});
 		@filelist = <LIST>;
 		close (LIST);
 	} else {
-		die "Please pass either a -l (list of files) or a -p (path) and " .
+		die "Please pass either a -f (list of files) or a -p (path) and " .
 			"-e (extension)\nto filter a specific set of files";
 	} # if ( exists $opts{e} && exists $opts{p} )
 
@@ -62,11 +63,17 @@ my @splitname; # full path split up
 		# copy the old name over to $newname
 		$newname = $splitname[-1];
 		if ( $opts{d} || $opts{v} ) { warn "original filename is $newname\n";}
+		# is there a file extension?
 		if ( exists $opts{e} ) {
-			if ( $opts{C} ) {
+			# are we just lowercasing the filename?
+			if ( $opts{l} ) {
+				$newname = lc($splitname[-1]);
+			# no, we're case-sensitive matching on a pattern
+			} elsif ( $opts{C} ) {
 				$newname =~ s/$opts{w}//;
+			# no, we're case-insensitve matching on a pattern
 			} else {
-				$newname =~ s/$opts{w}//;
+				$newname =~ s/$opts{w}//i;
 			} # if ( $opts{C} )
 		} # if ( exists $opts{e} )
 		$newname =~ s/&/-n-/g;
