@@ -42,7 +42,7 @@ if ( exists $opts{h} ) {
 } # if ( exists $opts{h} )
 
 # set up %dnsinfo
-%dnsinfo = (	serial => "2004032401", # serial number
+%dnsinfo = (	serial => "2004101301", # serial number
 				refresh => "3H", # refresh
 				retry => "45M", # how often to retry when initial try fails
 				expire => "8D", # max time to cache the zone
@@ -74,6 +74,12 @@ if ( exists $opts{h} ) {
 													primary => "observer"},
 				"tiedyelady.com"			=> { 	internal => "n",
 													primary => "observer"},
+				"erolotus.com"			=> { 	internal => "n",
+													primary => "observer"},
+				"hobartrax.com"			=> { 	internal => "n",
+													primary => "observer"},
+				"obstreetboards.com"			=> { 	internal => "n",
+													primary => "observer"},
 			);
 
 %hosts = (	"localhost"	=> { 	ip => "127.0.0.1",
@@ -85,6 +91,8 @@ if ( exists $opts{h} ) {
 			"kpri"		=> {	alias => "observer",
 								public => "n"},
 			"mail"		=> { 	alias => "observer",
+								public => "y"},
+			"dev"		=> { 	alias => "observer",
 								public => "y"},
 			"www"		=> {	alias => "observer",
 								public => "y"},
