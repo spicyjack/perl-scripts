@@ -65,6 +65,7 @@ my @splitname; # full path split up
 		if ( $opts{d} || $opts{v} ) { warn "original filename is $newname\n";}
 		# is there a file extension?
 		if ( exists $opts{e} ) {
+			if ( ! exists $opts{w} ) { $opts{w} = "";}
 			# are we just lowercasing the filename?
 			if ( $opts{l} ) {
 				$newname = lc($splitname[-1]);
