@@ -1,29 +1,69 @@
 #!/usr/bin/perl -w
 
-# open the input file 
-	if ( $ARGV[0] eq "" ) { 
-		print "Batch ID3 tagger\n\n";
-		print "Usage:\n";
-		print "\'batch_id3.pl playlistfile\' to add the ID3 tag comments\n";
-		print "\'batch_id3.pl playlistfile [show|verbose]\' to show tags\n\n";	
-		print "Create the playlist file using the following command:\n";
-		print "find \"/path/to/mp3s\" -name \"*.mp3\" -print > playlist.txt\n";
-		print "Exiting...\n";
+# $Id$
+# Batch MP3 ID3 tagger
+# (c)2003 Brian Manning
+# 
+# will change the text tags located in MP3 files in various ways
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA 
+
+# TODO's
+# 
+# - pull the date for the comment field using the date command
+# or perl equivalent; use the date trick for ripit.pl as well; see
+# thumbnails.pl for one example of how to do it
+# - pull Artist, Album, Track number and track name (Title) from
+# the path and filename
+# - year and genre fields will have to be prompted for
+# use directives
+use Getopt::Std;
+use strict;
+
+### begin main script body ###
+
+# some variables please
+my %opts; # for &getopts
+my @files = <*>; # all the files in the current directory
+my $total_files = 0; # how many files we changed
+my $start_time = time; # time we started processing files
+
+	# read in the command line options
+	&getopts("cdhinsv", \%opts);
+	# c - change comment only
+	# d - debugging
+	# i - ignore path, change Track, Title, and Comment tags only
+	# h - show help
+	# n - don't make changes, just pretend you're going to make changes
+	# s - show tags 
+
+	# show help?
+	if ( $opts{h} ) { 
+		&ShowHelp;
 		exit 1;
-	}	
-	
-	open (IN, $ARGV[0]) || die "Can\'t open file $ARGV[0]: \n$!";
-	$total_lines=0;
+	} # if ( $opts{h} )
 
-	if ($ARGV[1]) { $show = $ARGV[1]; }
-	else {$show = "";}
 	
-# count the time it takes to process
-
-	$start_time = time;
+	# count the time it takes to process
+	# TODO parse out the filename/path here
+	# use code from mp3_reencode.pl
 		
-# loop till EOF, looking for teltale strings...
-	while (<IN>) { # read a line from the input file
+	# loop thru @files, processing MP3 files only
+	foreach my $file (@files) {  
+		chomp($file); # remove any trailing EOL's
+
 		$_ =~ s/ /\\ /g;
 		$_ =~ s/\(/\\\(/g;
 		$_ =~ s/\)/\\\)/g;
@@ -48,7 +88,10 @@
 			print "Showing $_\n";
 			system("id3 -l $_");
 		}
-		else {
+		else { 
+
+			#system("id3 -c  \"SpicyJack's Stash, (R)2000\" $_");	
+			my $id3cmd = "-c  \"SpicyJack's Stash, (R)2000\" ";
 			system("id3 -c  \"SpicyJack's Stash, (R)2000\" $_");	
 		}
 	# update total files changed
@@ -60,3 +103,23 @@
 	$total_min = $total_time /60;
 	print "Processed $total_lines lines\n";
 	print "in $total_time seconds, or $total_min minutes.\n";
+
+### end main script body ###
+
+############
+# ShowHelp #
+############
+sub ShowHelp {
+# display a list of script options and exit
+	print "$0:\n";
+	print "Batch MP3 ID3 Tagger\n";
+	print "Script options:\n";
+	print "-c change comment only (edit script to set comment\n";
+	print "-d debug, noisy output\n";
+	print "-i ignore path, change Track, Title and Comment tags only\n";
+	print "   (Track and Title will be taken from the filename)\n";
+	print "-n don't make any changes, just pretend\n";
+	print "-s show existing tags, don't make any changes\n";
+} # sub ShowHelp
+
+# end of line
