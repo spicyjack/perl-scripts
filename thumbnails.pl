@@ -38,6 +38,25 @@ $RDJPGCOM = "/usr/bin/rdjpgcom";
 $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
 
     # check for command line options
+	if ( exists $opts{h} ) {
+		warn "Usage: thubmnails.pl [options]\n";
+		warn "[options] may consist of\n";
+		warn " -h show this help\n";
+		warn " -d run in debug mode (iextra noisy output)\n";
+		warn " -n don't re-do thumbnails, just re-generate index.html page\n";
+		warn " -c comments file; you can put comments into a file, and\n" . 
+			 "    this script will read from that file and match filenames\n" .
+			 "    with comments, and output the comments in the correct\n" .
+			 "    place in the HTML.  The file format goes like this:\n\n" .
+			 "# this is a comment line\n".
+			 "filename.jpg==this is the comment that will be applied to " .
+			 "the picture to the left of the double-equals to the left\n\n" .
+			 "    NOTE: comments must be all one line, so you must use a\n" .
+			 "    a text editor that does not wrap words for thie comments\n" .
+			 "    file to work correctly\n\n";
+		exit 0;
+	} # if ( exists $opts{h} )
+
     if ( exists $opts{c} ) { &read_captions; }
     if ( exists $opts{d} ) { $DEBUG = 1; }
 
