@@ -84,7 +84,7 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
         if ( ! -x $CJPEG ) { warn "missing $CJPEG"; }
         if ( ! -x $WRJPGCOM ) { warn "missing $WRJPGCOM"; }
         if ( ! -x $RDJPGCOM ) { warn "missing $RDJPGCOM"; }
-        warn    "Please install the missing files, and re-run this script.\n";
+        die "Please install the missing files, and re-run this script.\n";
     } # if ( ! -x $DJPEG || ! -x $CJPEG || ! -x $WRJPGCOM )
     
     # open the output HTML page
