@@ -42,7 +42,7 @@ if ( exists $opts{h} ) {
 } # if ( exists $opts{h} )
 
 # set up %dnsinfo
-%dnsinfo = (	serial => "2003071301", # serial number
+%dnsinfo = (	serial => "2004032401", # serial number
 				refresh => "3H", # refresh
 				retry => "45M", # how often to retry when initial try fails
 				expire => "8D", # max time to cache the zone
@@ -82,40 +82,18 @@ if ( exists $opts{h} ) {
 								public => "y"},
 			"naranja"  	=> { 	ip => "63.198.132.114",
 								public => "y"},
-			"rwc"		=> { 	ip => "216.148.210.140",
-								public => "n"},
-			"mystic"	=> {	ip => "192.215.8.11",
-								public => "n"},
-			"eightball" => {	ip => "63.240.15.29",
-								public => "n"},
-			"chango" 	=> { 	ip => "192.215.217.100",
-								public => "n"},
 			"kpri"		=> {	alias => "observer",
 								public => "n"},
 			"mail"		=> { 	alias => "observer",
 								public => "y"},
 			"www"		=> {	alias => "observer",
 								public => "y"},
-			"bnetd"		=> { 	alias => "naranja",
-								public => "n"},
-			"quake"		=> {	alias => "observer",
-								public => "n"},
 			"dns"		=> {	alias => "naranja",
 								public => "y"},
-			"bofh"		=> {	alias => "observer",
-								public => "n"},
-			"webmail"	=> { 	alias => "observer",
-								public => "y"},
-			"ssl"		=> { 	alias => "observer",
-								public => "n"},
-			"8ball"		=> { 	alias => "eightball",
-								public => "n"},
-			"doom"		=> {	alias => "observer",
-								public => "n"},
 			"smtp" 		=> {	ip => "65.119.16.218",
 								public => "y"},
 			"sf" 		=> {	ip => "66.35.250.210",
-								public => "y"},
+								public => "y"}
 ); # %hosts		
 							
 # are we running in DEBUG mode 
