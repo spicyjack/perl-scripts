@@ -42,7 +42,7 @@ if ( exists $opts{h} ) {
 } # if ( exists $opts{h} )
 
 # set up %dnsinfo
-%dnsinfo = (	serial => "2004082701", # serial number
+%dnsinfo = (	serial => "2004092901", # serial number
 				refresh => "3H", # refresh
 				retry => "45M", # how often to retry when initial try fails
 				expire => "8D", # max time to cache the zone
@@ -94,6 +94,8 @@ if ( exists $opts{h} ) {
             "anywipe"   => {    alias => "observer",
                                 public => "y"},
             "anyshell"  => {    alias => "observer",
+                                public => "y"},
+            "web420"    => {    alias => "observer",
                                 public => "y"},
 
 ); # %hosts		
