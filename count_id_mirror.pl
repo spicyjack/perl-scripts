@@ -10,7 +10,7 @@ if (! $ARGV[0]) { print "Usage: $0 ls_output\nExiting...\n"; exit 1;}
 
 # open the file for reading
 print "$0: opening $ARGV[0]\n";
-$ls_output = open(LSOUT, $ARGV[0]);
+open(LSOUT, $ARGV[0]);
 
 # a counter would be nice
 $counter = 0;
@@ -36,4 +36,5 @@ while (<LSOUT>) {
 
 print "Total bytes are: $counter\n";
 
+close(LSOUT);
 exit 0;
