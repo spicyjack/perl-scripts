@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 
+use lib "/sw/lib/perl5/5.8.1"; # for the Mac
 my $i=0;	# a counter
 
 # print the runtime environment
