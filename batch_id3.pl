@@ -2,9 +2,12 @@
 
 # open the input file 
 	if ( $ARGV[0] eq "" ) { 
-		print "You must enter a filename with a list of MP3's.\n";
-		print "Create this list using the following command:\n";
-		print "find -name *.mp3 -print > output.txt\n";
+		print "Batch ID3 tagger\n\n";
+		print "Usage:\n";
+		print "\'batch_id3.pl playlistfile\' to add the ID3 tag comments\n";
+		print "\'batch_id3.pl playlistfile [show|verbose]\' to show tags\n\n";	
+		print "Create the playlist file using the following command:\n";
+		print "find \"/path/to/mp3s\" -name \"*.mp3\" -print > playlist.txt\n";
 		print "Exiting...\n";
 		exit 1;
 	}	
@@ -38,6 +41,7 @@
 			if ($total_lines % 5 == 0 and $total_lines != 0) {
 				print "Line $total_lines; Press any key to continue";
 				$answer = <STDIN>;
+				$answer = ""; # this should take care of -w
 			}
 		}	
 		elsif ($show eq "verbose") {
