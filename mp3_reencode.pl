@@ -55,8 +55,17 @@
 		} # if ! -d $artist/$album
 		# now reencode the file
 		$song_time = time;
-		system("/usr/local/bin/lame -h -S -b 128 \"$file\" \"$outdir/$artist/$album/$song\"");
+		if ( ! $opts{w} ) {
+			# re-encode at a lower bitrate
+			$command = "/usr/local/bin/lame -h -S -b 128 ";
+			$command .= "\"$file\" \"$outdir/$artist/$album/$song\"";
+		} else {
+			# output to a wav file
+			$command = "/usr/local/bin/lame --decode ";
+			$command .= "\"$file\" \"$outdir/$song\"";
+		} # if ( ! $opts{w} )
 		$encode_time = time - $song_time;
+		system($command);
 		print "reencoded $artist/$album/$song in $encode_time secs\n";
 		# update total input lines parsed
 		$total_files++;
