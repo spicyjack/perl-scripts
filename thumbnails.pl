@@ -47,6 +47,18 @@
 
 # shell one-liner file extension renamer:
 # for x in *.THM; do y=`ls ${x} | sed 's/THM$/JPG/'`; mv $x $y; done
+#
+# shell one-liner for using dcraw to create jpegs
+# dcraw -c -w -2 CRW_2634.CRW | pnmtojpeg --progressive > crw_2634.23x17.jpg
+#
+# shell one-liner to convert to a smaller size image
+# time convert -resize 800x600 oldfile newfile
+#
+# for x in *.crw; do  y=`ls ${x} | sed 's/crw$/26x19.jpg/'`; dcraw -c -w -2 $x
+# | pnmtojpeg --progressive > 26x19/$y ; done
+#
+# for x in *.jpg; do  y=`ls ${x} | sed 's/26x19/8x6/'`; convert -resize 800x600
+# $x ../8x6/$y ; done
 
 # use directives
 use Getopt::Std;
