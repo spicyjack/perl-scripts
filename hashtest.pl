@@ -6,7 +6,7 @@ my %hash;
 my $key;
 my $file;
 
-foreach $file ( </etc/*> ) {
+foreach $file ( </lib/*> ) {
 	$hash{$file} = `dpkg -S $file 2>&1`;
 	chomp($hash{$file});
 	if ( $hash{$file} =~ /not found\.$/ ) {
