@@ -1,0 +1,266 @@
+#!/usr/bin/perl -w
+
+# created 07/21/01 for resizing images
+# (C) 1999 by Brian Manning <brian@sunset-cliffs.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA 
+
+# TODO's 
+# * read the date of the file for the copyright date in the jpeg comment
+# * check to see if the copyright comment is already in the image before adding
+#   it ( use -replace along with -comment)
+# * check to see if thumbnail files already exist, and if so, don't generate
+# new ones
+# * read the size of the picture in pixels for use in the img src tags in the
+#   HTML 
+#   images, so when I scale them, they'll always be the same size)
+# * read from another file the name of the image, and add a caption to the
+# HTML
+# - use GetOpt for passing command line options
+#   -d debugging, sleep for 5 seconds between each picture, stop at 9 pictures
+#   -h help
+#   -n generate new html page only
+# * reset the atime of the newly created file with the JPEG comments; set the
+# atime of the half and 8th files to be the same as the original file (?)
+# * add the atime to the picture number, using localtime to pretty it up
+
+# use directives
+use Getopt::Std;
+
+# begin
+my (%opts, %captions);
+&getopts("dhnc:", \%opts);
+@filedir= <*.jpg>;
+$start = time;
+$counter = 1;
+$column = 1;
+$row = 1;
+$DJPEG = '/usr/bin/djpeg';
+$CJPEG = '/usr/bin/cjpeg';
+$WRJPGCOM = '/usr/bin/wrjpgcom';
+$RDJPGCOM = 'usr/bin/rdjpgcom';
+
+$TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
+
+    # check for command line options
+    if ( exists $opts{c} ) { &read_captions; }
+    if ( exists $opts{d} ) { $DEBUG = 1; }
+
+    # check for existence of cjpeg and djpeg, and wrjpegcom
+    if ( ! -x $DJPEG || ! -x $CJPEG || ! -x $WRJPGCOM ) {
+        warn    "Sorry you are missing the following files that this script\n" .
+                "needs to run:\n";
+        if ( ! -x $DJPEG ) { warn "missing $DJPEG"; }
+        if ( ! -x $CJPEG ) { warn "missing $CJPEG"; }
+        if ( ! -x $WRJPGCOM ) { warn "missing $WRJPGCOM"; }
+        warn    "Please install the missing files, and re-run this script.\n";
+    } # if ( ! -x $DJPEG || ! -x $CJPEG || ! -x $WRJPGCOM )
+    
+    # open the output HTML page
+    open (OUT, "> index.html");
+
+    # add the required HTML code
+    print OUT "<HTML>\n<HEAD>\n";
+    print OUT "<TITLE>Thumbnail Page</TITLE>\n";
+    print OUT "<style><!--\n";
+    print OUT "BODY { font-family: Verdana, Helvetica, Lucida, Tahoma;\n";
+    print OUT "         background: white;}\n";
+    print OUT "SPAN.pixnum,TD.pixnum { background: #d4d3ff; }\n";
+    print OUT "SPAN.pixlinks,TD.pixlinks { background: #daffdd; }\n";
+    print OUT "SPAN.pixcap,TD.pixcap { background: #fffcd2; }\n";
+    print OUT "--></style>\n";
+    print OUT "</HEAD>\n";
+    print OUT "<BODY>\n\n";
+
+    print OUT   "<h3>Thumbnail Page - Click on any of below links to get a " .
+                "larger image.</h3>";
+
+    # add table borders if we are debugging
+    if ( $DEBUG ) {
+        #print OUT "<TABLE BORDER=1 WIDTH=\"90%\" BGCOLOR=\"#ffd3c1\">";
+        print OUT "<center><table border=1 width=\"95%\">";
+    } else {
+        #print OUT "<TABLE BORDER=0 WIDTH=\"90%\" BGCOLOR=\"#ffd3c1\">";
+        print OUT "<center><table border=0 width=\"95%\">";
+    } # if ( $DEBUG )
+    
+    print OUT "<tr valign=top>\n";
+
+    # loop the directory, converting all the files found
+    foreach $oldname (@filedir) {
+        if ( $oldname !~ /.*half.jpg$/ && $oldname !~ /.*8th.jpg$/ ) {
+            warn "\noldname is $oldname; converting";
+    	    $halfname = $eigthname = $oldname;
+        	$halfname =~ s/\.jpg\b/.half.jpg/i;			# the token file
+            $eigthname =~ s/\.jpg\b/.8th.jpg/i;
+            # don't do the thumbnail loop if the halfname or 8thname files exist
+            # or if we are just rebuilding the index page
+            if ( ! exists $opts{n} ) {
+                print "\n==================================================\n";
+                if ( ! -e $halfname ) {
+                    warn "$halfname does not exist, converting" if $DEBUG;
+	                system("$DJPEG -scale 1/2 $oldname| $CJPEG >$halfname");
+                } # if ( ! -e $halfname )
+                if ( ! -e $eigthname ) {
+                    warn "$eigthname does not exist, converting" if $DEBUG;
+                    system("$DJPEG -scale 1/8 $oldname| $CJPEG >$eigthname");
+                } # if ( ! -e $eigthname )
+            } # if ( ! -e $halfname || ! -e $eigthname )
+
+            # tag the files unless we're just rebuilding the index page
+            if ( ! defined $opts{n} ) {
+                &jpegtag($oldname);
+                &jpegtag($halfname);
+                &jpegtag($eigthname);
+            } # if ( ! defined $opts{h} )
+
+            warn "adding $oldname -> $halfname -> $eigthname\n" .
+                 "to html file in row $row, column $column";
+
+            # a table cell that holds the thumbnail and the 2nd table
+            print OUT "<td align=\"center\">\n";
+            print OUT "<a href=\"$oldname\" target=\"_new\">";
+            print OUT "<img src=\"$eigthname\" ";
+            print OUT  &imagesizes($eightname) . ">";
+            print OUT "</a><br>";
+            #print OUT "<span class=\"pixnum\">";
+            # second table with the text and links about the thumbnail
+            print OUT "<table width=\"100%\">";
+            # the image number and mtime
+            print OUT "<tr><td class=\"pixnum\">";
+            print OUT "#$counter - ";
+            print OUT &filedate($oldname, "fulldate");
+            print OUT "\n</td></tr>\n";
+            #print OUT "</span><br>\n";
+            #print OUT "<span class=\"pixlinks\">";
+            # the links 
+            print OUT "<tr><td class=\"pixlinks\">\n";
+            print OUT "<a href=\"$oldname\" target=\"_new\">";
+            print OUT "Link to full size image</a> (";
+            print OUT &filesize($oldname) . "kB) <br>";
+            print OUT "<a href=\"$halfname\" target=\"_new\">";
+            print OUT "Link to half size image</a> (";
+            print OUT &filesize($halfname) . "kB) ";
+            print OUT "\n</td></tr>\n";
+            #print OUT "</span>";
+            # and the caption, if one exists
+            if ( exists $captions{$oldname} ) {
+                #print OUT   "<br><span class=\"pixcap\">" . 
+                #            $captions{$oldname} . "</span>";
+                print OUT "<tr><td class=\"pixcap\">" . $captions{$oldname};
+                print OUT "\n</td></tr>\n";
+            } # if ( exists $captions{$oldname} )
+            # close the 2nd table
+            print OUT "</table>";
+            # close this cell
+            print OUT "</td>\n";
+            $column++;
+            $counter++;
+            # see if this is the end of a row of cells (3 cells to a row)
+            if ($column == 4) {
+                print OUT "</tr>\n\n<tr valign=top>\n";
+                $column = 1;
+                $row++; 
+            } # if $column == 4
+        } # if ( $oldname !~ /half.jpg$/ || $oldname !~ /8th.jpg$/ )
+    } # foreach $oldname
+
+    # end the table and HTML document
+    print OUT "</tr>\n</table></center>\n";
+    print OUT "</body>\n</html>";
+
+    $end = time - $start;
+    warn "Converted $counter jpegs in $end seconds";
+
+### end of main script ###
+
+sub filesize {
+    @filestat = stat ($_[0]);
+    $filesize = substr($filestat[7], 0, -3);
+    return $filesize;
+} # sub filesize
+    
+sub filedate {
+# pulls file's mtime using stat()
+    @filestat = stat($_[0]);
+    if ( $_[1] eq "year") {
+        $filedate = (localtime($filestat[9]))[5] + 1900;
+    } elsif ( $_[1] eq "mtime" ) {
+        $filedate = $filestat[9];
+    } else { 
+        $filedate = localtime($filestat[9]);
+    } # if ( $_[1] eq "year")
+    return $filedate;
+} # sub filedate
+
+sub jpegtag {
+    $JPEGTAG = "(c)" . &filedate($_[0], "year") . " " . $TAG;
+    $origdate = &filedate($_[0], "mtime");
+    warn  "tag will be $JPEGTAG" if $DEBUG;
+    warn  "renaming $_[0] to tmp$_[0]";
+    rename($_[0], "tmp$_[0]");
+    warn  "adding JPEG tag";
+    system("$WRJPGCOM -replace -comment \"$JPEGTAG\" tmp$_[0] > $_[0]");
+    warn "deleting tmp$_[0]";
+    unlink("tmp$_[0]");
+    utime($origdate, $origdate, $_[0]);
+} # sub jpegtag
+
+sub read_captions {
+# reads captions from an external file
+# format is 
+# filename==caption
+    
+    # set some variables
+    my ($line, $capkey);
+
+    # open the caption file
+    open(CAPS, "<$opts{c}");
+
+    # loop thru the file, splitting and adding keys/values to the captions hash
+    foreach $line (<CAPS>) {
+        if ( $line !~ /^#/ ) {
+            $capkey = (split(/==/, $line))[0];
+            warn "capkey is $capkey" if $DEBUG;
+            $captions{$capkey} = (split(/==/, $line))[1];
+        } # if ( $line !~ /^#/ )
+    } # foreach $line (<CAPS>)
+
+    # close the caption file
+    close(CAPS);
+} # sub read_captions
+
+sub imagesizes {
+# calls system(rdjpgcom -verbose) on a thumbnail to get width and height
+
+    # some variables
+    my ($line, @splitvar, $width, $height);
+
+    # capture the output of rdjpgcom, so we can get the width and height
+    @output = `$RDJPGCOM $_[0]`;
+    foreach $line ( @output ) {
+        if ( $line =~ /^JPEG image/ ) {
+            @splitvar = split(/ /, $line);
+            $splitvar[3] =~ s/w$//;
+            $splitvar[5] =~ s/h$//;
+            warn "$_[0]: width is $splitvar[3], height is $splitvar[5]" 
+                if $DEBUG;
+            return "width=\"" . $splitvar[3] . 
+                    "\" height=\"" . $splitvar[5] . "\"";
+        } # if ( $line =~ /^JPEG image/ )
+    } # foreach $line ( @output )
+} # sub imagesizes
+
+# end of line
