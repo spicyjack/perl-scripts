@@ -28,6 +28,12 @@
 # - pull Artist, Album, Track number and track name (Title) from
 # the path and filename
 # - year and genre fields will have to be prompted for
+# - switch to MP3::Tag module for modifying MP3 tags
+# - test to make sure MP3::Tag was installed on the system, and exit if it's
+# not
+# - script defaults to -s (show tags) if no other options are given
+
+
 # use directives
 use Getopt::Std; # parse command line parameters
 use strict; # strictness is good
@@ -36,19 +42,21 @@ my $ID3 = "/usr/bin/id3"; # path to the id3 binary
 ### begin main script body ###
 
 # some variables please
+my %mp3tag; # the tag information that will be applied to an MP3 file
 my %opts; # for &getopts
 my @files = <*>; # all the files in the current directory
 my $total_files = 0; # how many files we changed
 my $start_time = time; # time we started processing files
 
 	# read in the command line options
-	&getopts("cdhinsv", \%opts);
+	&getopts("acdhinsv", \%opts);
+	# a - change all tags
 	# c - change comment only
 	# d - debugging
 	# i - ignore path, change Track, Title, and Comment tags only
 	# h - show help
 	# n - don't make changes, just pretend you're going to make changes
-	# s - show tags 
+	# s - show tags *DEFAULT*
 
 	# show help?
 	if ( $opts{h} ) { 
@@ -105,6 +113,35 @@ my $start_time = time; # time we started processing files
 	print "in $total_time seconds, or $total_min minutes.\n";
 
 ### end main script body ###
+
+##############
+# ShowMP3Tag #
+##############
+#sub ShowMP3Tag {
+# displays a file's MP3 tag, if it has one.  Display will include ID3 version,
+# track, song title, album, artist, comment and filename
+# } # sub ShowMP3Tag
+
+###############
+# MP3FileInfo #
+###############
+# sub MP3FileInfo {
+# reads the file path, and separates out all of the info for use in tagging an
+# MP3 (Track, Song Title, Artist, Album)
+# my $opts = $_[0]; # command line options
+# -i: set only Comment, Track, Song Title fields 
+# -a: set all fields
+# -c: set only comment field
+# } sub MP3FileInfo
+
+################
+# ChangeMP3Tag #
+################
+# sub ChangeMP3Tag {
+# changes the MP3 tag info for a specific file; any fields in the hash that are
+# _undef_ don't get changed; this will allow the command line switches -c and
+# -i work with minimal hassle
+#} # sub ChangeMP3Tag 
 
 ############
 # ShowHelp #
