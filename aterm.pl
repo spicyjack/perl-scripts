@@ -30,7 +30,7 @@ my $colorkey = int ( rand ($numcolors) +1);
 my $typekey = int (rand ($numtypes) +1);
 my $tint = $colors{$colorkey};
 my $type = $types{$typekey};
-if (@ARGV > 1) { 
+if (scalar(@ARGV) > 0) { 
     exec("aterm -tr -tinttype $type -tint $tint &");
     } else {
     exec("aterm -tr -tinttype and -tint $tint & ");
