@@ -3,7 +3,7 @@
 # script to reencode MP3's at a different bitrate
 
 	# set the output directory, no trailng slash please!
-	$outdir = "/mnt/dose";
+	$outdir = "/home/brian/mp3";
 
 	# make sure we were passed a path to search for MP3's
 #	print "argv[0] is $ARGV[0]\n";
