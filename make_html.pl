@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA 
 
-@filedir= <*.jpg>;
+@filedir= <*.gif>;
 $start = time;
 $counter = 0;
 $row = 1;
@@ -26,32 +26,33 @@ $column = 1;
 open (OUT, "> index.html");
 
 print OUT "<HTML>\n<HEAD>\n";
-print OUT "<TITLE>JPEG Images</TITLE>\n</HEAD>\n";
+print OUT "<TITLE>Thumbnail Page</TITLE>\n</HEAD>\n";
 print OUT "<BODY BGCOLOR=\"#ffffff\">\n\n";
 
-print OUT "<H3>Full size pictures take the longest to download<BR>\n";
-print OUT "Half-size pictures take 1/2 as long :)</H3>\n";
+print OUT "<H3>Click on the below thumbnail to open the picture in a new
+browser window</H3>\n";
 
 print OUT "<TABLE BORDER=0 WIDTH=\"90%\">";
 print OUT "<TR>\n";
 
 foreach $oldname (@filedir) {
-	$newname = $oldname;
-	$newname =~ s/.jpg\b//;			# the token file
-	print "adding $oldname to html file in row $row, column $column\n";
-	print OUT "<TD ALIGN=\"CENTER\">\n";
-	print OUT "<IMG SRC=\"125/$newname.125.jpg\"><BR>\n";
-	print OUT "<A HREF=\"50/$newname.50.jpg\">Half Size</A>&nbsp;&nbsp;\n";
-	print OUT "<A HREF=\"$oldname\">Full Size</A>\n";
-	print OUT "</TD>\n";
-	$column++;
-	$counter++;	
-	if ($column == 4) {
-		print OUT "</TR>\n\n<TR>\n";
-		$column = 1;
-		$row++;
-	}
-	
+	print "oldname = $oldname\n";
+	if ($oldname =~ /thumb/) {
+		$newname = $oldname;
+		$newname =~ s/\.thumb\.gif/\.jpg/;
+		print "adding $oldname/$newname to html file in row $row, column $column\n";
+		print OUT "<TD ALIGN=\"CENTER\">\n";
+		print OUT "<A HREF=\"$newname\" target=\"_new\">\n";
+		print OUT "<IMG SRC=\"$oldname\"></a>\n";
+		print OUT "</TD>\n";
+		$column++;
+		$counter++;	
+		if ($column == 4) {
+			print OUT "</TR>\n\n<TR>\n";
+			$column = 1;
+			$row++;
+		}
+	} # if ($oldname)	
 } 
 print OUT "</TR>\n</TABLE>\n";
 print OUT "</BODY>\n</HTML>";
