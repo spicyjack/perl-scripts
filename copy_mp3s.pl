@@ -8,10 +8,15 @@
 $counter =0;
 @playlist= <./files.m3u>;
 
+if ($ARGV[0] eq "") {
+	print "Please enter a destination directory.  Exiting...\n";
+	exit 1;
+}
+
 foreach $mp3file (@playlist) {
 
 # call audix_strip.pl
-	system ("cp $mp3file /mnt/hde");
+	system ("cp $mp3file $ARGV[0]");
 
 # give the user a chance to read the stats
 	$counter = $counter + 1;
