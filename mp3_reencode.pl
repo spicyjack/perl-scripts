@@ -41,7 +41,8 @@
 		$artist = $parts[$maxparts - 3];
 		$album = $parts[$maxparts - 2];
 		$song = $parts[$maxparts - 1];
-		print "reencoding  $artist:$album:$song as #$total_files\n";
+		print "\n\n============================\n";
+		print "reencoding song #$total_files\n";
 		# make the artist directory if it does not exist already
 		if ( ! -d "$outdir/$artist" ) { # artist directory not there
 			mkdir("$outdir/$artist",0777) || 
@@ -53,11 +54,10 @@
 			die "cannot mkdir $outdir/$artist/$album: $!\n";
 		} # if ! -d $artist/$album
 		# now reencode the file
-#		print "executing: lame -b 128 \"$file\" \"$outdir/$artist/$album\"\n";
 		$song_time = time;
 		system("/usr/local/bin/lame -h -S -b 128 \"$file\" \"$outdir/$artist/$album/$song\"");
 		$encode_time = time - $song_time;
-		print "reencoded $artist/$album/$song in $encode_time secs\n";
+		print "reencoded $artist/$album/$song in $encode_time secs\n\n";
 		# update total input lines parsed
 		$total_files++;
 	} # foreach $file (@filelist)
