@@ -32,6 +32,8 @@
 # - detect the canon movie thumbnails, rename/symlink them and add a movie icon
 # in the description for the file
 # - lowercase filenames
+# - split conversion from writing the web page, so that all of the files are
+# converted first and stored in an array/hash, then written to a web page
 
 # use directives
 use Getopt::Std;
