@@ -40,16 +40,18 @@ use Getopt::Std;
 
 # begin
 my (%opts, %captions);
-&getopts("dhnc:", \%opts);
+&getopts("dhnp:c:", \%opts);
 @filedir= <*>;
 $start = time;
 $counter = 1;
 $column = 1;
 $row = 1;
-$DJPEG = "/usr/bin/djpeg";
-$CJPEG = "/usr/bin/cjpeg";
-$WRJPGCOM = "/usr/bin/wrjpgcom";
-$RDJPGCOM = "/usr/bin/rdjpgcom";
+# if the user called -p, then set BASEPATH to whatever the user input
+if ( exists $opts{p} ) { $BASEPATH=$opts{p}; } else { $BASEPATH="/usr/bin";}
+$DJPEG = "$BASEPATH/djpeg";
+$CJPEG = "$BASEPATH/cjpeg";
+$WRJPGCOM = "$BASEPATH/wrjpgcom";
+$RDJPGCOM = "$BASEPATH/rdjpgcom";
 
 $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
 
@@ -60,6 +62,8 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
 		warn " -h show this help\n";
 		warn " -d run in debug mode (extra noisy output)\n";
 		warn " -n don't re-do thumbnails, just re-generate index.html page\n";
+        warn " -p path to libjpeg binaries\n";
+        warn " (djpeg, cjpeg, wrjpgcom, rdjpgcom)\n";
 		warn " -c comments file; you can put comments into a file, and\n" . 
 			 "    this script will read from that file and match filenames\n" .
 			 "    with comments, and output the comments in the correct\n" .
