@@ -12,35 +12,42 @@
 use Getopt::Std; # parsing command line switches
 
 my %opts; # hash for command line options
-&getopts("f:l:w", \%opts); # go get the command line options
+&getopts("f:l:s:w", \%opts); # go get the command line options
 
 	# set the output directory, no trailng slash please!
 	$outdir = "/home/brian/out";
 
 	# make sure we were passed a path to search for MP3's
-	if ( ! ($opts{f} || $opts{l}) ) { 
+	if ( ! ($opts{f} || $opts{l} || $opts{s}) ) { 
 		print "mp3_reencode.pl (c) 2001 Brian Manning\n";
 		print "Usage:\n";
 		print "mp3_reencode.pl [-f path] [-l filename]\n";
+		print "-s: re-encode a single file, use the full path to the file\n";
 		print "-f: system(find) *.mp3 on a path and reencode\n";
 		print "-l: reencode each file listed in filename\n";
 		print "-w: output to a .wav file (for burning audio CD's)\n";
-		exit 1;
+		print "Output will be sent to $outdir, with each album being\n";
+		print "placed in it's own separate folder.\n"; 		exit 1;
 	}	
 	
 	# here's where we get the list of files to reencode
 	if ( exists $opts{f} ) {
 		# call system(find $path) to get a list of MP3's		
 		print "Executing system(find)...\n";
-		@filelist = `find $ARGV[1] -name \"*.mp3\" -print`;
-	} else {
+		@filelist = `find $opts{f} -name \"*.mp3\" -print`;
+	} elsif ( exists $opts{s} ) {
+		# single file, so just give filelist that file only
+		$filelist[0] = $opts{s};
+	} elsif ( exists $opts{l} ) {
 		# or open the passed in list of files
 		open (MP3LIST, "$opts{l}");
 		@filelist = <MP3LIST>;
 		close (MP3LIST);
-	} # if $ARGV[0]
-
-	# open the database connection
+	} else {
+		# we didn't get any valid options. exit
+		# we shouldn't ever reach this die statement
+		die("Please use the -f, -s, or -l switches when running this script");
+	}# if $ARGV[0]
 
 	$total_files = 1; # set a line counter 
 	$start_time = time; # set the overall start time 
