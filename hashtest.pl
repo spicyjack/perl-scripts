@@ -6,7 +6,12 @@ my %hash;
 my $key;
 my $file;
 
-foreach $file ( </home/manningb/cvs/scripts/*> ) {
-	$hash{$file} = $file;
-	print "hash key $file is " . $hash{$file} . "\n";
-}
+foreach $file ( </lib/*> ) {
+	$hash{$file} = `dpkg -S $file`;
+	chomp($hash{$file});
+	if ( $hash{$file} =~ /not found/ ) {
+		print "hash key $file is not part of a package\n";
+	} else {
+		print "hash key $file is " . $hash{$file} . "\n";
+	} # if ( $dpkgout =~ /not found.$/ )
+} # foreach $file ( </lib/*> )
