@@ -18,23 +18,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA 
 
 # TODO's 
-# * read the date of the file for the copyright date in the jpeg comment
-# * check to see if the copyright comment is already in the image before adding
-#   it ( use -replace along with -comment)
-# * check to see if thumbnail files already exist, and if so, don't generate
-# new ones
-# * read the size of the picture in pixels for use in the img src tags in the
-#   HTML 
-#   images, so when I scale them, they'll always be the same size)
-# * read from another file the name of the image, and add a caption to the
-# HTML
-# - use GetOpt for passing command line options
-#   -d debugging, sleep for 5 seconds between each picture, stop at 9 pictures
-#   -h help
-#   -n generate new html page only
-# * reset the atime of the newly created file with the JPEG comments; set the
-# atime of the half and 8th files to be the same as the original file (?)
-# * add the atime to the picture number, using localtime to pretty it up
 
 # use directives
 use Getopt::Std;
