@@ -24,6 +24,8 @@
 # - add a switch that specifies two columns of thumbnails or three; the Canon
 # thumbnails are good for two columns, the Kodak is good for 3; or maybe change
 # the size of the pictures somehow
+# - rename the canon static movie images to .jpg, and then use that image when
+# you create the HTML
 
 # use directives
 use Getopt::Std;
@@ -179,7 +181,7 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
             $column++;
             $counter++;
             # see if this is the end of a row of cells (3 cells to a row)
-            if ($column == 4) {
+            if ($column == 3) {
 				# close out the current row
                 print OUT "</tr>\n";
 				# print out the text row
