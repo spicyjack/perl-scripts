@@ -23,7 +23,12 @@
 # detailing what the movie file contains
 # - add a switch that specifies two columns of thumbnails or three; the Canon
 # thumbnails are good for two columns, the Kodak is good for 3; or maybe change
-# the size of the pictures somehow
+# the size of the pictures somehow; the canon movie thumbnails are 160x120,
+# make the regular thumbnails that size as well, so that all of the thumbnails
+# from either camera look the same
+# - add the original pixel size of the image to the file size of the image
+# links
+# - add the file name to the orignal date line in the HTML output
 # - detect the canon movie thumbnails, rename them and add a movie icon in the
 # description for the file
 
@@ -109,10 +114,13 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
 
     # loop the directory, converting all the files found
     foreach $oldname (@filedir) {
+        # rename/retag all of the JPEGs first
+        # FIXME separate the HTML writing from the JPEG mangling.  This is so
+        # we can also do movie files in the output HTML as well as JPEGs
+        # Maybe parse the files in the directory by the image number (s/\D//),
+        # so that the pictures/movies show up in the order they were taken in
 		if ( $oldname =~ /.*jpg$/i &&
 			($oldname !~ /.*half.jpg$/i && $oldname !~ /.*8th.jpg$/i) ) {
-
-        #if ( $oldname !~ /.*half.jpg$/ && $oldname !~ /.*8th.jpg$/ ) {
             warn "\n==================================================\n";
             warn "\noldname is $oldname; converting";
     	    $halfname = $eigthname = $oldname;
@@ -121,7 +129,6 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
             # don't do the thumbnail loop if the halfname or 8thname files exist
             # or if we are just rebuilding the index page
             if ( ! exists $opts{n} ) {
-
                 if ( ! -e $halfname ) {
                     warn "$halfname does not exist, converting" if $DEBUG;
 	                system("$DJPEG -scale 1/2 $oldname| $CJPEG >$halfname");
@@ -196,6 +203,9 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
                 $column = 1;
                 $row++; 
             } # if $column == 4
+        # if ( $oldname !~ /half.jpg$/ || $oldname !~ /8th.jpg$/ )
+        } elsif ( $oldname =~ /.*thm$/i || $oldname =~ /.*avi$/i ) {
+
         } # if ( $oldname !~ /half.jpg$/ || $oldname !~ /8th.jpg$/ )
     } # foreach $oldname
 
