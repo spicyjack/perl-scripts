@@ -42,7 +42,7 @@ if ( exists $opts{h} ) {
 } # if ( exists $opts{h} )
 
 # set up %dnsinfo
-%dnsinfo = (	serial => "2002120502", # serial number
+%dnsinfo = (	serial => "2003051801", # serial number
 				refresh => "3H", # refresh
 				retry => "45M", # how often to retry when initial try fails
 				expire => "8D", # max time to cache the zone
@@ -60,9 +60,11 @@ if ( exists $opts{h} ) {
 # I use, or if it gets just a basic set that covers all of the services...
 %domains = (	
 				"portaboom.com"				=> { 	internal => "n",
-													primary => "sf"},
+													primary => "observer"},
 				"portaboom.org"				=> { 	internal => "n",
-													primary => "sf"},
+													primary => "observer"},
+                "antlinux.com"              => {    internal => 'n',
+				                                    primary => 'observer'},
 			);
 
 %hosts = (	"localhost"	=> { 	ip => "127.0.0.1",
@@ -72,19 +74,26 @@ if ( exists $opts{h} ) {
 			"naranja"  	=> { 	ip => "63.198.132.114",
 								public => "y"},
 			"mystic"	=> {	ip => "192.215.8.11",
-								public => "n"},
+								public => "y"},
 			"mail"		=> { 	alias => "observer",
 								public => "y"},
-			"www"		=> {	alias => "sf",
+			"www"		=> {	alias => "observer",
 								public => "y"},
 			"dns"		=> {	alias => "naranja",
 								public => "y"},
-			"doom"		=> {	alias => "sf",
-								public => "n"},
+			"doom"		=> {	alias => "observer",
+								public => "y"},
 			"smtp" 		=> {	ip => "65.119.16.218",
 								public => "y"},
 			"sf" 		=> {	ip => "66.35.250.210",
 								public => "y"},
+            "portaboom" => {    alias => "observer",
+                                public => "y"},
+            "anywipe"   => {    alias => "observer",
+                                public => "y"},
+            "anyshell"  => {    alias => "observer",
+                                public => "y"},
+
 ); # %hosts		
 							
 # are we running in DEBUG mode 

@@ -42,7 +42,7 @@ if ( exists $opts{h} ) {
 } # if ( exists $opts{h} )
 
 # set up %dnsinfo
-%dnsinfo = (	serial => "2002120502", # serial number
+%dnsinfo = (	serial => "2003050101", # serial number
 				refresh => "3H", # refresh
 				retry => "45M", # how often to retry when initial try fails
 				expire => "8D", # max time to cache the zone
@@ -111,8 +111,6 @@ if ( exists $opts{h} ) {
 			"8ball"		=> { 	alias => "eightball",
 								public => "n"},
 			"doom"		=> {	alias => "observer",
-								public => "n"},
-			"portaboom" => {	alias => "observer",
 								public => "n"},
 			"smtp" 		=> {	ip => "65.119.16.218",
 								public => "y"},
