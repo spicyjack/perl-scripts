@@ -7,9 +7,13 @@ use strict;
 
 # script-wide variables
 # command line options
-
-# external script paths
 my (%ubd, %console, $memsize, $uml_id, $singleuser, $append, $umlbin);
+
+# script defaults
+# always start a UML session with more than 32M
+my $minmem = 32;
+# UML binary to use, can be overridden from the command line
+my $umlbinary = "/usr/local/src/antlinux/uml/linux";
 
 # begin
 # get command line options
@@ -31,8 +35,8 @@ my (%ubd, %console, $memsize, $uml_id, $singleuser, $append, $umlbin);
 #ubd1=/usr/local/src/antlinux/bf-uml/initrd \
 #ubd0=/usr/local/src/antlinux/sid-base.img single
 
-
-	# error checking for xcore client mode
+	# check for the UML binary
+    # FIXME change the paths below to use $umlbinary
 	if ( ! -x $umlbin ) {
         if ( -x "/usr/local/src/antlinux/uml/linux" ) {
             $umlbin = "/usr/local/src/antlinux/uml/linux"; 
@@ -40,7 +44,21 @@ my (%ubd, %console, $memsize, $uml_id, $singleuser, $append, $umlbin);
     		die "Error: no UML binary defined; use --umlbin <UML binary>\n>";
 	} # if ( ! -x $umlbin )
 
+# before we can start a UML session, we need:
+# - uml binary (checked above)
+# - at least one uml disk device
+#
+# optional:
+# - additional uml disk devices
+# - uml console devices (network or serial)
+# - uml session ID
+# - memory for UML session
+# - networking
+# - kernel options such as single user mode and/or other appended options
+# end main script
+
 sub ShowHelp {
+# shows the POD documentation (short or long version)
     my $whichhelp = shift;  # retrieve what help message to show 
     shift; # discard the value
 
@@ -67,7 +85,7 @@ umllinux.pl [OPTIONS]
 General Options
 
   -h|--help	    	Prints a brief help message then exits
-  --longhelp		Prints entire help file (including examples) to STDERR	
+  --longhelp		Prints entire help file (including examples)
 
 Block Device Options
 
