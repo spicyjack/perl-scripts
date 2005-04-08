@@ -34,7 +34,7 @@ my %opts; # hash for command line options
 	if ( exists $opts{f} ) {
 		# call system(find $path) to get a list of MP3's		
 		print "Executing system(find)...\n";
-		@filelist = `find $opts{f} -name \"*.mp3\" -print`;
+		@filelist = `find \"$opts{f}\" -name \"*.mp3\" -print`;
 	} elsif ( exists $opts{s} ) {
 		# single file, so just give filelist that file only
 		$filelist[0] = $opts{s};

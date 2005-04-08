@@ -1,7 +1,11 @@
 #!/usr/bin/perl -w
+# use the Exif module
 use Image::ExifTool 'ImageInfo';
+# if no filename is in @ARGS, exit
 my $file = shift or die "Please specify filename";
+# create an object for the file
 my $info = ImageInfo($file);
 foreach (keys %$info) {
-    print "$_ : $info->{$_}\n";
+    # then print out the EXIF data
+    print "$_ : " .  $info->{$_} . "\n";
 }

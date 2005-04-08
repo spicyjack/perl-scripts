@@ -42,7 +42,7 @@ if ( exists $opts{h} ) {
 } # if ( exists $opts{h} )
 
 # set up %dnsinfo
-%dnsinfo = (	serial => "2005010601", # serial number
+%dnsinfo = (	serial => "2005032901", # serial number
 				refresh => "3H", # refresh
 				retry => "45M", # how often to retry when initial try fails
 				expire => "8D", # max time to cache the zone
@@ -69,11 +69,9 @@ if ( exists $opts{h} ) {
 
 %hosts = (	"localhost"	=> { 	ip => "127.0.0.1",
 								public => "y"},
-			"observer" 	=> {	ip => "65.119.16.218",
+			"observer" 	=> {	ip => "72.14.141.184",
 								public => "y"},
 			"naranja"  	=> { 	ip => "63.198.132.114",
-								public => "y"},
-			"mystic"	=> {	ip => "192.215.8.11",
 								public => "y"},
 			"mail"		=> { 	alias => "observer",
 								public => "y"},
@@ -85,7 +83,7 @@ if ( exists $opts{h} ) {
 								public => "y"},
 			"doom"		=> {	alias => "observer",
 								public => "y"},
-			"smtp" 		=> {	ip => "65.119.16.218",
+			"smtp" 		=> {	ip => "72.14.141.184",
 								public => "y"},
 			"sf" 		=> {	ip => "66.35.250.210",
 								public => "y"},
