@@ -9,6 +9,10 @@
 # add an output path option, but use the default $outdir if one is not passed
 # in
 
+# oneliner for reencoding FLAC files
+# for FILE in *.flac; do newname=`ls ${FILE} | sed 's/flac$/mp3/'`;
+# /sw/bin/flac -d -c $FILE | ~/Documents/bin/lame -h -S -b 256 - $newname; done
+
 use Getopt::Std; # parsing command line switches
 
 my %opts; # hash for command line options
