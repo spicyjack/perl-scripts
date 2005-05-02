@@ -60,6 +60,9 @@
 # for x in *.jpg; do  y=`ls ${x} | sed 's/26x19/8x6/'`; convert -resize 800x600
 # $x ../8x6/$y ; done
 
+# time convert -resize 25% indian_hill-panoramic-1.jpg
+# indian_hill-panoramic-1-25pct.jpg
+
 # use directives
 use Getopt::Std;
 
