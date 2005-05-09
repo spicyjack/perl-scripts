@@ -13,6 +13,10 @@
 # for FILE in *.flac; do newname=`ls ${FILE} | sed 's/flac$/mp3/'`;
 # /sw/bin/flac -d -c $FILE | ~/Documents/bin/lame -h -S -b 256 - $newname; done
 
+# 24 bit flac files?  sure!!!
+# for FILE in *.flac; do newname=`ls ${FILE} | sed 's/flac$/wav/'`; 
+# ecasound -i $FILE -o ${newname}; done
+
 use Getopt::Std; # parsing command line switches
 
 my %opts; # hash for command line options
