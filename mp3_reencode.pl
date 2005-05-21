@@ -25,6 +25,9 @@
 # flac port" --set-tag="LOCATION=San Diego, California, United States"
 # --set-tag="ORGANIZATION=Courtesy of Spicyjack's Secret Stash"
 # QOTSA-Long_Slow_Goodbye-Acoustic-San_Diego-18May2005.flac
+
+# metaflac --show-md5sum QOTSA-Interview-KBZT_San_Diego-19Mar2005.flac
+
 use Getopt::Std; # parsing command line switches
 
 my %opts; # hash for command line options
