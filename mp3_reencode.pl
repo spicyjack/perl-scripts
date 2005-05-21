@@ -17,6 +17,14 @@
 # for FILE in *.flac; do newname=`ls ${FILE} | sed 's/flac$/wav/'`; 
 # ecasound -i $FILE -o ${newname}; done
 
+# metaflac --set-tag="TITLE=Long Slow Goodbye (Acoustic)"
+# --set-tag="ARTIST=Queens of the Stone Age" --set-tag="DATE=19May2005"
+# --set-tag="DESCRIPTION=Trimmed from the complete intervew file.  Recorded
+# using a Sangean ATS505 shortwave receiver connected to an Apple 12\"
+# Powerbook.  Editing performed in GarageBand, encoded using the OpenDarwin
+# flac port" --set-tag="LOCATION=San Diego, California, United States"
+# --set-tag="ORGANIZATION=Courtesy of Spicyjack's Secret Stash"
+# QOTSA-Long_Slow_Goodbye-Acoustic-San_Diego-18May2005.flac
 use Getopt::Std; # parsing command line switches
 
 my %opts; # hash for command line options
