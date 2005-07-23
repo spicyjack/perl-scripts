@@ -82,6 +82,8 @@ if ( exists $opts{h} ) {
 													primary => "observer"},
 				"capeshow.com"			=> { 	internal => "n",
 													primary => "observer"},
+				"blkmtnpub.com"			=> { 	internal => "n",
+													primary => "observer"},
 			);
 
 %hosts = (	"localhost"	=> { 	ip => "127.0.0.1",

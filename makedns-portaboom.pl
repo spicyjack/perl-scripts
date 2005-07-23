@@ -42,7 +42,8 @@ if ( exists $opts{h} ) {
 } # if ( exists $opts{h} )
 
 # set up %dnsinfo
-%dnsinfo = (	serial => "2005032901", # serial number
+# FIXME automate the serial number
+%dnsinfo = (	serial => "2005061701", # serial number
 				refresh => "3H", # refresh
 				retry => "45M", # how often to retry when initial try fails
 				expire => "8D", # max time to cache the zone
@@ -94,6 +95,8 @@ if ( exists $opts{h} ) {
             "anyshell"  => {    alias => "observer",
                                 public => "y"},
             "quickmap"    => {    alias => "observer",
+                                public => "y"},
+            "ff"    => {    alias => "observer",
                                 public => "y"},
 
 ); # %hosts		
