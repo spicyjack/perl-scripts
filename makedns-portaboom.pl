@@ -43,7 +43,7 @@ if ( exists $opts{h} ) {
 
 # set up %dnsinfo
 # FIXME automate the serial number
-%dnsinfo = (	serial => "2005061701", # serial number
+%dnsinfo = (	serial => "2005080801", # serial number
 				refresh => "3H", # refresh
 				retry => "45M", # how often to retry when initial try fails
 				expire => "8D", # max time to cache the zone

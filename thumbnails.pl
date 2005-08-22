@@ -154,11 +154,15 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
             if ( ! exists $opts{n} ) {
                 if ( ! -e $halfname ) {
                     warn "$halfname does not exist, converting" if $DEBUG;
-	                system("$DJPEG -scale 1/2 $oldname| $CJPEG >$halfname");
+                    $command = qq($DJPEG -scale 1/2 "$oldname")
+                        . qq(| $CJPEG >"$halfname");
+	                system($command);
                 } # if ( ! -e $halfname )
                 if ( ! -e $eigthname ) {
                     warn "$eigthname does not exist, converting" if $DEBUG;
-                    system("$DJPEG -scale 1/8 $oldname| $CJPEG >$eigthname");
+                    $command = qq($DJPEG -scale 1/8 "$oldname")
+                        . qq(| $CJPEG >"$eigthname");
+	                system($command);
                 } # if ( ! -e $eigthname )
             } # if ( ! -e $halfname || ! -e $eigthname )
 
