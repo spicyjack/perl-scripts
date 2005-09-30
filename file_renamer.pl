@@ -66,11 +66,8 @@ my @splitname; # full path split up
 		# is there a file extension?
 		if ( exists $opts{e} ) {
 			if ( ! exists $opts{w} ) { $opts{w} = "";}
-			# are we just lowercasing the filename?
-			if ( $opts{l} ) {
-				$newname = lc($splitname[-1]);
-			# no, we're case-sensitive matching on a pattern
-			} elsif ( $opts{C} ) {
+			# are we case-sensitive matching on a pattern
+			if ( $opts{C} ) {
 				$newname =~ s/$opts{w}//;
 			# no, we're case-insensitve matching on a pattern
 			} else {
@@ -79,6 +76,8 @@ my @splitname; # full path split up
 		} # if ( exists $opts{e} )
 		$newname =~ s/&/-n-/g;
 		$newname =~ s/ /_/g;
+        # are we just lowercasing the filename?
+        if ( $opts{l} ) { $newname = lc($newname);}
 		$splitname[-1] = $newname;
 
 		if ( $opts{d} ) { 
