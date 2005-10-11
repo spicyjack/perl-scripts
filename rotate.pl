@@ -29,7 +29,7 @@ use Getopt::Std;
 my (%opts, $filedate, $rotate_direction); 
 my ($basename, $systemstr); # base image file name, system call string
 &getopts("dhq129f:", \%opts);
-$JPEGTRAN="/usr/bin/jpegtran";
+$JPEGTRAN="/usr/bin/convert";
 
     # check for command line options
 	if ( exists $opts{h} ) { &ShowHelp; exit 0;}
@@ -41,12 +41,12 @@ $JPEGTRAN="/usr/bin/jpegtran";
     if ( exists $opts{q} ) { $QUIET = 1; }
 
 	if ( ! -r $opts{f} ) { 
-		die "ripit.pl: error - $! - exiting\n";
+		die "rotate.pl: error - $! - exiting\n";
 	} # if ( ! -r $opts{f} )
 	
     # check for existence of jpegtrans
     if ( ! -x $JPEGTRAN ) {
-        warn "Please install jpegtran, and re-run this script.\n";
+        warn "Please install ImageMagick, and re-run this script.\n";
     } # if ( ! -x $JPEGTRAN )
 
 	if ( exists $opts{f} &&
@@ -87,8 +87,8 @@ $JPEGTRAN="/usr/bin/jpegtran";
 		} # if (  exists $opts{1} )
 
 		# rotate the original file; build the system string
-		$systemstr = "$JPEGTRAN -rot $rotate_direction -trim";
-		$systemstr .= " tmp$opts{f} > $opts{f}";
+		$systemstr = qq($JPEGTRAN -rotate "$rotate_direction");
+		$systemstr .= " tmp$opts{f} $opts{f}";
 		# now do it
 		if ($DEBUG) {
 			warn "rotate.pl: would have called jpegtrans with:\n";
