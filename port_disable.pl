@@ -1,7 +1,8 @@
 #!/usr/bin/perl -w
 
-# created 3/30/99 for network file access scripts
-# (C) 1999 by Brian Manning <brian@sunset-cliffs.org>
+# $Id$
+# created 05Nov2005 for disabling all of the ports on a machine
+# Copyright (C) 2005 by Brian Manning <brian at antlinux dot com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,15 +18,21 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA 
 #
-# Program takes a directory of .htm files and corrects them to .html
 
-open(FILES, "<$ARGV[0]");
-@htmlfiledir= <FILES>;
+# Generate a list of active ports with:
+# port installed | grep -v "The following ports are currently installed" 
+# | grep "(active)" | sed 's/ (active)$//' | sed 's/^  *//' 
+# | sed 's/\(.*\)/"\1"/' > active_ports.txt 
 
-foreach $oldname (@htmlfiledir) {
-    $newname = $oldname;
-	$newname =~ s/ alias$//;			# the token file
-	print "The filename will be changed from $oldname to $newname\n";
-    rename "$oldname", "$newname";
+# read in the ports from a filelist
+open(PORT, "<$ARGV[0]");
+# read the actual file
+@ports= <PORT>;
+# remove traling newlines
+chomp(@ports);
+
+foreach $port (@ports) {
+	print "Port $port will now be disabled\n";
+    system "sudo port deactivate $port";
 } 
 
