@@ -41,7 +41,7 @@ sub change_color_callback {
       	$color = $colorsel->get_current_color;
       	$da->modify_bg ('normal', $color);
 
-		$label->modify_bg('normal', $color);
+		#$label->modify_bg('normal', $color);
 
 	   	print STDERR "Changing color to #" . &stringify_color($color) . "\n";
 	
@@ -98,7 +98,9 @@ sub stringify_color {
 	my $labelframe = Gtk2::Frame->new;
 	$vbox->pack_start ($labelframe, TRUE, TRUE, 0);
 
-	$label = Gtk2::Label->new_with_mnemonic("#" . &stringify_color($color));
+	$label = Gtk2::Entry->new();
+	$label->set_text("#" . &stringify_color($color));
+	#$label = Gtk2::Label->new_with_mnemonic("#" . &stringify_color($color));
 
 	$labelframe->add ($label);
 
