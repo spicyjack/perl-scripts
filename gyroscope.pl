@@ -19,6 +19,7 @@ use Gtk2::Pango;
 
 my $window = undef;
 my $da;
+my $label;
 my $color;
 
 sub change_color_callback {
@@ -38,15 +39,26 @@ sub change_color_callback {
 
   	if ($response eq 'ok') {
       	$color = $colorsel->get_current_color;
-
       	$da->modify_bg ('normal', $color);
+
+		$label->modify_bg('normal', $color);
+
+	   	print STDERR "Changing color to #" . &stringify_color($color) . "\n";
+	
+		$label->set_text("#" . &stringify_color($color));
   	}
-   	print STDERR "Changing color to #" . sprintf('%x', int($color->red / 257) )
-		. sprintf('%x', int($color->blue / 257) ) 
-		. sprintf('%x', int($color->green / 257) ) . "\n";
+
 
 	$dialog->destroy;
 }
+
+sub stringify_color {
+	$color = shift;
+
+	return sprintf('%02x', int($color->red / 257) )
+		. sprintf('%02x', int($color->blue / 257) ) 
+		. sprintf('%02x', int($color->green / 257) ); 
+} # sub stringify_color
 
 ### main script ###
 
@@ -71,17 +83,24 @@ sub change_color_callback {
     # Create the color swatch area
 	#
       
-    my $frame = Gtk2::Frame->new;
-	$frame->set_shadow_type ('in');
-    $vbox->pack_start ($frame, TRUE, TRUE, 0);
+    my $colorframe = Gtk2::Frame->new;
+	$colorframe->set_shadow_type ('in');
+    $vbox->pack_start ($colorframe, TRUE, TRUE, 0);
     
 	$da = Gtk2::DrawingArea->new;
     # set a minimum size
-	$da->set_size_request (200, 200);
+	$da->set_size_request (200, 100);
     # set the color
 	$da->modify_bg ('normal', $color);
      
-    $frame->add ($da);
+    $colorframe->add ($da);
+
+	my $labelframe = Gtk2::Frame->new;
+	$vbox->pack_start ($labelframe, TRUE, TRUE, 0);
+
+	$label = Gtk2::Label->new_with_mnemonic("#" . &stringify_color($color));
+
+	$labelframe->add ($label);
 
 	my $alignment = Gtk2::Alignment->new (1.0, 0.5, 0.0, 0.0);
       
