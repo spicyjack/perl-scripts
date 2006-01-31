@@ -42,7 +42,7 @@ if ( exists $opts{h} ) {
 } # if ( exists $opts{h} )
 
 # set up %dnsinfo
-%dnsinfo = (	serial => "2005100401", # serial number
+%dnsinfo = (	serial => "2006010904", # serial number
 				refresh => "3H", # refresh
 				retry => "45M", # how often to retry when initial try fails
 				expire => "8D", # max time to cache the zone
@@ -105,7 +105,11 @@ if ( exists $opts{h} ) {
 			"smtp" 		=> {	ip => "72.14.141.184",
 								public => "y"},
 			"sf" 		=> {	ip => "66.35.250.210",
-								public => "y"}
+								public => "y"},
+			"drupal" 	=> {	alias => "observer",
+								public => "y"},
+			"old" 	    => {	alias => "observer",
+								public => "y"},
 ); # %hosts		
 							
 # are we running in DEBUG mode 

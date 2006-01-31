@@ -43,7 +43,7 @@ if ( exists $opts{h} ) {
 
 # set up %dnsinfo
 # FIXME automate the serial number
-%dnsinfo = (	serial => "2005121501", # serial number
+%dnsinfo = (	serial => "2006010701", # serial number
 				refresh => "3H", # refresh
 				retry => "45M", # how often to retry when initial try fails
 				expire => "8D", # max time to cache the zone
@@ -82,8 +82,6 @@ if ( exists $opts{h} ) {
 								public => "y"},
 			"kpri"		=> {	alias => "observer",
 								public => "y"},
-			"doom"		=> {	alias => "observer",
-								public => "y"},
 			"smtp" 		=> {	ip => "72.14.141.184",
 								public => "y"},
 			"sf" 		=> {	ip => "66.35.250.210",
@@ -101,6 +99,8 @@ if ( exists $opts{h} ) {
             "foto"      => {    alias => "observer",
                                 public => "y"},
             "streamcast" => {   alias => "observer",
+                                public => "y"},
+            "vend"      => {   alias => "observer",
                                 public => "y"},
 
 ); # %hosts		
