@@ -5,8 +5,7 @@
 print "please input a test string: ";
 $input = <STDIN>;
 chomp($input);
-$input =~ s/^"(.*)"$/$1/g;
-$input =~ s/""/"/g;
+$input =~ s/.*\.(\w+)$/$1/;
 print "substituted output is: >$input<\n";
 print "Thanks for playing!!\n";
 

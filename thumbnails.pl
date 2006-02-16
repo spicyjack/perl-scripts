@@ -46,7 +46,7 @@
 # converted first and stored in an array/hash, then written to a web page
 
 # shell one-liner file extension renamer:
-# for x in *.THM; do y=`ls ${x} | sed 's/THM$/JPG/'`; mv $x $y; done
+# for x in *.THM; do y=$(ls ${x} | sed 's/THM$/JPG/'); mv $x $y; done
 #
 # shell one-liner for using dcraw to create jpegs
 # dcraw -c -w -2 CRW_2634.CRW | pnmtojpeg --progressive > crw_2634.23x17.jpg
@@ -54,15 +54,20 @@
 # shell one-liner to convert to a smaller size image
 # time convert -resize 800x600 oldfile newfile
 #
-# for x in *.crw; do  y=`ls ${x} | sed 's/crw$/26x19.jpg/'`; dcraw -c -w -2 $x
+# for x in *.crw; do  y=$(ls ${x} | sed 's/crw$/26x19.jpg/'); dcraw -c -w -2 $x
 # | pnmtojpeg --progressive > 26x19/$y ; done
 #
-# for x in *.jpg; do  y=`ls ${x} | sed 's/26x19/8x6/'`; convert -resize 800x600
+# for x in *.jpg; do  y=$(ls ${x} | sed 's/26x19/8x6/'); convert -resize 800x600
 # $x ../8x6/$y ; done
 
 # time convert -resize 25% indian_hill-panoramic-1.jpg
 # indian_hill-panoramic-1-25pct.jpg
 
+# for x in *.crw; do  y=$(ls ${x} | sed 's/crw$/26x19.jpg/'); dcraw -c -w -2 $x|
+# convert pnm:- jpg:26x19/$y ; done
+
+# for FILE in *.tiff; do NEW=$(ls ${FILE} | sed 's/tiff/jpg/'); echo -e
+# "Converting $FILE\nto $NEW"; convert $FILE $NEW; done
 # use directives
 use Getopt::Std;
 
@@ -84,8 +89,7 @@ $RDJPGCOM = "$BASEPATH/rdjpgcom";
 $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
 
     # check for command line options
-	if ( exists $opts{h} ) {
-	} # if ( exists $opts{h} )
+	if ( exists $opts{h} ) { &ShowHelp(); } # if ( exists $opts{h} )
 
     if ( exists $opts{c} ) { &read_captions; }
     if ( exists $opts{d} ) { $DEBUG = 1; }
@@ -186,7 +190,7 @@ $TAG="Brian Manning, All Rights Reserved.  Use with permission only.";
             } else {
                 print OUT ">";
             } # if ( defined $captions{$oldname} )
-            print OUT "</a>";
+            print OUT "\n</a>\n";
             # second table with the text and links about the thumbnail
 			$textrow .= "<!-- begin text table --><td valign=top>\n";
 			$textrow .= "<table width=\"100%\">\n<tr><td class=\"pixnum\">";
