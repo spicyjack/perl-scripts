@@ -4,6 +4,8 @@ use lib "/sw/lib/perl5/5.8.1"; # for the Mac
 my $i=0;	# a counter
 
 # print the runtime environment
+print "Content-type: text/html","\n\n";
+print "<html><body><pre>\n";
 print "##################################################################\n";
 print "# Perl Runtime Environment (\%ENV)                                #\n";
 print "##################################################################\n";
@@ -36,7 +38,9 @@ print "##################################################################\n";
 #   4. Print it
 use File::Find;
 foreach $start (@INC) { find(\&modules, $start); }
-	
+
+print "</body></html>\n";
+
 sub modules {
 	if (-d && /^[a-z]/) { $File::Find::prune = 1; return; }
 		return unless /\.pm$/;
