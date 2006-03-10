@@ -56,8 +56,9 @@ sub stringify_color {
 	$color = shift;
 
 	return sprintf('%02x', int($color->red / 257) )
-		. sprintf('%02x', int($color->blue / 257) ) 
-		. sprintf('%02x', int($color->green / 257) ); 
+		. sprintf('%02x', int($color->green / 257) )
+		. sprintf('%02x', int($color->blue / 257) ); 
+
 } # sub stringify_color
 
 ### main script ###
