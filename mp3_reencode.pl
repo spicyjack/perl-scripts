@@ -13,6 +13,9 @@
 # for FILE in *.flac; do newname=`ls ${FILE} | sed 's/flac$/mp3/'`;
 # /sw/bin/flac -d -c $FILE | ~/Documents/bin/lame -h -S -b 256 - $newname; done
 
+# for FILE in *.flac; do newname=$(ls ${FILE} | sed 's/flac$/wav/'); flac -d -c
+# $FILE > ~/out/Shows/ArtistName/$newname; done
+
 # 24 bit flac files?  sure!!!
 # for FILE in *.flac; do newname=`ls ${FILE} | sed 's/flac$/wav/'`; 
 # ecasound -i $FILE -o ${newname}; done
@@ -95,12 +98,12 @@ my %opts; # hash for command line options
 		$song_time = time;
 		if ( ! $opts{w} ) {
 			# re-encode at a lower bitrate
-			$command = "/usr/local/bin/lame -h -S -b 128 ";
+			$command = "/usr/bin/lame -h -S -b 128 ";
 
 		} else {
 			# output to a wav file
 			$song =~ s/mp3$/wav/i;
-			$command = "/usr/local/bin/lame --decode ";
+			$command = "/usr/bin/lame --decode ";
 		} # if ( ! $opts{w} )
 
 		# the extra part of the command string that gives the file to re-encode
