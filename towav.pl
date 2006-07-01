@@ -3,6 +3,11 @@
 # script to convert SHN/FLAC files to WAV files for burning to CD
 # $Id$
 
+# to do a whole directory of shows...
+# for DIR in $(find . -type d -maxdepth 1| grep [a-zA-Z]); do CLEAN=$(echo
+# ${DIR} | sed 's/^\.\///'); perl ~/cvs/perl_scripts/towav.pl -i $CLEAN/ -o
+# /home/brian/out/$CLEAN/ -c; done
+
 use strict;
 use warnings;
 use Getopt::Long;
