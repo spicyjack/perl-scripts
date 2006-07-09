@@ -73,9 +73,9 @@ sub found {
     $newfile =~ s/ /_/g; # space -> underscore
     SWITCH: {
         if ( $_ =~ /\.shn$/ ) {
-            $cmd = qq(if [ ! -e $newfile ]; then cp "$_" $newfile; fi; )
-                . q(/usr/bin/shnconv -o wav -d ) 
-                . $output_dir . q( ) . $File::Find::dir . q(/) . $newfile
+            if ( $_ ne $newfile ) { $cmd = qq(cp "$_" $newfile;); }
+            $cmd = q(/usr/bin/shnconv -o wav -d ) 
+                . $output_dir . q( ") . $File::Find::dir . q("/) . $newfile
                 . qq(;rm $newfile);
             last SWITCH;
         } # if ( $_ =~ /\.shn$/ )
