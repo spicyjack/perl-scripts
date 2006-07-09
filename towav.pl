@@ -73,16 +73,16 @@ sub found {
     $newfile =~ s/ /_/g; # space -> underscore
     SWITCH: {
         if ( $_ =~ /\.shn$/ ) {
-            $cmd = q(/usr/bin/shnconv -o wav -d ) 
-                . $output_dir . qq( "$_";)
-                . q(mv ) . $output_dir . qq(/"$_" ) 
-                . $output_dir . qq(/$newfile);
+            $cmd = qq(if [ ! -e $newfile ]; then cp "$_" $newfile; fi; )
+                . q(/usr/bin/shnconv -o wav -d ) 
+                . $output_dir . q( ) . $File::Find::dir . q(/) . $newfile
+                . qq(;rm $newfile);
             last SWITCH;
         } # if ( $_ =~ /\.shn$/ )
         if ( $_ =~ /\.flac$/ ) {
             $newfile =~ s/\.flac$/.wav/;
             $cmd = qq(/usr/bin/flac -d -c "$_" > ) 
-                . $output_dir . q(/") . $newfile . q(");
+                . $output_dir . q(/) . $newfile;
             last SWITCH; 
         } # if ( $_ =~ /\.flac$/ )
     } # SWITCH
