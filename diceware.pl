@@ -24,7 +24,7 @@ use Getopt::Long;
 
 package Diceware::Node;
 # $this->node_number = node number
-# $this->next_node = list of nodes that are next in lookup order
+# $this->next = list of nodes that are next in lookup order
 # $this->node_text = word that belongs to this node
 
 package main;
@@ -41,43 +41,12 @@ my $dicelist; # path to the word list
     $parser->getoptions(q(h) => \&ShowHelp, q(help) => \&ShowHelp,
         q(longhelp) => \&ShowHelp,
         q(debug) => \$DEBUG, q(D) => \$DEBUG,
-        q(l) => \$dicelist, q(list) => \$dicelist, q(dicelist) => \$dicelist,
-        q(wordlist) = \$dicelist,
+        q(l=s) => \$dicelist, q(list=s) => \$dicelist, q(dl=s) => \$dicelist, 
+        q(dicelist=s) => \$dicelist, q(wordlist=s) = \$dicelist,
     );
 
 
-sub ShowHelp {
-# shows the POD documentation (short or long version)
-    my $whichhelp = shift;  # retrieve what help message to show 
-    shift; # discard the value
-    
-    # call pod2usage and have it exit non-zero
-    # if if one of the 2 shorthelp options were not used, call longhelp
-    if ( ($whichhelp eq q(help))  || ($whichhelp eq q(h)) ) {
-        pod2usage(-exitstatus => 1); 
-    } else {
-        pod2usage(-exitstatus => 1, -verbose => 2);
-    }
-} # sub ShowHelp
 
-	if ( exists $opts{h} ) {
-		warn "Usage: file_renamer.pl [options]\n";
-		warn "[options] consist of:\n";
-		warn " -h show this help list\n";
-		warn " -d Debug mode - Doesn't do anything destructive.  " . 
-			"Automagically sets -v\n";
-		warn " -v Verbose mode - extra noisy\n";
-		warn " -w word to replace in the filename " . 
-			" (cannot be combined with -f)\n";
-		warn " -C be case sensitve in matching words to replace\n";
-		warn " -f filename containing a list of files to parse/rename\n";
-		warn " -e filename extension to match when not using a filelist\n";
-		warn " -p path to files when not using a filelist\n";
-		warn " -l just lowercase the filenames found with -e and -p\n";
-		# exit out
-		exit 0;
-	} # if ( exists $opts{h} )
-	
 	# was a filename extension passed in?
 	if ( exists $opts{e} && exists $opts{p} ) {	
 		@filelist = <$opts{p}/*.$opts{e}>;
@@ -128,6 +97,41 @@ sub ShowHelp {
 				die "Couldn't rename $file : $!";
 		} # if ( $opts{d} )
 	} # foreach
+
+	### end main script ###
+
+sub ShowHelp {
+# shows the POD documentation (short or long version)
+    my $whichhelp = shift;  # retrieve what help message to show 
+    shift; # discard the value
+    
+    # call pod2usage and have it exit non-zero
+    # if if one of the 2 shorthelp options were not used, call longhelp
+    if ( ($whichhelp eq q(help))  || ($whichhelp eq q(h)) ) {
+        pod2usage(-exitstatus => 1); 
+    } else {
+        pod2usage(-exitstatus => 1, -verbose => 2);
+    }
+
+
+	if ( exists $opts{h} ) {
+		warn "Usage: file_renamer.pl [options]\n";
+		warn "[options] consist of:\n";
+		warn " -h show this help list\n";
+		warn " -d Debug mode - Doesn't do anything destructive.  " . 
+			"Automagically sets -v\n";
+		warn " -v Verbose mode - extra noisy\n";
+		warn " -w word to replace in the filename " . 
+			" (cannot be combined with -f)\n";
+		warn " -C be case sensitve in matching words to replace\n";
+		warn " -f filename containing a list of files to parse/rename\n";
+		warn " -e filename extension to match when not using a filelist\n";
+		warn " -p path to files when not using a filelist\n";
+		warn " -l just lowercase the filenames found with -e and -p\n";
+		# exit out
+		exit 0;
+	} # if ( exists $opts{h} )
+} # sub ShowHelp	
 
 =pod
 
