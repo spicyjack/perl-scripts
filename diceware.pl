@@ -22,6 +22,23 @@ use warnings;
 # external modules
 use Getopt::Long;
 
+# psuedocode:
+# Enter the node parsing function with the diceware word and diceware numbers:
+# - Is there still is a list of numbers rolled with the dice?
+# Y - shift off a number from the left side, create a new node object from it,
+# then recurse the function with the diceware word and the remaining numbers
+# N - Assign the text to the current node object
+#
+# new( 	[-|--]number => (packed number of rolled dice), 
+# 		[-|--]text => (text string) )
+# get( 	[-|--]number => (packed number of rolled dice) ), returns (text string)
+
+# @numbers = unpack(C5, $number)
+# foreach (@numbers) {
+# 	if ( exists $node[$_] ) {
+# 	}
+# }
+
 package Diceware::Node;
 # $this->node_number = node number
 # $this->next = list of nodes that are next in lookup order
@@ -44,8 +61,6 @@ my $dicelist; # path to the word list
         q(l=s) => \$dicelist, q(list=s) => \$dicelist, q(dl=s) => \$dicelist, 
         q(dicelist=s) => \$dicelist, q(wordlist=s) = \$dicelist,
     );
-
-
 
 	# was a filename extension passed in?
 	if ( exists $opts{e} && exists $opts{p} ) {	
@@ -112,7 +127,6 @@ sub ShowHelp {
     } else {
         pod2usage(-exitstatus => 1, -verbose => 2);
     }
-
 
 	if ( exists $opts{h} ) {
 		warn "Usage: file_renamer.pl [options]\n";
