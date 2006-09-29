@@ -21,26 +21,33 @@ use strict;
 use warnings;
 # external modules
 use Getopt::Long;
+use Pod::Usage;
 
 =pod
 
 =head1 NAME
 
-diceparse.pl - starts a User Mode Linux session with specified hard drive
-images , network connections and console configurations
+diceparse.pl
 
 =head1 SYNOPSIS
 
-umllinux.pl [OPTIONS]
+diceparse.pl [OPTIONS]
 
 General Options
 
-  --netmask     Netmask to use for XCore clients
+  [-h|--help|--longhelp]    Shows script help information
+  [-D|--debug]              Show debugging output during script execution
+  [-l|-dl|-list|-dicelist]  Diceware wordlist to parse for user input.  
 
 =head1 OVERVIEW
 
-This script will asssist with testing xcore on both the client and server sides
-of the xcore session.
+Reads a Diceware wordlist, then parses user input to generate a password using
+the Diceware wordlist previously read.  Diceware wordlists can be obtained from
+L<http://world.std.com/~reinhold/diceware.html>.
+
+=head1 MODULES
+
+=over 4
 
 =cut
 
@@ -61,10 +68,19 @@ of the xcore session.
 # 	}
 # }
 
-package Diceware::Node;
+package Diceparse::Node;
 # $this->node_number = node number
 # $this->next = list of nodes that are next in lookup order
 # $this->node_text = word that belongs to this node
+
+=pod
+
+=item Diceparse::Node
+
+Contains a Diceware node, or a pointer either to the next number in a Diceware
+sequence, or a Diceware word 
+
+=cut
 
 package main;
 # variables
@@ -75,13 +91,13 @@ my $dicelist; # path to the word list
 	
     # http://tinyurl.com/a3e62 <- Getopt::Long docs
 	# get the command line switches
-    $parser = new Getopt::Long::Parser;
-	$parser->configure()
+    my $parser = new Getopt::Long::Parser;
+	$parser->configure();
     $parser->getoptions(q(h) => \&ShowHelp, q(help) => \&ShowHelp,
         q(longhelp) => \&ShowHelp,
         q(debug) => \$DEBUG, q(D) => \$DEBUG,
         q(l=s) => \$dicelist, q(list=s) => \$dicelist, q(dl=s) => \$dicelist, 
-        q(dicelist=s) => \$dicelist, q(wordlist=s) = \$dicelist,
+        q(dicelist=s) => \$dicelist, q(wordlist=s) => \$dicelist,
     );
 
     my $counter = 0;
