@@ -104,8 +104,10 @@ my $dicelist; # path to the word list
     if ( -r $dicelist ) {
         open (LIST, "< $dicelist");
     	foreach my $line (<LIST>) {
+            $counter++;
 	    	chomp($line);
-            print qq(line # $counter is: $line\n);
+            print q(line # ) . sprintf(q(%03d), $counter) . q( is ') 
+                . $line . qq('\n);
             die(q(counter reached 20)) if ( $counter == 19 );
     	} # foreach
     } # if ( -r $dicelist )
