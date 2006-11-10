@@ -37,8 +37,10 @@ diceparse.pl [OPTIONS]
 General Options
 
   [-h|--help|--longhelp]    Shows script help information
+  [-r|-rl|--ranlength]      Create this many Diceware words randomly
+  [-v|--verbose]            Show verbose script output
+  [-l|-dl|-list|--dicelist] Diceware wordlist to parse for user input.  
   [-D|--debug]              Show debugging output during script execution
-  [-l|-dl|-list|-dicelist]  Diceware wordlist to parse for user input.  
 
 =head1 OVERVIEW
 
@@ -52,40 +54,10 @@ L<http://world.std.com/~reinhold/diceware.html>.
 
 =cut
 
-# psuedocode:
-# Enter the node parsing function with the diceware word and diceware numbers:
-# - Is there still is a list of numbers rolled with the dice?
-# Y - shift off a number from the left side, create a new node object from it,
-# then recurse the function with the diceware word and the remaining numbers
-# N - Assign the text to the current node object
-#
-# new( 	[-|--]number => (packed number of rolled dice), 
-# 		[-|--]text => (text string) )
-# get( 	[-|--]number => (packed number of rolled dice) ), returns (text string)
-
-# @numbers = unpack(C5, $number)
-# foreach (@numbers) {
-# 	if ( exists $node[$_] ) {
-# 	}
-# }
-
-package Diceparse::Node;
-# $this->node_number = node number
-# $this->next = list of nodes that are next in lookup order
-# $this->node_text = word that belongs to this node
-
-=pod
-
-=item Diceparse::Node
-
-Contains a Diceware node, or a pointer either to the next number in a Diceware
-sequence, or a Diceware word 
-
-=cut
-
-package main;
 # variables
 my $DEBUG; # are we debugging?
+my $VERBOSE; # verbose script output; otherwise, just print the diceware word
+my $ranlength; # how many random numbers to use for creating a diceware word
 my $dicelist; # path to the word list
 my %diceware; # wordlist with numbers as the index
 
@@ -97,7 +69,10 @@ my %diceware; # wordlist with numbers as the index
 	$parser->configure();
     $parser->getoptions(q(h) => \&ShowHelp, q(help) => \&ShowHelp,
         q(longhelp) => \&ShowHelp,
+  		q(r=i) => \$ranlength, q(rl=i) => \$ranlength,
+		q(ranlength=i) => \$ranlength,
         q(debug) => \$DEBUG, q(D) => \$DEBUG,
+		q(verbose) => \$VERBOSE, q(v) => \$VERBOSE,
         q(l=s) => \$dicelist, q(list=s) => \$dicelist, q(dl=s) => \$dicelist, 
         q(dicelist=s) => \$dicelist, q(wordlist=s) => \$dicelist,
     );
@@ -125,8 +100,9 @@ my %diceware; # wordlist with numbers as the index
 			} # if ( m/^\d{5}/ )
     	} # foreach
     } # if ( -r $dicelist )
-	print qq(Read in $counter Diceware words\n);
-	print qq(Enter in the list of numbers to translate into Diceware words:\n);
+	print qq(Read in $counter Diceware words\n) if ( $VERBOSE );
+	print qq(Enter in the list of numbers to translate into Diceware words:\n)
+		if ( $VERBOSE );
 	$Term::ReadPassword::USE_STARS = 1;
     my $dicepassword;
 	my $dicein = read_password(q(diceware string: ));
@@ -151,8 +127,15 @@ my %diceware; # wordlist with numbers as the index
             $dicein = substr($dicein, 1);
         } # if ( m/[1-6]{5}/ )
     } # while ( length($dicein) > 0 )
-	print qq(input was: $original_in\n);
-	print qq(output is: $dicepassword\n);
+
+	if ( $VERBOSE ) {
+		# pretty print the output
+		print qq(input was: $original_in\n);
+		print qq(output is: $dicepassword\n);
+	} else {
+		# just print the generated password
+		print $dicepassword . qq(\n);
+	}
 	### end main script ###
 
 sub ShowHelp {
