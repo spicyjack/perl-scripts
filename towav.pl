@@ -73,10 +73,14 @@ sub found {
     $newfile =~ s/ /_/g; # space -> underscore
     SWITCH: {
         if ( $_ =~ /\.shn$/ ) {
+            #warn "shn conversion is currently broken; exiting...";
+            #exit 1;
             if ( $_ ne $newfile ) { $cmd = qq(cp "$_" $newfile;); }
-            $cmd = q(/usr/bin/shnconv -o wav -d ) 
-                . $output_dir . q( ") . $File::Find::dir . q("/) . $newfile
-                . qq(;rm $newfile);
+            # FIXME test this out to make sure it works before you hose another
+            # directory of shn files
+            $cmd .= q(/usr/bin/shnconv -o wav -d ) 
+                . $output_dir . q( ") . $File::Find::dir . q("/) . $newfile;
+            if ( $_ ne $newfile ) {$cmd .= qq(;rm $newfile); }
             last SWITCH;
         } # if ( $_ =~ /\.shn$/ )
         if ( $_ =~ /\.flac$/ ) {

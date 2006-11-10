@@ -102,12 +102,20 @@ my %diceware; # wordlist with numbers as the index
         q(dicelist=s) => \$dicelist, q(wordlist=s) => \$dicelist,
     );
 
+    my @program_name = split(/\//,$0);
+    if ( ! defined $dicelist ) {
+        die qq(ERROR: ) . $program_name[-1] . qq(\n)
+            . qq(ERROR: No Diceware wordlist file passed in\n)
+            . qq(ERROR: Please use ) . $program_name[-1] . qq( --help )
+            . qq(for a complete list of options\n);
+    } # if ( ! defined $dicelist )
+
     my $counter = 0;
     if ( -r $dicelist ) {
         open (LIST, "< $dicelist");
     	foreach my $line (<LIST>) {
 	    	chomp($line);
-			if ( $line =~ m/^\d{5}/ ) {
+			if ( $line =~ m/^[1-6]{5}/ ) {
 		        $counter++;
 				my ($dicenum, $diceword) = split(/\t/, $line);
 				$diceware{$dicenum} = $diceword;
@@ -120,8 +128,31 @@ my %diceware; # wordlist with numbers as the index
 	print qq(Read in $counter Diceware words\n);
 	print qq(Enter in the list of numbers to translate into Diceware words:\n);
 	$Term::ReadPassword::USE_STARS = 1;
-	my $dicepass = read_password(q(diceware string: ));
-	print qq(Dicepass was: $dicepass\n);
+    my $dicepassword;
+	my $dicein = read_password(q(diceware string: ));
+    my $original_in = $dicein;
+    my $offset = 0;
+    # while $dicein has data
+    while ( length($dicein) > 4 ) {
+        # test a block of 5 bytes
+        # substr($scalar, offset, length)
+        #my $teststring = substr($dicein, $offset, 5);
+        my $teststring = substr($dicein, $offset, 5);
+        if ( $teststring =~ m/[1-6]{5}/ ) {
+            # we got a match, 5 numbers in a row;
+            # add the diceware string to the password
+            $dicepassword .= $diceware{$teststring};
+            # and then shorten $dicein by 5 characters 
+            $dicein = substr($dicein, 5);
+            # reset the offset
+            #$offset = 0;
+        } else {
+            # no match, shorten the $dicein string
+            $dicein = substr($dicein, 1);
+        } # if ( m/[1-6]{5}/ )
+    } # while ( length($dicein) > 0 )
+	print qq(input was: $original_in\n);
+	print qq(output is: $dicepassword\n);
 	### end main script ###
 
 sub ShowHelp {
