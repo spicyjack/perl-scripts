@@ -22,6 +22,7 @@ use warnings;
 # external modules
 use Getopt::Long;
 use Pod::Usage;
+use Term::ReadPassword;
 
 =pod
 
@@ -86,6 +87,7 @@ package main;
 # variables
 my $DEBUG; # are we debugging?
 my $dicelist; # path to the word list
+my %diceware; # wordlist with numbers as the index
 
 	### begin script ###
 	
@@ -104,13 +106,22 @@ my $dicelist; # path to the word list
     if ( -r $dicelist ) {
         open (LIST, "< $dicelist");
     	foreach my $line (<LIST>) {
-            $counter++;
 	    	chomp($line);
-            print q(line # ) . sprintf(q(%03d), $counter) . q( is ') 
-                . $line . qq('\n);
-            die(q(counter reached 20)) if ( $counter == 19 );
+			if ( $line =~ m/^\d{5}/ ) {
+		        $counter++;
+				my ($dicenum, $diceword) = split(/\t/, $line);
+				$diceware{$dicenum} = $diceword;
+	            #print q(line # ) . sprintf(q(%03d), $counter) . q(:  ') 
+	            print q(number: ) . $dicenum . q(, word: ') 
+					. $diceword . qq('\n) if ( $DEBUG );
+			} # if ( m/^\d{5}/ )
     	} # foreach
     } # if ( -r $dicelist )
+	print qq(Read in $counter Diceware words\n);
+	print qq(Enter in the list of numbers to translate into Diceware words:\n);
+	$Term::ReadPassword::USE_STARS = 1;
+	my $dicepass = read_password(q(diceware string: ));
+	print qq(Dicepass was: $dicepass\n);
 	### end main script ###
 
 sub ShowHelp {
