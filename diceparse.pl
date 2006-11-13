@@ -100,12 +100,26 @@ my %diceware; # wordlist with numbers as the index
 			} # if ( m/^\d{5}/ )
     	} # foreach
     } # if ( -r $dicelist )
-	print qq(Read in $counter Diceware words\n) if ( $VERBOSE );
-	print qq(Enter in the list of numbers to translate into Diceware words:\n)
-		if ( $VERBOSE );
-	$Term::ReadPassword::USE_STARS = 1;
+    # if ranlength is not set, read in the dice numbers from the user
+    my $dicein;
+    if ( ! $ranlength ) {
+    	print qq(Read in $counter Diceware words\n) if ( $VERBOSE );
+    	print q(Enter in the list of numbers to translate )
+            . qq(into Diceware words:\n);
+    	$Term::ReadPassword::USE_STARS = 1;
+    	$dicein = read_password(q(diceware string: ));
+    } else {
+        open(RANDOM, qq(</dev/random));
+        my $rawrandom;
+        sysread(RANDOM, $rawrandom, $ranlength);
+        warn(q(read ) . length($rawrandom) . q( bytes from /dev/random));
+        # read each byte in $rawrandom, interpret as a die roll
+        foreach ( unpack(q(C), $rawrandom) ) {
+            print (qq(ord of this byte of rawrandom is ) . ord($_) . qq(\n));
+        }
+        die;
+    } # if ( ! $ranlength )
     my $dicepassword;
-	my $dicein = read_password(q(diceware string: ));
     my $original_in = $dicein;
     my $offset = 0;
     # while $dicein has data
