@@ -56,9 +56,9 @@ L<http://world.std.com/~reinhold/diceware.html>.
 
 # variables
 my $DEBUG; # are we debugging?
-my $VERBOSE; # verbose script output; otherwise, just print the diceware word
 my $ranlength; # how many random numbers to use for creating a diceware word
 my $dicelist; # path to the word list
+my $stdin; # read the numbers from standard input
 my %diceware; # wordlist with numbers as the index
 
 	### begin script ###
@@ -72,42 +72,47 @@ my %diceware; # wordlist with numbers as the index
   		q(r=i) => \$ranlength, q(rl=i) => \$ranlength,
 		q(ranlength=i) => \$ranlength,
         q(debug) => \$DEBUG, q(D) => \$DEBUG,
-		q(verbose) => \$VERBOSE, q(v) => \$VERBOSE,
         q(l=s) => \$dicelist, q(list=s) => \$dicelist, q(dl=s) => \$dicelist, 
         q(dicelist=s) => \$dicelist, q(wordlist=s) => \$dicelist,
+		q(stdin=s) => \$stdin, q(standardin=s) => \$stdin, 
+		q(si=s) => \$stdin, q(s=s) => \$stdin,
     );
 
     my @program_name = split(/\//,$0);
-    if ( ! defined $dicelist ) {
+    if ( ! defined $dicelist || ! -r $dicelist ) {
         die qq(ERROR: ) . $program_name[-1] . qq(\n)
-            . qq(ERROR: No Diceware wordlist file passed in\n)
+            . qq(ERROR: No Diceware wordlist file passed in,\n)
+            . qq(ERROR: or Diceware wordlist file not readable;\n)
             . qq(ERROR: Please use ) . $program_name[-1] . qq( --help )
             . qq(for a complete list of options\n);
     } # if ( ! defined $dicelist )
 
     my $counter = 0;
-    if ( -r $dicelist ) {
-        open (LIST, "< $dicelist");
-    	foreach my $line (<LIST>) {
-	    	chomp($line);
-			if ( $line =~ m/^[1-6]{5}/ ) {
-		        $counter++;
-				my ($dicenum, $diceword) = split(/\t/, $line);
-				$diceware{$dicenum} = $diceword;
-	            #print q(line # ) . sprintf(q(%03d), $counter) . q(:  ') 
-	            print q(number: ) . $dicenum . q(, word: ') 
-					. $diceword . qq('\n) if ( $DEBUG );
-			} # if ( m/^\d{5}/ )
-    	} # foreach
-    } # if ( -r $dicelist )
+	open (LIST, "< $dicelist");
+    foreach my $line (<LIST>) {
+	 	chomp($line);
+		if ( $line =~ m/^[1-6]{5}/ ) {
+			$counter++;
+			my ($dicenum, $diceword) = split(/\t/, $line);
+			$diceware{$dicenum} = $diceword;
+	        #print q(line # ) . sprintf(q(%03d), $counter) . q(:  ') 
+	        print q(number: ) . $dicenum . q(, word: ') 
+				. $diceword . qq('\n) if ( $DEBUG );
+		} # if ( $line =~ m/^[1-6]{5}/ )
+	} # foreach
+	print qq(Read in $counter Diceware words\n) if ( $DEBUG );
     # if ranlength is not set, read in the dice numbers from the user
     my $dicein;
     if ( ! $ranlength ) {
-    	print qq(Read in $counter Diceware words\n) if ( $VERBOSE );
+		if ( defined $stdin ) {
+			*LIST = *STDIN;
+		} else {
+   
     	print q(Enter in the list of numbers to translate )
             . qq(into Diceware words:\n);
     	$Term::ReadPassword::USE_STARS = 1;
     	$dicein = read_password(q(diceware string: ));
+
     } else {
         open(RANDOM, qq(</dev/random));
         my $rawrandom;
@@ -142,7 +147,7 @@ my %diceware; # wordlist with numbers as the index
         } # if ( m/[1-6]{5}/ )
     } # while ( length($dicein) > 0 )
 
-	if ( $VERBOSE ) {
+	if ( $DEBUG ) {
 		# pretty print the output
 		print qq(input was: $original_in\n);
 		print qq(output is: $dicepassword\n);
