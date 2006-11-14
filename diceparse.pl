@@ -71,14 +71,16 @@ my %diceware; # wordlist with numbers as the index
         q(longhelp) => \&ShowHelp,
   		q(r=i) => \$ranlength, q(rl=i) => \$ranlength,
 		q(ranlength=i) => \$ranlength,
-        q(debug) => \$DEBUG, q(D) => \$DEBUG,
+        q(debug:i) => \$DEBUG, q(D:i) => \$DEBUG,
         q(l=s) => \$dicelist, q(list=s) => \$dicelist, q(dl=s) => \$dicelist, 
         q(dicelist=s) => \$dicelist, q(wordlist=s) => \$dicelist,
-		q(stdin=s) => \$stdin, q(standardin=s) => \$stdin, 
-		q(si=s) => \$stdin, q(s=s) => \$stdin,
+		q(stdin) => \$stdin, q(standardin) => \$stdin, 
+		q(si) => \$stdin, q(s) => \$stdin,
     );
 
     my @program_name = split(/\//,$0);
+
+    # grab the wordlist and parse it
     if ( ! defined $dicelist || ! -r $dicelist ) {
         die qq(ERROR: ) . $program_name[-1] . qq(\n)
             . qq(ERROR: No Diceware wordlist file passed in,\n)
@@ -97,29 +99,39 @@ my %diceware; # wordlist with numbers as the index
 			$diceware{$dicenum} = $diceword;
 	        #print q(line # ) . sprintf(q(%03d), $counter) . q(:  ') 
 	        print q(number: ) . $dicenum . q(, word: ') 
-				. $diceword . qq('\n) if ( $DEBUG );
+				. $diceword . qq('\n) if ( defined $DEBUG && $DEBUG > 0 );
 		} # if ( $line =~ m/^[1-6]{5}/ )
 	} # foreach
-	print qq(Read in $counter Diceware words\n) if ( $DEBUG );
+	print qq(Read in $counter Diceware words\n) if ( defined $DEBUG );
+
     # if ranlength is not set, read in the dice numbers from the user
     my $dicein;
     if ( ! $ranlength ) {
+        # maybe $stdin was set instead
 		if ( defined $stdin ) {
-			*LIST = *STDIN;
+		    while(<STDIN>) {
+                $dicein .= $_;
+            }
+            $dicein =~ s/\s/ /g;
 		} else {
-   
-    	print q(Enter in the list of numbers to translate )
-            . qq(into Diceware words:\n);
-    	$Term::ReadPassword::USE_STARS = 1;
-    	$dicein = read_password(q(diceware string: ));
-
+            # nope, grab the numberlist from the user
+        	print q(Enter in the list of numbers to translate )
+                . qq(into Diceware words:\n);
+        	$Term::ReadPassword::USE_STARS = 1;
+        	$dicein = read_password(q(diceware string: ));
+        } # if ( defined $stdin )
     } else {
         open(RANDOM, qq(</dev/random));
         my $rawrandom;
         sysread(RANDOM, $rawrandom, $ranlength);
         warn(q(read ) . length($rawrandom) . q( bytes from /dev/random));
         # read each byte in $rawrandom, interpret as a die roll
-        foreach ( unpack(q(C), $rawrandom) ) {
+        my @bytes;
+        for (my $x = 0; $x == length($rawrandom); $x++){
+            push(@bytes, substr($rawrandom, $x, 1));
+        }
+        print qq(length of bytes is ) . scalar(@bytes) . qq(\n);
+        foreach ( @bytes ) {
             print (qq(ord of this byte of rawrandom is ) . ord($_) . qq(\n));
         }
         die;
@@ -147,7 +159,7 @@ my %diceware; # wordlist with numbers as the index
         } # if ( m/[1-6]{5}/ )
     } # while ( length($dicein) > 0 )
 
-	if ( $DEBUG ) {
+	if ( defined $DEBUG ) {
 		# pretty print the output
 		print qq(input was: $original_in\n);
 		print qq(output is: $dicepassword\n);
