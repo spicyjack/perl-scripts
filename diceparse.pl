@@ -94,6 +94,8 @@ my %diceware; # wordlist with numbers as the index
     } # if ( ! defined $dicelist )
 
     my $counter = 0;
+	# FIXME allow for multiple word lists, and add a way to choose a random
+	# wordlist later on
 	open (LIST, "< $dicelist");
     foreach my $line (<LIST>) {
 	 	chomp($line);
@@ -162,6 +164,8 @@ my %diceware; # wordlist with numbers as the index
         if ( $teststring =~ m/[1-6]{5}/ ) {
             # we got a match, 5 numbers in a row;
             # add the diceware string to the password
+			# FIXME if there is more than one wordlist passed in, choose which
+			# wordlist to use here
             $dicepassword .= $diceware{$teststring};
             # and then shorten $dicein by 5 characters 
             $dicein = substr($dicein, 5);
