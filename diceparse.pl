@@ -38,9 +38,9 @@ General Options
 
   [-h|--help|--longhelp]    Shows script help information
   [-r|-rl|--ranlength]      Create this many Diceware words randomly
-  [-v|--verbose]            Show verbose script output
+  [-s|-si|--stdin]          Read Diceware numbers from STDIN
   [-l|-dl|-list|--dicelist] Diceware wordlist to parse for user input.  
-  [-D|--debug]              Show debugging output during script execution
+  [-D|-d|--debug]           Show debugging output during script execution
 
 =head1 OVERVIEW
 
@@ -56,6 +56,7 @@ L<http://world.std.com/~reinhold/diceware.html>.
 
 # variables
 my $DEBUG; # are we debugging?
+my $perlrand; # use rand() function instead of reading /dev/random directly
 my $ranlength; # how many random numbers to use for creating a diceware word
 my $dicelist; # path to the word list
 my $stdin; # read the numbers from standard input
@@ -69,6 +70,7 @@ my %diceware; # wordlist with numbers as the index
 	$parser->configure();
     $parser->getoptions(q(h) => \&ShowHelp, q(help) => \&ShowHelp,
         q(longhelp) => \&ShowHelp,
+		q(pr) => \$perlrandom, q(perlrand) => \$perlrandom
   		q(r=i) => \$ranlength, q(rl=i) => \$ranlength,
 		q(ranlength=i) => \$ranlength,
         q(debug:i) => \$DEBUG, q(D:i) => \$DEBUG,
@@ -121,38 +123,43 @@ my %diceware; # wordlist with numbers as the index
         	$dicein = read_password(q(diceware string: ));
         } # if ( defined $stdin )
     } else {
-        open(RANDOM, qq(</dev/random));
-        my $rawrandom;
-        sysread(RANDOM, $rawrandom, $ranlength);
-        warn(q(read ) . length($rawrandom) . q( bytes from /dev/random));
-        # read each byte in $rawrandom, interpret as a die roll
-        my @bytes;
-        for (my $x = 0; $x == length($rawrandom); $x++){
-            push(@bytes, substr($rawrandom, $x, 1));
-        }
-        print qq(length of bytes is ) . scalar(@bytes) . qq(\n);
-        foreach ( @bytes ) {
-            print (qq(ord of this byte of rawrandom is ) . ord($_) . qq(\n));
-        }
-        die;
+		my @bytes; # list of bytes generated randomly
+		if ( defined $perlrand ) {
+			# generate random numbers via perl's built-in rand() function
+			srand();
+			for ( my $x = 1; $x > $ranlength * 5; $x++ ) {
+				push(@bytes, rand(6) + 1);
+			} # for ( my $x = 1; $x > $ranlength * 5; $x++ )
+		} else {
+			# generate random numbers via the system's /dev/random device
+	        open(RANDOM, qq(</dev/random));
+  			my $rawrandom;
+
+			while ($dicein < $ranlength) {
+				# sysread(FILEHANDLE, $buffer, read_length)
+		        sysread(RANDOM, $rawrandom, 1);
+		        # read each byte in $rawrandom, interpret as a die roll
+    	    my @bytes = unpack(q(C*), $rawrandom);
+        	print qq(length of bytes is ) . scalar(@bytes) . qq(\n);
+	        foreach ( @bytes ) {
+    	        print (qq(this byte of rawrandom is ) 
+					. sprintf("%u", $_) . qq(\n));
+        	}
+		} # if ( defined $perlrand )
     } # if ( ! $ranlength )
     my $dicepassword;
     my $original_in = $dicein;
-    my $offset = 0;
     # while $dicein has data
     while ( length($dicein) > 4 ) {
         # test a block of 5 bytes
         # substr($scalar, offset, length)
-        #my $teststring = substr($dicein, $offset, 5);
-        my $teststring = substr($dicein, $offset, 5);
+        my $teststring = substr($dicein, 0, 5);
         if ( $teststring =~ m/[1-6]{5}/ ) {
             # we got a match, 5 numbers in a row;
             # add the diceware string to the password
             $dicepassword .= $diceware{$teststring};
             # and then shorten $dicein by 5 characters 
             $dicein = substr($dicein, 5);
-            # reset the offset
-            #$offset = 0;
         } else {
             # no match, shorten the $dicein string
             $dicein = substr($dicein, 1);
