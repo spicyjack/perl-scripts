@@ -36,11 +36,12 @@ diceparse.pl [OPTIONS]
 
 General Options
 
-  [-h|--help|--longhelp]    Shows script help information
-  [-r|-rl|--ranlength]      Create this many Diceware words randomly
-  [-s|-si|--stdin]          Read Diceware numbers from STDIN
-  [-l|-dl|-list|--dicelist] Diceware wordlist to parse for user input.  
-  [-D|-d|--debug]           Show debugging output during script execution
+  [-h|--help|--longhelp]   Shows script help information
+  [-r|-rl|-ranlength]      Create this many Diceware words randomly
+  [-pr|-perlrandom]        Use Perl's rand() function instead of /dev/random
+  [-s|-si|-stdin]          Read Diceware numbers from STDIN
+  [-l|-dl|-list|-dicelist] Diceware wordlist to parse for user input.  
+  [-D|-d|-debug]           Show debugging output during script execution
 
 =head1 OVERVIEW
 
@@ -56,7 +57,7 @@ L<http://world.std.com/~reinhold/diceware.html>.
 
 # variables
 my $DEBUG; # are we debugging?
-my $perlrand; # use rand() function instead of reading /dev/random directly
+my $perlrandom; # use rand() function instead of reading /dev/random directly
 my $ranlength; # how many random numbers to use for creating a diceware word
 my $dicelist; # path to the word list
 my $stdin; # read the numbers from standard input
@@ -70,7 +71,8 @@ my %diceware; # wordlist with numbers as the index
 	$parser->configure();
     $parser->getoptions(q(h) => \&ShowHelp, q(help) => \&ShowHelp,
         q(longhelp) => \&ShowHelp,
-		q(pr) => \$perlrandom, q(perlrand) => \$perlrandom
+		q(pr) => \$perlrandom, q(perlrand) => \$perlrandom,
+		q(perlrandom) => \$perlrandom,
   		q(r=i) => \$ranlength, q(rl=i) => \$ranlength,
 		q(ranlength=i) => \$ranlength,
         q(debug:i) => \$DEBUG, q(D:i) => \$DEBUG,
@@ -107,7 +109,7 @@ my %diceware; # wordlist with numbers as the index
 	print qq(Read in $counter Diceware words\n) if ( defined $DEBUG );
 
     # if ranlength is not set, read in the dice numbers from the user
-    my $dicein;
+    my $dicein = q();
     if ( ! $ranlength ) {
         # maybe $stdin was set instead
 		if ( defined $stdin ) {
@@ -124,27 +126,30 @@ my %diceware; # wordlist with numbers as the index
         } # if ( defined $stdin )
     } else {
 		my @bytes; # list of bytes generated randomly
-		if ( defined $perlrand ) {
+		if ( defined $perlrandom ) {
 			# generate random numbers via perl's built-in rand() function
 			srand();
 			for ( my $x = 1; $x > $ranlength * 5; $x++ ) {
 				push(@bytes, rand(6) + 1);
 			} # for ( my $x = 1; $x > $ranlength * 5; $x++ )
+			$dicein = join(q(), @bytes);
 		} else {
 			# generate random numbers via the system's /dev/random device
 	        open(RANDOM, qq(</dev/random));
   			my $rawrandom;
-
-			while ($dicein < $ranlength) {
+			while ( length($dicein) < $ranlength * 5 ) {
 				# sysread(FILEHANDLE, $buffer, read_length)
 		        sysread(RANDOM, $rawrandom, 1);
-		        # read each byte in $rawrandom, interpret as a die roll
-    	    my @bytes = unpack(q(C*), $rawrandom);
-        	print qq(length of bytes is ) . scalar(@bytes) . qq(\n);
-	        foreach ( @bytes ) {
-    	        print (qq(this byte of rawrandom is ) 
-					. sprintf("%u", $_) . qq(\n));
-        	}
+				my $byte = sprintf("%u", unpack(q(C), $rawrandom));
+				if ( $byte < 252 ) {
+					# to represent 6 possible values, we can divide 252 by 6,
+					# and add one to the result to get the possibility of
+					# values between 1 and 6 
+					# append the value to the $dicein string
+					$dicein .= int($byte/42) + 1;
+				} # if ( $byte < 252 )
+        	} # while ($dicein < $ranlength)
+			close(RANDOM);
 		} # if ( defined $perlrand )
     } # if ( ! $ranlength )
     my $dicepassword;
