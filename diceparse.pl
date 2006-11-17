@@ -22,7 +22,12 @@ use warnings;
 # external modules
 use Getopt::Long;
 use Pod::Usage;
-use Term::ReadPassword;
+eval q(use Term::ReadPassword;);
+my $noreadpassword;
+if ( $@ ) {
+    warn qq(Term::ReadPassword failed to load\n);
+    $noreadpassword = 1;
+}
 
 =pod
 
@@ -83,6 +88,12 @@ my %diceware; # wordlist with numbers as the index
     );
 
     my @program_name = split(/\//,$0);
+
+    if ( defined $noreadpassword && 
+        ( ! defined $ranlength && ! defined $stdin) ) {
+        die qq(Hmmm, Term::ReadPassword can't load, and -ranlength/-stdin )
+            . q(not used);
+    }
 
     # grab the wordlist and parse it
     if ( ! defined $dicelist || ! -r $dicelist ) {
@@ -181,7 +192,7 @@ my %diceware; # wordlist with numbers as the index
 		print qq(output is: $dicepassword\n);
 	} else {
 		# just print the generated password
-		print $dicepassword . qq(\n);
+		print $dicepassword; # . qq(\n);
 	}
 	### end main script ###
 
