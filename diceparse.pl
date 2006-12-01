@@ -142,8 +142,8 @@ my %diceware; # wordlist with numbers as the index
 		if ( defined $perlrandom ) {
 			# generate random numbers via perl's built-in rand() function
 			srand();
-			for ( my $x = 1; $x > $ranlength * 5; $x++ ) {
-				push(@bytes, rand(6) + 1);
+			for ( my $x = 1; $x < $ranlength * 5; $x++ ) {
+				push(@bytes, int(rand(6)) + 1);
 			} # for ( my $x = 1; $x > $ranlength * 5; $x++ )
 			$dicein = join(q(), @bytes);
 		} else {
