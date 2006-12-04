@@ -17,6 +17,13 @@
 #   along with this program;  if not, write to the Free Software
 #   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111, USA.
 
+# TODO
+# - suppress warning for Term::ReadPassword if given a --quiet switch
+# - allow for multiple word lists, and add a way to choose a random
+# wordlist later on
+# - allow the use of a temporary directory for writing batches of keys to a
+# ramdisk, then flushing the ramdisk afte 'X' number of keys
+
 use strict;
 use warnings;
 # external modules
@@ -105,8 +112,7 @@ my %diceware; # wordlist with numbers as the index
     } # if ( ! defined $dicelist )
 
     my $counter = 0;
-	# FIXME allow for multiple word lists, and add a way to choose a random
-	# wordlist later on
+
 	open (LIST, "< $dicelist");
     foreach my $line (<LIST>) {
 	 	chomp($line);
