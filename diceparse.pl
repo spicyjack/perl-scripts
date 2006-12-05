@@ -21,18 +21,16 @@
 # - suppress warning for Term::ReadPassword if given a --quiet switch
 # - allow for multiple word lists, and add a way to choose a random
 # wordlist later on
-# - allow the use of a temporary directory for writing batches of keys to a
-# ramdisk, then flushing the ramdisk afte 'X' number of keys
 
 use strict;
 use warnings;
 # external modules
 use Getopt::Long;
 use Pod::Usage;
+# $noreadpassword get checked below along with --stdin and --ranlength to make
+# sure that the script has enough information to run
 eval q(use Term::ReadPassword;);
-my $noreadpassword;
 if ( $@ ) {
-    warn qq(Term::ReadPassword failed to load\n);
     $noreadpassword = 1;
 }
 
@@ -98,8 +96,8 @@ my %diceware; # wordlist with numbers as the index
 
     if ( defined $noreadpassword && 
         ( ! defined $ranlength && ! defined $stdin) ) {
-        die qq(Hmmm, Term::ReadPassword can't load, and -ranlength/-stdin )
-            . q(not used);
+        die qq(Hmmm, there's a problem.  Term::ReadPassword can't load,\n)
+			. q(and -ranlength/-stdin not used);
     }
 
     # grab the wordlist and parse it
