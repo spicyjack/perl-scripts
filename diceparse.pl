@@ -30,6 +30,7 @@ use Pod::Usage;
 # $noreadpassword get checked below along with --stdin and --ranlength to make
 # sure that the script has enough information to run
 eval q(use Term::ReadPassword;);
+my $noreadpassword;
 if ( $@ ) {
     $noreadpassword = 1;
 }
