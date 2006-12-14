@@ -231,5 +231,3 @@ Brian Manning
 
 # vi: set sw=4 ts=4 cin:
 # end of line
-1;
-
