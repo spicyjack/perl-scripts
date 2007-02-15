@@ -5,8 +5,8 @@
 print "please input a test string: ";
 $input = <STDIN>;
 chomp($input);
-$input =~ /^Package: (\w+)$/;
-print "substituted output is: >$input<\n";
+$input =~ s/[^(\d{1,2})]/$1/g;
+print "substituted input is: >$input<\n";
 print "first variable is >$1<\n";
 print "Thanks for playing!!\n";
 

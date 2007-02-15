@@ -70,6 +70,7 @@ L<http://world.std.com/~reinhold/diceware.html>.
 my $DEBUG; # are we debugging?
 my $perlrandom; # use rand() function instead of reading /dev/random directly
 my $ranlength; # how many random numbers to use for creating a diceware word
+my $random_dev = q(/dev/random); # random device file to read from
 my $dicelist; # path to the word list
 my $stdin; # read the numbers from standard input
 my %diceware; # wordlist with numbers as the index
@@ -80,17 +81,13 @@ my %diceware; # wordlist with numbers as the index
 	# get the command line switches
     my $parser = new Getopt::Long::Parser;
 	$parser->configure();
-    $parser->getoptions(q(h) => \&ShowHelp, q(help) => \&ShowHelp,
-        q(longhelp) => \&ShowHelp,
-		q(pr) => \$perlrandom, q(perlrand) => \$perlrandom,
-		q(perlrandom) => \$perlrandom,
-  		q(r=i) => \$ranlength, q(rl=i) => \$ranlength,
-		q(ranlength=i) => \$ranlength,
-        q(debug:i) => \$DEBUG, q(D:i) => \$DEBUG,
-        q(l=s) => \$dicelist, q(list=s) => \$dicelist, q(dl=s) => \$dicelist, 
-        q(dicelist=s) => \$dicelist, q(wordlist=s) => \$dicelist,
-		q(stdin) => \$stdin, q(standardin) => \$stdin, 
-		q(si) => \$stdin, q(s) => \$stdin,
+    $parser->getoptions(q(h|longhelp|help) => \&ShowHelp, 
+		q(pr|perlrand|perlrandom) => \$perlrandom,
+  		q(r|ranlength|rl=i) => \$ranlength,
+		q(randomdev|randev|rd=s) => \$random_dev,
+        q(debug|D:i) => \$DEBUG,
+		q(l|dl|list|dicelist|wordlist=s) => \$dicelist, 
+		q(stdin|standardin|si|s) => \$stdin, 
     );
 
     my @program_name = split(/\//,$0);
@@ -153,7 +150,7 @@ my %diceware; # wordlist with numbers as the index
 			$dicein = join(q(), @bytes);
 		} else {
 			# generate random numbers via the system's /dev/random device
-	        open(RANDOM, qq(</dev/random));
+	        open(RANDOM, q(<) . $random_dev);
   			my $rawrandom;
 			while ( length($dicein) < $ranlength * 5 ) {
 				# sysread(FILEHANDLE, $buffer, read_length)
