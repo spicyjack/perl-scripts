@@ -16,6 +16,58 @@ The current version of this script is 0.1 (23Feb2007)
 =cut
 
 $VERSION = 0.1;
+
+package PerlModDepWrapper;
+use strict;
+use warnings;
+
+sub new {
+	my $class = shift;
+	if ( ref($class) ) {
+		die qq(PerlDepShell is not meant to be subclassed... sorry.);
+	} # if ( ref($class) )
+	my $this = bless ({}, $class);
+	return $this;
+} # sub new
+
+sub drop_index {
+#Module::Dependency::Info::dropIndex();
+    my $logger = get_logger();
+    $logger->warn(q(drop_index));
+} # sub drop_index
+
+sub load_index_file {
+	my $logger = get_logger();
+    $logger->warn(q(load_index_file));
+=pod
+
+	if ( scalar(@_) == 1 ) {
+		# see if the file argument exists/is readable
+		if ( -r $_[0] ) {
+			Module::Dependency::Indexer::setIndex($_[0]);
+		} else {
+			$logger->warn(q(File ) . $_[0] . q( not found/not readable));
+		} # if ( -r $_[0] )
+	} # if ( scalar(@_) == 1 )
+
+=cut
+
+} # sub load_index_file
+
+sub save_index_file {
+    my $logger = get_logger();
+    $logger->warn(q(save_index_file));
+} # sub save_index_file
+
+sub create_index_file {
+    my $logger = get_logger();
+    $logger->warn(q(create_index_file));
+} # sub save_index_file
+
+############
+### MAIN 
+############
+
 package main;
 use strict;
 use warnings;
@@ -42,7 +94,7 @@ BEGIN {
 					q(Time::HiRes) => q(gettimeofday tv_interval), 
 					q(Module::Dependency::Indexer) => undef,
 					q(Module::Dependency::Info) => undef,
-					q(PerlDepShell) => undef,
+					q(PerlModDepWrapper) => undef,
 				); # %modules
 	foreach ( keys(%load_modules) ) {
         if ( defined $load_modules{$_} ) {
@@ -80,8 +132,10 @@ $Config->define(q(dbfile|db=s));
 $Config->define(q(module|mod|m=s@));
 # paths to directories containing perl scripts/modules
 $Config->define(q(libpath|path|p=s@));
-# seed the libpath with some defaults
-$Config->set();
+# don't seed the libpath (for Mac OSX)
+$Config->define(q(noseed|ns!));
+# don't confirm before deleting files
+$Config->define(q(noconfirm|nc!));
 
 # parse the command line
 $Config->args(\@ARGV);
@@ -99,6 +153,15 @@ if ( $Config->get(q(help)) ) {
 if ( ! defined $Config->get(q(dbfile)) ) { 
     $Config->set(q(dbfile), qq(/tmp/perldep.$$.db)); 
 } # if ( ! defined $Config->get(q(dbfile)) )
+
+# do this unless 'noseed' is set
+unless ( $Config->get(q(noseed)) ) {
+    # seed the libpath with some defaults
+    $Config->set(q(libpath), q(/usr/lib/perl));
+    $Config->set(q(libpath), q(/usr/lib/perl5));
+    $Config->set(q(libpath), q(/usr/share/perl));
+    $Config->set(q(libpath), q(/usr/share/perl5));
+} # if ( ! $Config->get(q(noseed)) )
 
 # set up the logger
 my $logger_conf = qq(log4perl.rootLogger = INFO, Screen\n);
@@ -166,8 +229,8 @@ sub get_commands {
 	my $logger = get_logger();
     my @modlist;
 
-    if ( scalar( @{$Config->get(q(getmods))} ) > 0 ) {
-        @modlist = @{$Config->get(q(getmods))};
+    if ( scalar( @{$Config->get(q(module))} ) > 0 ) {
+        @modlist = @{$Config->get(q(module))};
     } # if ( scalar( @{$Config->get(q(getmods))} ) > 0 )
 
 	return {
@@ -203,9 +266,31 @@ HELPDOC
                 proc => sub { $moddep->drop_index(); },
             }, # idx->drop
             'clear'     =>  { syn => q(drop) },
-            'delete'     =>  { syn => q(drop) },
             'dr'     =>  { syn => q(drop) },
-            'del'     =>  { syn => q(drop) },
+			### drop
+            'delete' => {
+                desc => q(Deletes an index file (if it exists) ),
+                proc => sub { 
+                    # do this unless 'noconfirm' is set
+                    unless ( $Config->get(q(noconfirm)) ) {
+                        # verify this is what the user really wants prior to
+                        # doing it
+                        return unless ( &confirm(
+                                confirm_warning => 
+                                qq(Do you really want to delete ) 
+                                . $Config->get(q(dbfile)),
+                                prompt => qq(Delete ) . $Config->get(q(dbfile))
+                                . q( [Y/n]? ) ) );
+                    } # if ( $Config->get(q(noconfirm) )
+                    if ( -f $Config->get(q(dbfile)) ) {
+                        if ( unlink($Config->get(q(dbfile))) == 0 ) { 
+                            $logger->error(q(Unable to delete index file )
+                                . $Config->get(q(dbfile)) . qq(: $!) );
+                        } # if ( unlink($Config->get(q(dbfile))) == 0 )
+                    } # if ( -f $Config->get(q(dbfile)) )
+                }, # idx->delete->proc
+            }, # idx->drop
+            'del'     =>  { syn => q(delete) },
 			### load
             'load' => {
                 desc => q(Loads an index from a file),
@@ -221,19 +306,27 @@ HELPDOC
 			### create
             'create' => {
                 desc => q(Creates a new index file),
-                proc => sub { $moddep->create_index_file(filenames => @_); },
+                proc => sub { 
+                    # check to see if the user specified a filename first
+                    if ( scalar(@_) >= 1 ) {
+                        # yep; set this file to be 'dbfile' if
+                        # create_index_file returns success
+                        $Config->set(q(dbfile), $_[0])
+                            if ($moddep->create_index_file(filename => $_[0] ));
+                    # then fall back to the 'dbfile' Config variable
+                    } elsif ( $Config->get(q(dbfile)) ) {
+                        $moddep->create_index_file(
+                            filename => $Config->get(q(dbfile)) );
+                    # barf otherwise
+                    } else {
+                        $logger->warn(q(No database file specified...));
+                        $logger->warn(
+                            q(Please specify a filename to use for the index));
+                    } # if ( $Config->get(q(dbfile)) )
+                }, # idx->create->proc
             }, # idx->create
             'cr' => { syn => q(create) },
             'new' => { syn => q(create) },
-            'all' => { 
-                desc => q(Wipes all databases and lists),
-                proc => sub { 
-                    $filedb->clear_filedb(); 
-                    $filedb->clear_pkgs();
-                    @modlist = undef; 
-                }, # clear->all
-            }, # clear->all
-            'a'     =>  { syn => q(all) },
         }, # idx->cmds
     }, # idx
 ### show
@@ -278,7 +371,7 @@ EXAMPLES
 				$logger->debug( join(q(;), @modlist) );
 				$logger->debug(q(the following modules were passed in:));
 				$logger->debug( join(q(;), @_) );
-                $filedb->_start_timer(q(overall));
+                #$filedb->_start_timer(q(overall));
 			} else {
 				$logger->warn(q(Please input one or more modules to look));
 				$logger->warn(q(up dependencies for.));
@@ -332,34 +425,5 @@ sub ShowHelp {
     warn qq( -nocl|--nocolorlog don't colorize the shell output\n);
 	exit 0;
 } # sub ShowHelp
-
-package PerlModDepWrapper;
-use strict;
-use warnings;
-
-sub new {
-	my $class = shift;
-	if ( ref($class) ) {
-		die qq(PerlDepShell is not meant to be subclassed... sorry.);
-	} # if ( ref($class) )
-	my $this = bless ({}, $class);
-	return $this;
-} # sub new
-
-sub drop_index {
-	Module::Dependency::Info::dropIndex();
-} # sub drop_index
-
-sub load_index_file {
-	my $logger = get_logger();
-	if ( scalar(@_) == 1 ) {
-		# see if the file argument exists/is readable
-		if ( -r $_[0] ) {
-			Module::Dependency::Indexer::setIndex($_[0]);
-		} else {
-			$logger->warn(q(File ) . $_[0] . q( not found/not readable));
-		} # if ( -r $_[0] )
-	} # if ( scalar(@_) == 1 )
-} # sub load_index_file
 
 # vi: set ft=perl sw=4 ts=4 cin:
