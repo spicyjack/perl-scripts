@@ -94,7 +94,7 @@ BEGIN {
 					q(Time::HiRes) => q(gettimeofday tv_interval), 
 					q(Module::Dependency::Indexer) => undef,
 					q(Module::Dependency::Info) => undef,
-					q(PerlModDepWrapper) => undef,
+#q(PerlModDepWrapper) => undef,
 				); # %modules
 	foreach ( keys(%load_modules) ) {
         if ( defined $load_modules{$_} ) {
@@ -107,6 +107,8 @@ BEGIN {
         	. "     Error output from Perl:\n$@" if $@;
 	}
 } # BEGIN
+
+require PerlModDepWrapper;
 
 ### Begin Script ###
 
