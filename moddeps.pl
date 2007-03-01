@@ -26,7 +26,7 @@ shell interface and via the command line.
 package Modules::Dependency::Wrapper;
 use strict;
 use warnings;
-#use Log::Log4Perl qw(get_logger);
+use Log::Log4Perl qw(get_logger);
 #use Module::Dependency::Indexer;
 #use Module::Dependency::Info;
 
@@ -37,49 +37,93 @@ sub new {
 		$logger->logdie( q(Sorry, ) . ref($class) 
 			. qq( is not meant to be subclassed...));
 	} # if ( ref($class) )
-	$this->{TIMER} = OpTimer->new();
+
+    # bless the object into existence
 	my $this = bless ({}, $class);
+    # add a link to a timer object
+	$this->set_timer( OpTimer->new() );
 	return $this;
 } # sub new
+
+sub set_timer {
+    my $this = shift;
+    my $timer = shift;
+    my $logger = get_logger();
+
+    if ( defined $timer ) {
+        $this->{_TIMER} = $timer;
+        return 1;
+    } else {
+        $logger->logdie(q(Tried to assign an undefined value to the timer));
+    } # if ( defined $timer )
+} # sub set_timer
+
+sub get_timer {
+    my $this = shift;
+    my $logger = get_logger();
+
+    if ( defined $this->{_TIMER} ) {
+        return $this->{_TIMER};
+    } else {
+        $logger->logdie(q(Tried to obtain an undefined value for the timer));
+    } # if ( defined $this->{_TIMER} )
+} # sub get_timer
 
 sub drop_index {
 	my $this = shift;
     my $logger = get_logger();
-	$this->{TIMER}->start_timer(q(drop_index));	
+    my $timer = $this->get_timer();
+
+	$timer->start_timer(q(drop_index));	
 	Module::Dependency::Info::dropIndex();
-	my $time_interval = $this->{TIMER}->stop_timer(q(drop_index));
+	my $time_interval = $timer->stop_timer(q(drop_index));
 	if ( defined $time_interval ) {
 	    $logger->info(q(OK: drop_index: ) . $time_interval . q( seconds));
 	} # if ( defined $time_interval )
+    return 1;
 } # sub drop_index
 
+# meant to be used for creating new index files
+# directory writeability should be tested before getting to this point
+sub create_index_file {
+	my $this = shift;
+    my %args = @_;
+	my $index_file = $args{index_file};
+    my $timer = $this->get_timer();
+	my $logger = get_logger();
+
+    $timer->start_timer(q(create_index));	
+	Module::Dependency::Indexer::makeIndex($_[0]);
+	my $time_interval = $timer->stop_timer(q(create_index));
+	if ( defined $time_interval ) {
+	    $logger->info(q(OK: create_index_file: ) . $time_interval 
+            . q( seconds));
+    } # if ( defined $time_interval )
+    return 1;
+} # sub load_index_file
+
+# meant to be used for loading indexes that have been saved
 sub load_index_file {
 	my $this = shift;
-	my $index_file = shift;
+    my %args = @_;
+    my $timer = $this->get_timer();
+	my $index_file = $args{index_file};
 	my $logger = get_logger();
 
 	# see if the file argument exists/is readable
-	if ( -r $_[0] ) {
-		$this->{TIMER}->start_timer(q(drop_index));	
-		Module::Dependency::Indexer::setIndex($_[0]);
-		my $time_interval = $this->{TIMER}->stop_timer(q(drop_index));
-		if ( defined $time_interval ) {
-			$logger->info(q(OK: load_index_file: ) . $time_interval 
-				. q( seconds));
-		} # if ( defined $time_interval )
-	} else {
-		$logger->warn(q(File ) . $_[0] . q( not found/not readable));
-	} # if ( -r $_[0] )
+    $timer->start_timer(q(load_index));	
+	Module::Dependency::Info::retrieveIndex($_[0]);
+	my $time_interval = $timer->stop_timer(q(load_index));
+	if ( defined $time_interval ) {
+	    $logger->info(q(OK: ) . q(load_index_file: ) . $time_interval 
+            . q( seconds));
+    } # if ( defined $time_interval )
+    return 1;
 } # sub load_index_file
 
 sub save_index_file {
     my $logger = get_logger();
     $logger->warn(q(save_index_file));
-} # sub save_index_file
-
-sub create_index_file {
-    my $logger = get_logger();
-    $logger->warn(q(create_index_file));
 } # sub save_index_file
 
 =pod
@@ -133,7 +177,7 @@ sub stop_timer {
 
     if ( exists $_timers{$timer_name} ) {
 		# return the time value interval between $timer_name and now
-		return tv_interval $_timers{$timer_name};
+		return tv_interval($_timers{$timer_name});
 	} else {
 		$logger->logwarn(qq(Hmm. Timer '$timer_name' does not exist.));
 		return undef;
@@ -168,7 +212,11 @@ BEGIN {
 					q(Log::Log4perl) => q(get_logger :levels),
                     q(AppConfig) => undef,
                     q(Term::ShellUI) => undef, 
-
+                    q(Time::HiRes) => q(time tv_interval),
+                    q(Log::Log4Perl) => q(get_logger),
+                    q(Module::Dependency::Indexer) => undef,
+                    q(Module::Dependency::Info) => undef,
+                    q(File::Basename) => undef,
 				); # %modules
 	foreach ( keys(%load_modules) ) {
         if ( defined $load_modules{$_} ) {
@@ -179,12 +227,7 @@ BEGIN {
    	 	die   " === ERROR: $_ failed to load:\n" 
         	. "     Do you have the $_ module installed?\n"
         	. "     Error output from Perl:\n$@" if $@;
-	}
-use Log::Log4Perl qw(get_logger);
-use Module::Dependency::Indexer;
-use Module::Dependency::Info;
-use Time::HiRes qw(time tv_interval);
-
+	} # foreach ( keys(%load_modules) )
 } # BEGIN
 
 
@@ -373,22 +416,18 @@ HELPDOC
                 }, # idx->delete->proc
             }, # idx->drop
             'del'     =>  { syn => q(delete) },
-			### load
-            'load' => {
-                desc => q(Loads an index from a file),
+			### create
+            'create' => {
+                desc => q(Creates an index from a list of file paths),
                 proc => sub { 
-					if ( scalar(@_) >= 1 ) {
-						# we only care about the first argument
-						# but we'll be nice and warn anyways
-						if ( scalar(@_) > 1 ) {
-							$logger->warn(q(Extra argments to 'idx load' )
-								. q( ignored));
-						} # if ( scalar(@_) > 1 )
-						$moddep->load_index_file($_[0]); 
-					} # if ( scalar(@_) >= 1 )	
+                    my @temp_path_list;
+                    if ( scalar(@_) > 0 ) { @temp_path_list = @_; }
+                    push( @temp_path_list, $Config->get(q(libpath)) );
+                    $moddep->create_index_file( @temp_path_list ); 
 				} # idx->load->proc
             }, # idx->load
-            'lo'     =>  { syn => q(load) },
+            'cr' => { syn => q(create) },
+            'new' => { syn => q(create) },
 			### save 
             'save' => {
                 desc => q(Saves an index to a file),
@@ -396,29 +435,28 @@ HELPDOC
             }, # idx->load
             'sa'     =>  { syn => q(save) },
 			### create
-            'create' => {
-                desc => q(Creates a new index file),
+            'load' => {
+                desc => q(Loads a new index file),
                 proc => sub { 
                     # check to see if the user specified a filename first
                     if ( scalar(@_) >= 1 ) {
                         # yep; set this file to be 'dbfile' if
                         # create_index_file returns success
                         $Config->set(q(dbfile), $_[0])
-                            if ($moddep->create_index_file(filename => $_[0] ));
+                            if ($moddep->load_index_file(index_file => $_[0]) );
                     # then fall back to the 'dbfile' Config variable
                     } elsif ( $Config->get(q(dbfile)) ) {
-                        $moddep->create_index_file(
-                            filename => $Config->get(q(dbfile)) );
+                        $moddep->load_index_file( 
+                            index_file=> $Config->get(q(dbfile)) );
                     # barf otherwise
                     } else {
-                        $logger->warn(q(No database file specified...));
+                        $logger->warn(q(No index file specified...));
                         $logger->warn(
                             q(Please specify a filename to use for the index));
                     } # if ( $Config->get(q(dbfile)) )
                 }, # idx->create->proc
             }, # idx->create
-            'cr' => { syn => q(create) },
-            'new' => { syn => q(create) },
+            'lo'     =>  { syn => q(load) },
         }, # idx->cmds
     }, # idx
 ### show
