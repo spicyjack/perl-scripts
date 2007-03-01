@@ -13,45 +13,63 @@ moddeps.pl
 
 The current version of this script is 0.1 (23Feb2007)
 
+=pod
+
+=head2 Package Modules::Dependency::Wrapper
+
+An object-oriented wrapper around L<Modules::Dependency>.  The wrapper was
+written to make it easier to make calls to Modules::Dependency both through a
+shell interface and via the command line.
+
 =cut
 
-$VERSION = 0.1;
-
-package PerlModDepWrapper;
+package Modules::Dependency::Wrapper;
 use strict;
 use warnings;
+#use Log::Log4Perl qw(get_logger);
+#use Module::Dependency::Indexer;
+#use Module::Dependency::Info;
 
 sub new {
 	my $class = shift;
+	my $logger = get_logger();
 	if ( ref($class) ) {
-		die qq(PerlDepShell is not meant to be subclassed... sorry.);
+		$logger->logdie( q(Sorry, ) . ref($class) 
+			. qq( is not meant to be subclassed...));
 	} # if ( ref($class) )
+	$this->{TIMER} = OpTimer->new();
 	my $this = bless ({}, $class);
 	return $this;
 } # sub new
 
 sub drop_index {
-#Module::Dependency::Info::dropIndex();
+	my $this = shift;
     my $logger = get_logger();
-    $logger->warn(q(drop_index));
+	$this->{TIMER}->start_timer(q(drop_index));	
+	Module::Dependency::Info::dropIndex();
+	my $time_interval = $this->{TIMER}->stop_timer(q(drop_index));
+	if ( defined $time_interval ) {
+	    $logger->info(q(OK: drop_index: ) . $time_interval . q( seconds));
+	} # if ( defined $time_interval )
 } # sub drop_index
 
 sub load_index_file {
+	my $this = shift;
+	my $index_file = shift;
 	my $logger = get_logger();
-    $logger->warn(q(load_index_file));
-=pod
 
-	if ( scalar(@_) == 1 ) {
-		# see if the file argument exists/is readable
-		if ( -r $_[0] ) {
-			Module::Dependency::Indexer::setIndex($_[0]);
-		} else {
-			$logger->warn(q(File ) . $_[0] . q( not found/not readable));
-		} # if ( -r $_[0] )
-	} # if ( scalar(@_) == 1 )
-
-=cut
-
+	# see if the file argument exists/is readable
+	if ( -r $_[0] ) {
+		$this->{TIMER}->start_timer(q(drop_index));	
+		Module::Dependency::Indexer::setIndex($_[0]);
+		my $time_interval = $this->{TIMER}->stop_timer(q(drop_index));
+		if ( defined $time_interval ) {
+			$logger->info(q(OK: load_index_file: ) . $time_interval 
+				. q( seconds));
+		} # if ( defined $time_interval )
+	} else {
+		$logger->warn(q(File ) . $_[0] . q( not found/not readable));
+	} # if ( -r $_[0] )
 } # sub load_index_file
 
 sub save_index_file {
@@ -64,11 +82,69 @@ sub create_index_file {
     $logger->warn(q(create_index_file));
 } # sub save_index_file
 
+=pod
+
+=head2 Package OpTimer
+
+L</"Package OpTimer"> is meant to time operations by other modules.  You start
+a timer with the L</"start_timer"> method, run your method, then call the
+L</"stop_timer"> method to stop that timer and return the time in seconds that
+the timer was active.
+
+=cut
+
+package OpTimer;
+use strict;
+use warnings;
+#use Time::HiRes qw(time tv_interval);
+#use Log::Log4Perl qw(get_logger);
+
+my %_timers;
+
+sub new {
+    my $class = shift;
+    my $logger = get_logger();
+    if ( ref($class) ) {
+        $logger->logdie( q(Sorry, ) . ref($class)
+            . qq( is not meant to be subclassed...));
+    } # if ( ref($class) )
+    my $this = bless ({}, $class);
+    return $this;
+} # sub new
+
+sub start_timer {
+	my $this = shift;
+	my $timer_name = shift;
+	my $logger = get_logger();
+	
+	if ( exists $_timers{$timer_name} ) {
+		$logger->logwarn(qq(Hmm. Timer '$timer_name' already exists.));
+		$logger->logdie(qq(Exiting program due to unknown timer key.));
+	} # if ( exists $_timers{$timer_name} )
+	# add the start time for this timer to the %_timers hash
+	$_timers{$timer_name} = time;
+	return $_timers{$timer_name};
+} # sub start_timer
+
+sub stop_timer {
+	my $this = shift;
+	my $timer_name = shift;
+    my $logger = get_logger();
+
+    if ( exists $_timers{$timer_name} ) {
+		# return the time value interval between $timer_name and now
+		return tv_interval $_timers{$timer_name};
+	} else {
+		$logger->logwarn(qq(Hmm. Timer '$timer_name' does not exist.));
+		return undef;
+	} # if ( exists $_timers{$timer_name} )
+} # sub stop_timer
+
 ############
 ### MAIN 
 ############
-
 package main;
+$main::VERSION = 0.1;
 use strict;
 use warnings;
 
@@ -88,13 +164,11 @@ use warnings;
 # sitewide
 BEGIN {
     # list of modules to load
-    my %load_modules = ( q(Log::Log4perl) => q(get_logger :levels),
+    my %load_modules = ( 
+					q(Log::Log4perl) => q(get_logger :levels),
                     q(AppConfig) => undef,
                     q(Term::ShellUI) => undef, 
-					q(Time::HiRes) => q(gettimeofday tv_interval), 
-					q(Module::Dependency::Indexer) => undef,
-					q(Module::Dependency::Info) => undef,
-#q(PerlModDepWrapper) => undef,
+
 				); # %modules
 	foreach ( keys(%load_modules) ) {
         if ( defined $load_modules{$_} ) {
@@ -106,9 +180,13 @@ BEGIN {
         	. "     Do you have the $_ module installed?\n"
         	. "     Error output from Perl:\n$@" if $@;
 	}
+use Log::Log4Perl qw(get_logger);
+use Module::Dependency::Indexer;
+use Module::Dependency::Info;
+use Time::HiRes qw(time tv_interval);
+
 } # BEGIN
 
-require PerlModDepWrapper;
 
 ### Begin Script ###
 
@@ -200,11 +278,13 @@ if ( @{$Config->get(q(debug))} > 0 ) {
 	} # if ( grep(/all/, @{$Config->debug()}) )
 } # if ( scalar($Config->debug()) > 0 )
 
-my $moddep = new PerlModDepWrapper( indexfile => $Config->get(q(dbfile)) );
-my $term = new Term::ShellUI( 	commands => get_commands($Config, $moddep),
-								app => q(perldepsh),
-								prompt => q(perldepsh> ),);
-#								debug_complete => 2 );
+my $moddep = new Modules::Dependency::Wrapper( 
+		indexfile => $Config->get(q(dbfile)) );
+my $term = new Term::ShellUI( 	
+		commands => get_commands($Config, $moddep),
+		app => q(perldepsh),
+		prompt => q(perldepsh> ),);
+#		debug_complete => 2 );
 
 print qq(=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n);
 print $Config->get(q(program_name)) . qq(, a Perl dependency shell, );
@@ -296,7 +376,17 @@ HELPDOC
 			### load
             'load' => {
                 desc => q(Loads an index from a file),
-                proc => sub { $moddep->load_index_file(); }
+                proc => sub { 
+					if ( scalar(@_) >= 1 ) {
+						# we only care about the first argument
+						# but we'll be nice and warn anyways
+						if ( scalar(@_) > 1 ) {
+							$logger->warn(q(Extra argments to 'idx load' )
+								. q( ignored));
+						} # if ( scalar(@_) > 1 )
+						$moddep->load_index_file($_[0]); 
+					} # if ( scalar(@_) >= 1 )	
+				} # idx->load->proc
             }, # idx->load
             'lo'     =>  { syn => q(load) },
 			### save 
