@@ -11,7 +11,7 @@ moddeps.pl
 
 =head1 VERSION
 
-The current version of this script is 0.1 (23Feb2007)
+The current version of this script is $Revision$ $Date$
 
 =pod
 
@@ -28,11 +28,10 @@ use strict;
 use warnings;
 use vars qw( $AUTOLOAD );
 use Log::Log4perl qw(get_logger :levels);
-#use Module::Dependency::Indexer;
-#use Module::Dependency::Info;
 
 sub new {
 	my $class = shift;
+    my %args = @_;
 	my $logger = get_logger();
 	if ( ref($class) ) {
 		$logger->logdie( q(Sorry, ) . ref($class) 
@@ -43,9 +42,15 @@ sub new {
 	my $this = bless ({}, $class);
     # add a link to a timer object
 	$this->set_timer( OpTimer->new() );
+
+    # set the values in this object obtained from %args
+    foreach my $argkey ( keys %args ) {
+        my $method = q(set_) . $argkey;
+        $this->$method($args{$argkey});
+    } # foreach my $argkey ( keys %args )
+
 	return $this;
 } # sub new
-
 
 sub drop_index {
 	my $this = shift;
@@ -71,11 +76,17 @@ sub generate_index {
 	my $logger = get_logger();
 
     $timer->start_timer($op);	
-	# use the @{} to make perl treat it as an array
+	# use the @{} to make perl treat the pathlist as an array
+# FIXME hack Indexer.pm to shut up the warn statement
 	Module::Dependency::Indexer::makeIndex(@{$args{pathlist}});
 	my $time_interval = $timer->stop_timer($op);
 	if ( defined $time_interval ) {
-	    $logger->info(qq(OK: $op: $time_interval seconds));
+	
+        my $allitems = Module::Dependency::Info::allItems();
+        my $allscripts = Module::Dependency::Info::allScripts();
+        $logger->info(q(Loaded ) . scalar(@$allitems) . q( items total));
+        $logger->info(q(Loaded ) . scalar(@$allscripts) . q( scripts total));
+        $logger->info(qq(OK: $op: $time_interval seconds));
     } # if ( defined $time_interval )
     return 1;
 } # sub generate_index
@@ -90,7 +101,7 @@ sub create_index_file {
     my $logger = get_logger();
 
     $timer->start_timer($op);
-    Module::Dependency::Indexer::setIndex(qq($args{index_file}));
+    Module::Dependency::Indexer::setIndex($args{index_file});
     my $time_interval = $timer->stop_timer($op);
     if ( defined $time_interval ) {
         $logger->info(qq(OK: $op: $time_interval seconds));
@@ -176,7 +187,7 @@ the timer was active.
 package OpTimer;
 use strict;
 use warnings;
-use Time::HiRes qw(time tv_interval);
+use Time::HiRes qw(gettimeofday tv_interval);
 use Log::Log4perl qw(get_logger :levels);
 
 my %_timers;
@@ -197,12 +208,17 @@ sub start_timer {
 	my $timer_name = shift;
 	my $logger = get_logger();
 	
+    $logger->debug(ref($this) . qq(->start_timer: entering as '$timer_name'));
 	if ( exists $_timers{$timer_name} ) {
 		$logger->logwarn(qq(Hmm. Timer '$timer_name' already exists.));
 		$logger->logdie(qq(Exiting program due to unknown timer key.));
 	} # if ( exists $_timers{$timer_name} )
 	# add the start time for this timer to the %_timers hash
-	$_timers{$timer_name} = time;
+    # the tv_interval function (later) expects an array reference, hence the
+    # [brackets] around gettimeofday below
+	$_timers{$timer_name} = [gettimeofday];
+    $logger->debug(ref($this) . qq(->start_timer: leaving $timer_name ));
+    $logger->debug(q(with ') . join(q(.), @{$_timers{$timer_name}}) . q('));
 	return $_timers{$timer_name};
 } # sub start_timer
 
@@ -211,6 +227,7 @@ sub stop_timer {
 	my $timer_name = shift;
     my $logger = get_logger();
 
+    $logger->debug(ref($this) . qq(->stop_timer: entering as '$timer_name'));
     if ( exists $_timers{$timer_name} ) {
 		# return the time value interval between $timer_name and now
 		my $interval = tv_interval($_timers{$timer_name});
@@ -227,7 +244,7 @@ sub stop_timer {
 ### MAIN 
 ############
 package main;
-$main::VERSION = 0.1;
+$main::VERSION = (q$Revision$ =~ /(\d+)/g)[0];
 use strict;
 use warnings;
 
@@ -256,7 +273,7 @@ BEGIN {
 					q(Log::Log4perl) => q(get_logger :levels),
                     q(AppConfig) => undef,
                     q(Term::ShellUI) => undef, 
-                    q(Time::HiRes) => q(time tv_interval),
+                    q(Time::HiRes) => q(gettimeofday tv_interval),
                     q(Module::Dependency::Indexer) => undef,
                     q(Module::Dependency::Info) => undef,
                     q(File::Basename) => undef,
@@ -329,6 +346,13 @@ unless ( $Config->get(q(noseed)) ) {
     $Config->set(q(libpath), q(/usr/share/perl5));
 } # if ( ! $Config->get(q(noseed)) )
 
+# color log output on by default
+if ( $Config->get(q(nocolorlog)) ) {
+    $Config->set(q(colorlog), 0);
+} else {
+    $Config->set(q(colorlog), 1);
+} # if ( $Config->get(q(nocolorlog)) )
+
 # set up the logger
 my $logger_conf = qq(log4perl.rootLogger = INFO, Screen\n);
 if ( $Config->get(q(colorlog)) ) {
@@ -345,10 +369,6 @@ $logger_conf .= qq(log4perl.appender.Screen.stderr = 1\n)
 	. qq(\n);
 #log4perl.appender.Screen.layout.ConversionPattern = %d %p> %F{1}:%L %M - %m%n
 
-if ( scalar(@{$Config->get(q(debug))}) ) {
-    warn qq(logger_conf is:\n$logger_conf);
-} # if ($Config->get(q(debug))) 
-
 # create the logger object
 Log::Log4perl::init( \$logger_conf );
 my $logger = get_logger("");
@@ -364,8 +384,12 @@ if ( @{$Config->get(q(debug))} > 0 ) {
 	} # if ( grep(/all/, @{$Config->debug()}) )
 } # if ( scalar($Config->debug()) > 0 )
 
+if ( scalar(@{$Config->get(q(debug))}) ) {
+    warn qq(logger_conf is:\n$logger_conf);
+} # if ($Config->get(q(debug))) 
+
 my $moddep = new Modules::Dependency::Wrapper( 
-		indexfile => $Config->get(q(dbfile)) );
+		index_file => $Config->get(q(dbfile)) );
 my $term = new Term::ShellUI( 	
 		commands => get_commands($Config, $moddep),
 		app => q(moddeps),
@@ -487,13 +511,17 @@ HELPDOC
 						if ( -w $dirpath ) {
 	   						$Config->set(q(dbfile), $_[0]);
 		                    $moddep->create_index_file(
-									index_file => $Config->get($_[0]) );
+									index_file => $Config->get(q(dbfile)) );
 						} else {
 							$logger->warn(qq(Can't create index file:) . $_[0]);
 							$logger->warn(qq(Directory ') . $dirpath
 								. q(' not writeable for current user) );
-						} # 
-					} # if ( scalar(@_) > 0 )
+						} # if ( -w $dirpath )
+					} else {
+                        $logger->warn(q(Hmm.  Nothing to create.));
+                        $logger->warn(q(Please pass a filename to the )
+                            . q('create' command) );
+                    }# if ( scalar(@_) > 0 )
 				} # idx->create->proc
             }, # idx->create
             'cr' => { syn => q(create) },
@@ -505,7 +533,7 @@ HELPDOC
                     # check to see if the user specified a filename first
                     if ( scalar(@_) >= 1 ) {
                         # yep; set this file to be 'dbfile' if
-                        # create_index_file returns success
+                        # load_index_file returns success
                         $Config->set(q(dbfile), $_[0])
                             if ($moddep->load_index_file(index_file => $_[0]) );
                     # then fall back to the 'dbfile' Config variable
@@ -516,7 +544,11 @@ HELPDOC
                     } else {
                         $logger->warn(q(No index file specified...));
                         $logger->warn(
-                            q(Please specify a filename to use for the index));
+                            q(Please specify a filename to use for the index,));
+                        $logger->warn(
+                            q(or use the --dbfile switch on the command line));
+                        $logger->warn( q(Try ') . $Config->get(q(program_name))
+                            . q( --help' to see more options) );
                     } # if ( $Config->get(q(dbfile)) )
                 }, # idx->load->proc
             }, # idx->load
@@ -610,12 +642,20 @@ sub ShowHelp {
 # shows the help message
     warn qq(\nUsage: $0 [options]\n);
     warn qq([options] may consist of one or more of the following:\n);
+    warn qq(\n General Options:\n);
     warn qq( -h|--help          show this help\n);
+    warn qq( -f|--dbfile        file to use for storing index data\n);
+    warn qq( -m|--module	    Perl module to work out dependencies for\n);
+    warn qq( (use --module multiple times to specifiy multiple modules)\n);
+    warn qq( -p|--libpath       Perl library path to search\n);
+    warn qq( (use --libpath multiple times to specifiy multiple paths)\n);
+    warn qq(\n Switches that control script behaivor:\n);
     warn qq( -d|--debug         run in debug mode (extra noisy output)\n);
     warn qq( -i|--interactive   run in interactive mode (default)\n);
     warn qq( -noi|--nointeractive   Don't run in interactive mode\n);
-    warn qq( -m|--module	    Perl module to work out dependencies for\n);
-    warn qq( (use --module multiple times to specifiy multiple modules)\n);
+    warn qq( -nc|--noconfirm    don't confirm before deleting files\n);
+    warn qq( -ns|--noseed       don't seed 'libpath' (use on Mac OS X)\n);
+    warn qq( (Please use --libpath to specifiy non-standard paths on OS X)\n);
     warn qq( -nocl|--nocolorlog don't colorize the shell output\n);
 	exit 0;
 } # sub ShowHelp
