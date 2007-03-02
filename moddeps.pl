@@ -26,7 +26,8 @@ shell interface and via the command line.
 package Modules::Dependency::Wrapper;
 use strict;
 use warnings;
-use Log::Log4Perl qw(get_logger);
+use vars qw( $AUTOLOAD );
+use Log::Log4perl qw(get_logger :levels);
 #use Module::Dependency::Indexer;
 #use Module::Dependency::Info;
 
@@ -45,86 +46,121 @@ sub new {
 	return $this;
 } # sub new
 
-sub set_timer {
-    my $this = shift;
-    my $timer = shift;
-    my $logger = get_logger();
-
-    if ( defined $timer ) {
-        $this->{_TIMER} = $timer;
-        return 1;
-    } else {
-        $logger->logdie(q(Tried to assign an undefined value to the timer));
-    } # if ( defined $timer )
-} # sub set_timer
-
-sub get_timer {
-    my $this = shift;
-    my $logger = get_logger();
-
-    if ( defined $this->{_TIMER} ) {
-        return $this->{_TIMER};
-    } else {
-        $logger->logdie(q(Tried to obtain an undefined value for the timer));
-    } # if ( defined $this->{_TIMER} )
-} # sub get_timer
 
 sub drop_index {
 	my $this = shift;
+	my $op = q(drop_index);
     my $logger = get_logger();
     my $timer = $this->get_timer();
 
-	$timer->start_timer(q(drop_index));	
+	$timer->start_timer($op);	
 	Module::Dependency::Info::dropIndex();
-	my $time_interval = $timer->stop_timer(q(drop_index));
+	my $time_interval = $timer->stop_timer($op);
 	if ( defined $time_interval ) {
-	    $logger->info(q(OK: drop_index: ) . $time_interval . q( seconds));
+	    $logger->info(qq(OK: $op: $time_interval seconds));
 	} # if ( defined $time_interval )
     return 1;
 } # sub drop_index
+
+# go out and actually call makeIndex
+sub generate_index {
+	my $this = shift;
+	my $op = q(generate_index);
+	my %args = @_;
+    my $timer = $this->get_timer();
+	my $logger = get_logger();
+
+    $timer->start_timer($op);	
+	# use the @{} to make perl treat it as an array
+	Module::Dependency::Indexer::makeIndex(@{$args{pathlist}});
+	my $time_interval = $timer->stop_timer($op);
+	if ( defined $time_interval ) {
+	    $logger->info(qq(OK: $op: $time_interval seconds));
+    } # if ( defined $time_interval )
+    return 1;
+} # sub generate_index
 
 # meant to be used for creating new index files
 # directory writeability should be tested before getting to this point
 sub create_index_file {
 	my $this = shift;
-    my %args = @_;
-	my $index_file = $args{index_file};
+	my $op = q(create_index_file);
+	my %args = @_;
     my $timer = $this->get_timer();
-	my $logger = get_logger();
+    my $logger = get_logger();
 
-    $timer->start_timer(q(create_index));	
-	Module::Dependency::Indexer::makeIndex($_[0]);
-	my $time_interval = $timer->stop_timer(q(create_index));
-	if ( defined $time_interval ) {
-	    $logger->info(q(OK: create_index_file: ) . $time_interval 
-            . q( seconds));
+    $timer->start_timer($op);
+    Module::Dependency::Indexer::setIndex(qq($args{index_file}));
+    my $time_interval = $timer->stop_timer($op);
+    if ( defined $time_interval ) {
+        $logger->info(qq(OK: $op: $time_interval seconds));
     } # if ( defined $time_interval )
     return 1;
-} # sub load_index_file
+} # sub create_index_file
 
 # meant to be used for loading indexes that have been saved
 sub load_index_file {
 	my $this = shift;
+	my $op = q(load_index_file);
     my %args = @_;
     my $timer = $this->get_timer();
 	my $index_file = $args{index_file};
 	my $logger = get_logger();
 
 	# see if the file argument exists/is readable
-    $timer->start_timer(q(load_index));	
+    $timer->start_timer($op);	
 	Module::Dependency::Info::retrieveIndex($_[0]);
-	my $time_interval = $timer->stop_timer(q(load_index));
+	my $time_interval = $timer->stop_timer($op);
 	if ( defined $time_interval ) {
-	    $logger->info(q(OK: ) . q(load_index_file: ) . $time_interval 
-            . q( seconds));
+	    $logger->info(qq(OK: $op: $time_interval seconds));
     } # if ( defined $time_interval )
     return 1;
 } # sub load_index_file
 
 sub save_index_file {
+    my $this = shift;
+    my $op = q(save_index_file);
+    my %args = @_;
+    my $timer = $this->get_timer();
+    my $index_file = $args{index_file};
     my $logger = get_logger();
-    $logger->warn(q(save_index_file));
+
+    # see if the file argument exists/is readable
+    $timer->start_timer($op);
+	# FIXME save the index file here
+    my $time_interval = $timer->stop_timer($op);
+    if ( defined $time_interval ) {
+        $logger->info(qq(OK: $op: $time_interval seconds));
+    } # if ( defined $time_interval )
+    return 1;
 } # sub save_index_file
+
+sub AUTOLOAD {
+    my $this = shift;
+    my $setval = shift;
+    
+	return if $AUTOLOAD =~ /::DESTROY$/;
+
+	my $logger = get_logger();
+
+	if ( $AUTOLOAD =~ /.*::set(_\w+)/ ) {
+	    if ( defined $setval ) {
+    	    $this->{$1} = $setval;
+        	return 1;
+	    } else {
+    	    $logger->logdie(qq(Tried to assign an undefined value to $1));
+	    } # if ( defined $timer )
+	} elsif ( $AUTOLOAD =~ /.*::get(_\w+)/ ) { 
+	    if ( exists $this->{$1} ) {
+    	    return $this->{$1};
+	    } else {
+    	    $logger->logdie(qq(Tried to obtain an undefined value for $1));
+	    } # if ( defined $this->{_TIMER} )
+	#} elsif if ( $AUTOLOAD =~ /.*::is(_[\w_]+)/ ) { # for shits and giggles
+	} else {
+		$logger->warn(qq(No handler for AUTOLOAD request: $AUTOLOAD));
+	} # if ( $AUTOLOAD =~ /.*::get(_\w+)/ )
+} # sub AUTOLOAD
 
 =pod
 
@@ -140,8 +176,8 @@ the timer was active.
 package OpTimer;
 use strict;
 use warnings;
-#use Time::HiRes qw(time tv_interval);
-#use Log::Log4Perl qw(get_logger);
+use Time::HiRes qw(time tv_interval);
+use Log::Log4perl qw(get_logger :levels);
 
 my %_timers;
 
@@ -177,7 +213,10 @@ sub stop_timer {
 
     if ( exists $_timers{$timer_name} ) {
 		# return the time value interval between $timer_name and now
-		return tv_interval($_timers{$timer_name});
+		my $interval = tv_interval($_timers{$timer_name});
+		# make sure you delete the timer key too
+		delete $_timers{$timer_name};
+		return $interval;
 	} else {
 		$logger->logwarn(qq(Hmm. Timer '$timer_name' does not exist.));
 		return undef;
@@ -207,13 +246,17 @@ use warnings;
 
 # sitewide
 BEGIN {
-    # list of modules to load
+    # module loading block
+	#
+	# note that some of these modules are loaded above in their own package
+	# spaces, but since this BEGIN block is run first when the script is first
+	# loaded, and has the most verbose debugging if there's a problem loading a
+	# module, the modules are loaded in main's packagespace as well
     my %load_modules = ( 
 					q(Log::Log4perl) => q(get_logger :levels),
                     q(AppConfig) => undef,
                     q(Term::ShellUI) => undef, 
                     q(Time::HiRes) => q(time tv_interval),
-                    q(Log::Log4Perl) => q(get_logger),
                     q(Module::Dependency::Indexer) => undef,
                     q(Module::Dependency::Info) => undef,
                     q(File::Basename) => undef,
@@ -223,7 +266,7 @@ BEGIN {
     	    eval "use $_ qw(" . $load_modules{$_} . ");";
         } else {
     	    eval "use $_";
-        }
+        } # if ( defined $load_modules{$_} )
    	 	die   " === ERROR: $_ failed to load:\n" 
         	. "     Do you have the $_ module installed?\n"
         	. "     Error output from Perl:\n$@" if $@;
@@ -325,8 +368,8 @@ my $moddep = new Modules::Dependency::Wrapper(
 		indexfile => $Config->get(q(dbfile)) );
 my $term = new Term::ShellUI( 	
 		commands => get_commands($Config, $moddep),
-		app => q(perldepsh),
-		prompt => q(perldepsh> ),);
+		app => q(moddeps),
+		prompt => q(moddeps> ),);
 #		debug_complete => 2 );
 
 print qq(=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n);
@@ -416,18 +459,18 @@ HELPDOC
                 }, # idx->delete->proc
             }, # idx->drop
             'del'     =>  { syn => q(delete) },
-			### create
-            'create' => {
-                desc => q(Creates an index from a list of file paths),
+			### generate
+            'generate' => {
+                desc => q(Generates an index file from a list of file paths),
                 proc => sub { 
                     my @temp_path_list;
                     if ( scalar(@_) > 0 ) { @temp_path_list = @_; }
                     push( @temp_path_list, $Config->get(q(libpath)) );
-                    $moddep->create_index_file( @temp_path_list ); 
-				} # idx->load->proc
-            }, # idx->load
-            'cr' => { syn => q(create) },
-            'new' => { syn => q(create) },
+                    $moddep->generate_index(pathlist => @temp_path_list ); 
+				} # idx->generate->proc
+            }, # idx->generate
+            'gen' => { syn => q(generate) },
+            'ge' => { syn => q(generate) },
 			### save 
             'save' => {
                 desc => q(Saves an index to a file),
@@ -435,8 +478,29 @@ HELPDOC
             }, # idx->load
             'sa'     =>  { syn => q(save) },
 			### create
+			'create' => {
+                desc => q(Creates a new index file on disk),
+                proc => sub { 
+					if ( scalar(@_) > 0 ) {
+						# fileparse comes from File::Basename
+						my ($filename, $dirpath, $suffix) = fileparse($_[0]);
+						if ( -w $dirpath ) {
+	   						$Config->set(q(dbfile), $_[0]);
+		                    $moddep->create_index_file(
+									index_file => $Config->get($_[0]) );
+						} else {
+							$logger->warn(qq(Can't create index file:) . $_[0]);
+							$logger->warn(qq(Directory ') . $dirpath
+								. q(' not writeable for current user) );
+						} # 
+					} # if ( scalar(@_) > 0 )
+				} # idx->create->proc
+            }, # idx->create
+            'cr' => { syn => q(create) },
+            'new' => { syn => q(create) },
+			### load
             'load' => {
-                desc => q(Loads a new index file),
+                desc => q(Loads an existing index file from disk),
                 proc => sub { 
                     # check to see if the user specified a filename first
                     if ( scalar(@_) >= 1 ) {
@@ -454,8 +518,8 @@ HELPDOC
                         $logger->warn(
                             q(Please specify a filename to use for the index));
                     } # if ( $Config->get(q(dbfile)) )
-                }, # idx->create->proc
-            }, # idx->create
+                }, # idx->load->proc
+            }, # idx->load
             'lo'     =>  { syn => q(load) },
         }, # idx->cmds
     }, # idx
