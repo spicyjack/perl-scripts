@@ -403,7 +403,7 @@ print qq(script version: ) . sprintf("%1.1f", $main::VERSION) . qq(\n);
 print q(CVS: $Id$) . qq(\n);
 print qq(  For help with commands, type 'help' (without quotes) )
     . qq(at the prompt;\n);
-print qq(  You can view an example of index generation with 'show examples'\n);
+print qq(  You can view an example of index generation with 'show example'\n);
 print qq(  The module index file currently is: ) . $Config->get(q(dbfile)) 
     . qq(\n);
 
@@ -572,16 +572,26 @@ HELPDOC
                 }, # idx->load->proc
             }, # idx->load
             'lo'     =>  { syn => q(load) },
+            ### index
+            'show' => {
+                desc => q(Displays the index filename),
+                proc => sub {
+                    $logger->info(q(The current index filename is:));
+                    $logger->info($Config->get(q(dbfile)));
+                }, # idx->show->proc
+            }, # idx->show
+            'sh' => { syn => q(show) },
         }, # idx->cmds
     }, # idx
 ### show
 	'show'	=>  { desc => q(Shows examples/current configuration values),
-        maxargs => 1,
+#maxargs => 1,
 		cmds => {
 		    ### examples
-    		'examples' => {
+    		'example' => {
                 desc => q(A 'moddep' usage example),
 		        proc => sub { print <<EXAMPLES
+  Steps to follow to generate and query from a dependency index:
   1) Verify the script knows where to     'show libpaths'
      find Perl modules
   2) Add paths for searching for Perl     'set libpath /perl/module/path'
@@ -592,10 +602,42 @@ HELPDOC
 EXAMPLES
 				}, # show->examples->proc
         	}, # show->examples
-	    	'ex'     =>  { syn => q(examples) },
+	    	'examples'  =>  { syn => q(example) },
+	    	'ex'        =>  { syn => q(example) },
+            ### index
+            'idx' => {
+                desc => q(Displays the index filename),
+                proc => sub {
+                    $logger->info(q(The current index filename is:));
+                    $logger->info($Config->get(q(dbfile)));
+                }, # show->idx->proc
+            }, # show->idx
+            'index'     => { syn => q(idx) },
+            'in'        => { syn => q(idx) },
+            ### returnedinfo
+            'returnedinfo' => {
+                desc => q(Displays what information is returned )
+                    . q(during a 'get' query),
+                proc => sub {
+                }, # show->returnedinfo->proc
+            }, # show->returnedinfo
+            'ri'        => { syn => q(returnedinfo) },
+            'returned'  => { syn => q(returnedinfo) },
 		}, # show->cmds
 	}, # show
 	'sh'     =>  { syn => q(show) },
+### set 
+	'set' => { 
+        desc => q(Sets script configuration values),
+		cmds => {
+		    ### returnedinfo
+    		'returnedinfo' => {
+                desc => q(Tells the script which values to return for queries),
+                proc => {
+                }, # set->returnedinfo->proc
+            }, # set->returnedinfo
+        }, # set->cmds
+    }, # set
 ### get
 	'get'  =>  { desc => q(Get the dependencies for one or more Perl modules),
 	# if getfiles is defined, or the file is passed in on @_
