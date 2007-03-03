@@ -73,10 +73,7 @@ sub get_module_deps {
 			$logger->info(qq(Module '$lookup_module' has no dependencies));
 		} # if ( defined $depinfo )
 	} # foreach my $module_lookup ( @modlist )
-	my $time_interval = $timer->stop_timer($op);
-	if ( defined $time_interval ) {
-	    $logger->info(qq(OK: $op: $time_interval seconds));
-	} # if ( defined $time_interval )
+	$logger->info( $timer->stop_timer($op) );
     return 1;
 
 } # sub get_module_deps
@@ -89,10 +86,7 @@ sub drop_index {
 
 	$timer->start_timer($op);	
 	Module::Dependency::Info::dropIndex();
-	my $time_interval = $timer->stop_timer($op);
-	if ( defined $time_interval ) {
-	    $logger->info(qq(OK: $op: $time_interval seconds));
-	} # if ( defined $time_interval )
+	$logger->info( $timer->stop_timer($op) );
     return 1;
 } # sub drop_index
 
@@ -111,14 +105,11 @@ sub generate_index {
 	$logger->debug(q(pathlist is: ) . join(q(:), @pathlist) );
 # FIXME hack Indexer.pm to shut up the warn statement
 	Module::Dependency::Indexer::makeIndex( @pathlist );
-	my $time_interval = $timer->stop_timer($op);
-	if ( defined $time_interval ) {
-        my $allitems = Module::Dependency::Info::allItems();
-        my $allscripts = Module::Dependency::Info::allScripts();
-        $logger->info(q(Loaded ) . scalar(@$allitems) . q( items total));
-        $logger->info(q(Loaded ) . scalar(@$allscripts) . q( scripts total));
-        $logger->info(qq(OK: $op: $time_interval seconds));
-    } # if ( defined $time_interval )
+    my $allitems = Module::Dependency::Info::allItems();
+    my $allscripts = Module::Dependency::Info::allScripts();
+    $logger->info(q(Loaded ) . scalar(@$allitems) . q( items total));
+    $logger->info(q(Loaded ) . scalar(@$allscripts) . q( scripts total));
+	$logger->info( $timer->stop_timer($op) );
     return 1;
 } # sub generate_index
 
@@ -133,10 +124,7 @@ sub create_index_file {
 
     $timer->start_timer($op);
     Module::Dependency::Indexer::setIndex($args{index_file});
-    my $time_interval = $timer->stop_timer($op);
-    if ( defined $time_interval ) {
-        $logger->info(qq(OK: $op: $time_interval seconds));
-    } # if ( defined $time_interval )
+    $logger->info( $timer->stop_timer($op) );
     return 1;
 } # sub create_index_file
 
@@ -152,30 +140,9 @@ sub load_index_file {
 	# see if the file argument exists/is readable
     $timer->start_timer($op);	
 	Module::Dependency::Info::retrieveIndex($_[0]);
-	my $time_interval = $timer->stop_timer($op);
-	if ( defined $time_interval ) {
-	    $logger->info(qq(OK: $op: $time_interval seconds));
-    } # if ( defined $time_interval )
+	$logger->info( $timer->stop_timer($op) );
     return 1;
 } # sub load_index_file
-
-sub save_index_file {
-    my $this = shift;
-    my $op = q(save_index_file);
-    my %args = @_;
-    my $timer = $this->get_timer();
-    my $index_file = $args{index_file};
-    my $logger = get_logger();
-
-    # see if the file argument exists/is readable
-    $timer->start_timer($op);
-	# FIXME save the index file here
-    my $time_interval = $timer->stop_timer($op);
-    if ( defined $time_interval ) {
-        $logger->info(qq(OK: $op: $time_interval seconds));
-    } # if ( defined $time_interval )
-    return 1;
-} # sub save_index_file
 
 sub AUTOLOAD {
     my $this = shift;
@@ -264,9 +231,9 @@ sub stop_timer {
 		my $interval = tv_interval($_timers{$timer_name});
 		# make sure you delete the timer key too
 		delete $_timers{$timer_name};
-		return $interval;
+        return qq(OK: $timer_name took $interval seconds);
 	} else {
-		$logger->logwarn(qq(Hmm. Timer '$timer_name' does not exist.));
+		$logger->warn(qq(Hmm. Timer '$timer_name' does not exist.));
 		return undef;
 	} # if ( exists $_timers{$timer_name} )
 } # sub stop_timer
@@ -338,6 +305,7 @@ $Config->define(q(debug|DEBUG|d=s@));
 $Config->define(q(nocolorlog|nocolourlog|nocl));
 $Config->define(q(colorlog));
 $Config->define(q(interactive|i!));
+$Config->define(q(index_generated));
 # set interactive mode by default, the user can turn it back off
 $Config->set(q(interactive), 1);
 # path to the module index (module database)
@@ -371,6 +339,8 @@ if ( ! defined $Config->get(q(dbfile)) ) {
 # do this unless 'noseed' is set
 unless ( $Config->get(q(noseed)) ) {
     # seed the libpath with some defaults
+    # TODO decide if you want to give these a warning if the below paths are
+    # not found; it would be nice, but noisy
     $Config->set(q(libpath), q(/usr/lib/perl)) if ( -d q(/usr/lib/perl) );
     $Config->set(q(libpath), q(/usr/lib/perl5)) if ( -d q(/usr/lib/perl5) );
     $Config->set(q(libpath), q(/usr/share/perl)) if ( -d q(/usr/share/perl) );
@@ -431,9 +401,11 @@ print qq(=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n);
 print $Config->get(q(program_name)) . qq(, a Perl dependency shell, );
 print qq(script version: ) . sprintf("%1.1f", $main::VERSION) . qq(\n);
 print q(CVS: $Id$) . qq(\n);
-print q(  For help with commands, type 'help' (without quotes) )
+print qq(  For help with commands, type 'help' (without quotes) )
     . qq(at the prompt;\n);
-#print qq(  You can view a list of command examples with 'show examples'\n);
+print qq(  You can view an example of index generation with 'show examples'\n);
+print qq(  The module index file currently is: ) . $Config->get(q(dbfile)) 
+    . qq(\n);
 
 # yield to Term::ShellUI
 $term->run();
@@ -485,32 +457,37 @@ HELPDOC
         cmds => {
 			### drop
             'drop' => {
-                desc => q(Drops the currently loaded index),
+                desc => q(Drops (but does not delete) the current index file),
                 proc => sub { $moddep->drop_index(); },
             }, # idx->drop
             'clear'     =>  { syn => q(drop) },
             'dr'     =>  { syn => q(drop) },
 			### drop
             'delete' => {
-                desc => q(Deletes an index file (if it exists) ),
+                desc => q(Drops and deletes an index file (if it exists) ),
                 proc => sub { 
                     # do this unless 'noconfirm' is set
                     unless ( $Config->get(q(noconfirm)) ) {
                         # verify this is what the user really wants prior to
                         # doing it
-                        return unless ( &confirm(
-                                confirm_warning => 
+                        return unless ( 
+                            &confirm(
+                            confirm_warning => 
                                 qq(Do you really want to delete ) 
                                 . $Config->get(q(dbfile)),
-                                prompt => qq(Delete ) . $Config->get(q(dbfile))
+                            prompt => qq(Delete ) . $Config->get(q(dbfile))
                                 . q( [Y/n]? ) ) );
-                    } # if ( $Config->get(q(noconfirm) )
-                    if ( -f $Config->get(q(dbfile)) ) {
-                        if ( unlink($Config->get(q(dbfile))) == 0 ) { 
-                            $logger->error(q(Unable to delete index file )
+                    } # unless ( $Config->get(q(noconfirm)) )
+                    # try to nuke the file
+                    if ( unlink($Config->get(q(dbfile))) == 0 ) { 
+                        $logger->error(q(Unable to delete index file )
                                 . $Config->get(q(dbfile)) . qq(: $!) );
-                        } # if ( unlink($Config->get(q(dbfile))) == 0 )
-                    } # if ( -f $Config->get(q(dbfile)) )
+                            return undef;
+                    } # if ( unlink($Config->get(q(dbfile))) == 0 )
+                    $moddep->drop_index();
+                    # let other methods know that there currently is no
+                    # index file loaded
+                    $Config->set(q(index_generated), 0);
                 }, # idx->delete->proc
             }, # idx->drop
             'del'     =>  { syn => q(delete) },
@@ -532,17 +509,16 @@ HELPDOC
 					$logger->debug(q(validated paths: ) 
 						. join(q(:), @validated_path_list) 
 						. q(, count is ) . scalar(@validated_path_list) );
-                    $moddep->generate_index(pathlist => @validated_path_list ); 
+                    # the return value from generate_index is used as a flag
+                    # to let other parts of the script know that an index is
+                    # available to be queried against
+                    $Config->set(q(index_generated), 
+                        $moddep->generate_index(
+                            pathlist => @validated_path_list ) ); 
 				} # idx->generate->proc
             }, # idx->generate
             'gen' => { syn => q(generate) },
             'ge' => { syn => q(generate) },
-			### save 
-            'save' => {
-                desc => q(Saves an index to a file),
-                proc => sub { $moddep->save_index_file(); }
-            }, # idx->load
-            'sa'     =>  { syn => q(save) },
 			### create
 			'create' => {
                 desc => q(Creates a new index file on disk),
@@ -604,12 +580,15 @@ HELPDOC
 		cmds => {
 		    ### examples
     		'examples' => {
-                desc => q(Some usage examples),
+                desc => q(A 'moddep' usage example),
 		        proc => sub { print <<EXAMPLES
-  Select a file:                          'file /path/to/some/file'
-  Get dependencies:                       'get'
-  Select file and get dependencies:       'get /path/to/some/file'
-  View a list of files in the database:   'show files'
+  1) Verify the script knows where to     'show libpaths'
+     find Perl modules
+  2) Add paths for searching for Perl     'set libpath /perl/module/path'
+  3) Create an index file:                'idx create /path/to/index/file.db'
+  4) Generate the index:                  'idx generate'
+  5) Query the index with one or more     'get IO::Socket File::Basename'
+     module names
 EXAMPLES
 				}, # show->examples->proc
         	}, # show->examples
@@ -621,6 +600,13 @@ EXAMPLES
 	'get'  =>  { desc => q(Get the dependencies for one or more Perl modules),
 	# if getfiles is defined, or the file is passed in on @_
     	proc => sub {
+            if ( ! $Config->get(q(index_generated)) ) {
+                $logger->warn(q(No index is available for queries.));
+                $logger->warn(q(To generate an index, try the 'idx generate'));
+                $logger->warn(q(command.  Use 'help idx' for more info on ));
+                $logger->warn(q(generating indexes.));
+                return;
+            } # if ( ! $Config->get(q(index_generated)) )
 			# if either the @modlist or the @_ array has values 
 			if ( scalar (@modlist) || scalar(@_) ) {
                 # any files passed in replace the files that were in @modlist
@@ -645,7 +631,7 @@ EXAMPLES
 	}, # get
 	'ge'     =>  { syn => q(get) },
 ### graph 
-	'graph'	=>  { desc => q(Sets script configuration values),
+	'graph'	=>  { desc => q(Shows module dependencies in an image),
 		cmds => {
 			'dependencies' => {
 				desc => q(Flag for whether or not to recurse dependencies),
