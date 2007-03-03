@@ -52,6 +52,35 @@ sub new {
 	return $this;
 } # sub new
 
+sub get_module_deps {
+    my $this = shift;
+	my %args = @_;
+    my $op = q(get_module_deps);
+    my $logger = get_logger();
+    my $timer = $this->get_timer();
+
+    $timer->start_timer($op);
+	my @modlist = $args{modlist};
+	foreach my $lookup_module ( @modlist ) {
+		my $depinfo = Module::Dependency::Info::getChildren($lookup_module);
+		if ( defined $depinfo ) {
+			$logger->info(qq(Dependency information for: )
+				. $lookup_module);
+			foreach my $depkey ( sort(@$depinfo) ) {
+				$logger->info(qq(\t$depkey));
+			} # foreach my $depkey ( sort( keys(%$depinfo) ) )
+		} else {
+			$logger->info(qq(Module '$lookup_module' has no dependencies));
+		} # if ( defined $depinfo )
+	} # foreach my $module_lookup ( @modlist )
+	my $time_interval = $timer->stop_timer($op);
+	if ( defined $time_interval ) {
+	    $logger->info(qq(OK: $op: $time_interval seconds));
+	} # if ( defined $time_interval )
+    return 1;
+
+} # sub get_module_deps
+	
 sub drop_index {
 	my $this = shift;
 	my $op = q(drop_index);
@@ -76,12 +105,14 @@ sub generate_index {
 	my $logger = get_logger();
 
     $timer->start_timer($op);	
-	# use the @{} to make perl treat the pathlist as an array
+	# push the values from the pathlist argument into it's own array so it can
+	# be passed around to other methods/subroutines
+	my @pathlist = $args{pathlist};
+	$logger->debug(q(pathlist is: ) . join(q(:), @pathlist) );
 # FIXME hack Indexer.pm to shut up the warn statement
-	Module::Dependency::Indexer::makeIndex(@{$args{pathlist}});
+	Module::Dependency::Indexer::makeIndex( @pathlist );
 	my $time_interval = $timer->stop_timer($op);
 	if ( defined $time_interval ) {
-	
         my $allitems = Module::Dependency::Info::allItems();
         my $allscripts = Module::Dependency::Info::allScripts();
         $logger->info(q(Loaded ) . scalar(@$allitems) . q( items total));
@@ -217,7 +248,7 @@ sub start_timer {
     # the tv_interval function (later) expects an array reference, hence the
     # [brackets] around gettimeofday below
 	$_timers{$timer_name} = [gettimeofday];
-    $logger->debug(ref($this) . qq(->start_timer: leaving $timer_name ));
+    $logger->debug(ref($this) . qq(->start_timer: leaving as '$timer_name'));
     $logger->debug(q(with ') . join(q(.), @{$_timers{$timer_name}}) . q('));
 	return $_timers{$timer_name};
 } # sub start_timer
@@ -340,10 +371,10 @@ if ( ! defined $Config->get(q(dbfile)) ) {
 # do this unless 'noseed' is set
 unless ( $Config->get(q(noseed)) ) {
     # seed the libpath with some defaults
-    $Config->set(q(libpath), q(/usr/lib/perl));
-    $Config->set(q(libpath), q(/usr/lib/perl5));
-    $Config->set(q(libpath), q(/usr/share/perl));
-    $Config->set(q(libpath), q(/usr/share/perl5));
+    $Config->set(q(libpath), q(/usr/lib/perl)) if ( -d q(/usr/lib/perl) );
+    $Config->set(q(libpath), q(/usr/lib/perl5)) if ( -d q(/usr/lib/perl5) );
+    $Config->set(q(libpath), q(/usr/share/perl)) if ( -d q(/usr/share/perl) );
+    $Config->set(q(libpath), q(/usr/share/perl5)) if ( -d q(/usr/share/perl5) );
 } # if ( ! $Config->get(q(noseed)) )
 
 # color log output on by default
@@ -487,10 +518,21 @@ HELPDOC
             'generate' => {
                 desc => q(Generates an index file from a list of file paths),
                 proc => sub { 
-                    my @temp_path_list;
+                    my (@temp_path_list, @validated_path_list);
                     if ( scalar(@_) > 0 ) { @temp_path_list = @_; }
-                    push( @temp_path_list, $Config->get(q(libpath)) );
-                    $moddep->generate_index(pathlist => @temp_path_list ); 
+					@temp_path_list = @{$Config->get(q(libpath))};
+					foreach my $checkpath ( @temp_path_list ) {
+						if ( -d $checkpath ) {
+		                    push( @validated_path_list, $checkpath );
+						} else {
+							$logger->warn(qq(Directory $checkpath )
+								. q(does not exist));
+						} # if ( -d $checkpath )
+					} # foreach my $checkpath ( @{$Config->get(q(libpath))} )
+					$logger->debug(q(validated paths: ) 
+						. join(q(:), @validated_path_list) 
+						. q(, count is ) . scalar(@validated_path_list) );
+                    $moddep->generate_index(pathlist => @validated_path_list ); 
 				} # idx->generate->proc
             }, # idx->generate
             'gen' => { syn => q(generate) },
@@ -525,6 +567,7 @@ HELPDOC
 				} # idx->create->proc
             }, # idx->create
             'cr' => { syn => q(create) },
+            'cre' => { syn => q(create) },
             'new' => { syn => q(create) },
 			### load
             'load' => {
@@ -578,12 +621,8 @@ EXAMPLES
 	'get'  =>  { desc => q(Get the dependencies for one or more Perl modules),
 	# if getfiles is defined, or the file is passed in on @_
     	proc => sub {
-			if ( scalar @modlist > 0 || scalar(@_) ) {
-                # Process getfiles; if a list was passed in, process all of the
-                # files or directories in the list; files will be processed
-                # individually, directories will be have their contents
-                # processed as individual files; add a --subdirectories option,
-                # and recurse into subdirectories if requested
+			# if either the @modlist or the @_ array has values 
+			if ( scalar (@modlist) || scalar(@_) ) {
                 # any files passed in replace the files that were in @modlist
 				if ( scalar(@_) ) {
 					# reset @modlist before we assign to it, or we will end up
@@ -597,7 +636,7 @@ EXAMPLES
 				$logger->debug( join(q(;), @modlist) );
 				$logger->debug(q(the following modules were passed in:));
 				$logger->debug( join(q(;), @_) );
-                #$filedb->_start_timer(q(overall));
+                $moddep->get_module_deps(modlist => @modlist);
 			} else {
 				$logger->warn(q(Please input one or more modules to look));
 				$logger->warn(q(up dependencies for.));
