@@ -61,17 +61,39 @@ sub get_module_deps {
 
     $timer->start_timer($op);
 	my @modlist = $args{modlist};
-	foreach my $lookup_module ( @modlist ) {
-		my $depinfo = Module::Dependency::Info::getChildren($lookup_module);
-		if ( defined $depinfo ) {
-			$logger->info(qq(Dependency information for: )
-				. $lookup_module);
-			foreach my $depkey ( sort(@$depinfo) ) {
-				$logger->info(qq(\t$depkey));
-			} # foreach my $depkey ( sort( keys(%$depinfo) ) )
-		} else {
-			$logger->info(qq(Module '$lookup_module' has no dependencies));
-		} # if ( defined $depinfo )
+	foreach my $lookup_mod ( @modlist ) {
+        my $depinfo;
+        if ( $args{return_info} eq q(CHILDREN)) {
+		    $depinfo = Module::Dependency::Info::getChildren($lookup_mod);
+    		if ( defined $depinfo ) {
+	    		$logger->info(qq(Dependency information for: ) . $lookup_mod);
+			    foreach my $depkey ( sort(@$depinfo) ) {
+			    	$logger->info(qq(\t$depkey));
+    			} # foreach my $depkey ( sort( keys(%$depinfo) ) )
+    		} else {
+    			$logger->info(qq(Module '$lookup_mod' has no dependencies));
+    		} # if ( defined $depinfo )
+        } # if ( $args{return_info} eq q(children))
+        if ( $args{return_info} eq q(PARENTS)) {
+		    $depinfo = Module::Dependency::Info::getParents($lookup_mod);
+    		if ( defined $depinfo ) {
+	    		$logger->info(qq(Parent module information for: ). $lookup_mod);
+			    foreach my $depkey ( sort(@$depinfo) ) {
+			    	$logger->info(qq(\t$depkey));
+    			} # foreach my $depkey ( sort( keys(%$depinfo) ) )
+    		} else {
+    			$logger->info(qq(Module '$lookup_mod' has no dependencies));
+    		} # if ( defined $depinfo )
+        } # if ( $args{return_info} eq q(parents))
+        if ( $args{return_info} eq q(FILENAME)) {
+		    $depinfo = Module::Dependency::Info::getFilename($lookup_mod);
+            if ( defined $depinfo ) {
+                $logger->info(qq(Filename of '$lookup_mod is:));
+                $logger->info($depinfo);
+            } else {
+                $logger->info(qq(No match found for '$depinfo'));
+            } # if ( defined $depinfo )
+        } # if ( $args{return_info} eq q(filename))
 	} # foreach my $module_lookup ( @modlist )
 	$logger->info( $timer->stop_timer($op) );
     return 1;
@@ -288,7 +310,13 @@ BEGIN {
 	} # foreach ( keys(%load_modules) )
 } # BEGIN
 
-
+# the bitmask for what gets returned in a 'get' call
+use constant {
+    NONE        => 0b0000,
+    PARENTS     => 0b0001,
+    CHILDREN    => 0b0010,
+    FILENAME    => 0b0100,
+}; # use constant
 ### Begin Script ###
 
 # create a config object with some default variables
@@ -306,6 +334,9 @@ $Config->define(q(nocolorlog|nocolourlog|nocl));
 $Config->define(q(colorlog));
 $Config->define(q(interactive|i!));
 $Config->define(q(index_generated));
+# a bit field that describes what values to return for a 'get' call
+$Config->define(q(returned_info=s));
+$Config->set(q(returned_info), 0);
 # set interactive mode by default, the user can turn it back off
 $Config->set(q(interactive), 1);
 # path to the module index (module database)
@@ -616,9 +647,28 @@ EXAMPLES
             'in'        => { syn => q(idx) },
             ### returnedinfo
             'returnedinfo' => {
-                desc => q(Displays what information is returned )
-                    . q(during a 'get' query),
+                desc => q(Sets information is returned during a 'get' query),
                 proc => sub {
+                    my @ri_strings;
+                    my $ri_bitmask = $Config->get(q(returned_info));
+                    if ( $ri_bitmask == 0 ) {
+                        $logger->info(q(returned_info is currently NONE));
+                    } else {
+                        if ( $ri_bitmask & PARENTS ) {
+                            push(@ri_strings, q(PARENTS));
+                        }  # if ( $ri_bitmask & PARENTS )
+                        if ( $ri_bitmask & CHILDREN ) {
+                            push(@ri_strings, q(CHILDREN));
+                        } # if ( $ri_bitmask & CHILDREN )
+                        if ( $ri_bitmask & FILENAME ) {
+                            push(@ri_strings, q(FILENAME));
+                        } # if ( $ri_bitmask & FILENAME )
+                        $logger->debug(q(returned_info bitmask is: )
+                            . sprintf("0b%04b: ", 
+                                $Config->get(q(returned_info))) );
+                        $logger->info(q(returned_info is currently:));
+                        $logger->info( join(q( ), @ri_strings) );
+                    } # if ( $ri_bitmask == 0 )
                 }, # show->returnedinfo->proc
             }, # show->returnedinfo
             'ri'        => { syn => q(returnedinfo) },
@@ -626,6 +676,7 @@ EXAMPLES
 		}, # show->cmds
 	}, # show
 	'sh'     =>  { syn => q(show) },
+	'sho'    =>  { syn => q(show) },
 ### set 
 	'set' => { 
         desc => q(Sets script configuration values),
@@ -633,11 +684,48 @@ EXAMPLES
 		    ### returnedinfo
     		'returnedinfo' => {
                 desc => q(Tells the script which values to return for queries),
-                proc => {
+                proc  => sub {
+                    # we use foreach instead of a separate set of menu commands
+                    # because this way we can specify multiple items at once
+                    # FIXME the below tests will toggle the bit; set it once to
+                    # turn it on, set it again to turn it back off; NONE will
+                    # turn *all* of the bits off
+                    foreach my $ri_arg ( @_ ) {
+                        $logger->debug(q(returned_info bitmask is currently:)
+                            . sprintf("0b%04b",
+                                $Config->get(q(returned_info))) );
+                        my $current_ri = $Config->get(q(returned_info));
+                        if ( $ri_arg =~ /^pa.*$/i ) {
+                            # PARENTS
+                            $Config->set(q(returned_info), 
+                                $current_ri | PARENTS);
+                            $logger->info(q(Enabled returning PARENTS info));
+                        } elsif ( $ri_arg =~ /^ch.*$/i ) {
+                            # CHILDREN
+                            $Config->set(q(returned_info), 
+                                $current_ri | CHILDREN);
+                            $logger->info(q(Enabled returning CHILDREN info));
+                        } elsif ( $ri_arg =~ /^fi.*$/i ) {
+                            # FILENAME
+                            $Config->set(q(returned_info), 
+                                $current_ri | FILENAME);
+                            $logger->info(q(Enabled returning FILENAME info));
+                        } elsif ( $ri_arg =~ /^no.*$/i ) {
+                            # NONE
+                            $Config->set(q(returned_info), 0b0);
+                            $logger->info(q(Cleared returned information mask));
+                        } # if ( $ri_arg =~ /^pa.*$/i )
+                        $logger->debug(q(returned_info bitmask is now:)
+                            . sprintf("0b%04b",
+                                $Config->get(q(returned_info))) );
+                    } # foreach my $ri_arg ( @_ )
                 }, # set->returnedinfo->proc
             }, # set->returnedinfo
+            'ri'        => { syn => q(returnedinfo) },
+            'returned'  => { syn => q(returnedinfo) },
         }, # set->cmds
     }, # set
+	'se'     =>  { syn => q(set) },
 ### get
 	'get'  =>  { desc => q(Get the dependencies for one or more Perl modules),
 	# if getfiles is defined, or the file is passed in on @_
@@ -664,7 +752,21 @@ EXAMPLES
 				$logger->debug( join(q(;), @modlist) );
 				$logger->debug(q(the following modules were passed in:));
 				$logger->debug( join(q(;), @_) );
-                $moddep->get_module_deps(modlist => @modlist);
+                if ( $Config->get(q(returned_info)) & CHILDREN ) {
+                    $moddep->get_module_deps(
+                            modlist     => @modlist,
+                            return_info => q(CHILDREN) );
+                } # if ( $Config->get(q(returned_info)) & CHILDREN )
+                if ( $Config->get(q(returned_info)) & PARENTS ) {
+                    $moddep->get_module_deps(
+                            modlist     => @modlist,
+                            return_info => q(PARENTS) );
+                } # if ( $Config->get(q(returned_info)) & PARENTS )
+                if ( $Config->get(q(returned_info)) & FILENAME ) {
+                    $moddep->get_module_deps(
+                            modlist     => @modlist,
+                            return_info => q(FILENAME) );
+                } # if ( $Config->get(q(returned_info)) & FILENAME )
 			} else {
 				$logger->warn(q(Please input one or more modules to look));
 				$logger->warn(q(up dependencies for.));
