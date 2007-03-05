@@ -23,6 +23,28 @@ shell interface and via the command line.
 
 =cut
 
+# TODO
+# - pick 3 or 4 modules to 'get', and use the output from those to write tests
+# that can be run in non-interactive mode
+# - add non-interactive config options
+# - finish the POD documentation
+# - add a 'libpaths' command
+#   - list
+#   - add
+#   - clear
+#   - the libpaths can also be obtained from --libpath switches
+# - add more commands to the 'graph' function
+#   - dependencies
+#   - parents
+#   - children
+#   - output filename; where to write the graph to
+# - add a 'filelist' command
+#   - use it with @modlist (below, in get_commands() ) to generate a complete
+#   list of Perl modules that would need to be present to get any one of the
+#   modules in that list to run on an embedded/standalone system
+#   - calculate the complete size of the filelist, including the Perl binary,
+#   in order to get an idea of how big it would all end up being
+
 package Modules::Dependency::Wrapper;
 use strict;
 use warnings;
@@ -453,6 +475,7 @@ sub get_commands {
 	my $moddep = shift; 
 	# grab the logger singleton object
 	my $logger = get_logger();
+    # a list of Perl modules to look up dependencies for 
     my @modlist;
 
     if ( scalar( @{$Config->get(q(module))} ) > 0 ) {
