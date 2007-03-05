@@ -336,7 +336,7 @@ $Config->define(q(interactive|i!));
 $Config->define(q(index_generated));
 # a bit field that describes what values to return for a 'get' call
 $Config->define(q(returned_info=s));
-$Config->set(q(returned_info), 0);
+$Config->set(q(returned_info), CHILDREN);
 # set interactive mode by default, the user can turn it back off
 $Config->set(q(interactive), 1);
 # path to the module index (module database)
@@ -699,17 +699,25 @@ EXAMPLES
                             # PARENTS
                             $Config->set(q(returned_info), 
                                 $current_ri | PARENTS);
-                            $logger->info(q(Enabled returning PARENTS info));
+                            $logger->info(q(Enabled returning PARENTS )
+                                . q(dependency info));
                         } elsif ( $ri_arg =~ /^ch.*$/i ) {
                             # CHILDREN
                             $Config->set(q(returned_info), 
                                 $current_ri | CHILDREN);
-                            $logger->info(q(Enabled returning CHILDREN info));
+                            $logger->info(q(Enabled returning CHILDREN )
+                                . q(dependency info));
                         } elsif ( $ri_arg =~ /^fi.*$/i ) {
                             # FILENAME
                             $Config->set(q(returned_info), 
                                 $current_ri | FILENAME);
-                            $logger->info(q(Enabled returning FILENAME info));
+                            $logger->info(q(Enabled returning FILENAME )
+                                . q(dependency info));
+                        } elsif ( $ri_arg =~ /^al.*$/i ) {
+                            $Config->set(q(returned_info), 
+                                $current_ri | CHILDREN | PARENTS | FILENAME );
+                            $logger->info(q(Enabled returning ALL )
+                                . q(dependency info));
                         } elsif ( $ri_arg =~ /^no.*$/i ) {
                             # NONE
                             $Config->set(q(returned_info), 0b0);
@@ -789,7 +797,6 @@ EXAMPLES
         }, # graph->cmds
     }, # graph
 	'gr'     =>  { syn => q(graph) },
-
 	} # return
 } # sub get_commands
 
