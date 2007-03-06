@@ -139,14 +139,16 @@ sub get_module_deps {
     my $timer = $this->get_timer();
 
 	if ( $this->is_index_created && $this->is_index_generated ) {
+		my @modlist = @{$args{modlist}};
+        $logger->debug(qq($op : modlist is ) . join(q(:), @modlist ) );
 	    $timer->start_timer($op);
-		my @modlist = $args{modlist};
 		foreach my $lookup_mod ( @modlist ) {
     	    my $depinfo;
         	if ( $args{return_info} eq q(CHILDREN)) {
 		    	$depinfo = Module::Dependency::Info::getChildren($lookup_mod);
 	    		if ( defined $depinfo ) {
 					if ( exists $args{raw_children} ) {
+                        $timer->stop_timer($op);
 						return $depinfo;
 					} else {
 		    			$logger->info(qq(Dependency information for: ) 
@@ -163,6 +165,7 @@ sub get_module_deps {
 			    $depinfo = Module::Dependency::Info::getParents($lookup_mod);
     			if ( defined $depinfo ) {
 					if ( exists $args{raw_parents} ) {
+                        $timer->stop_timer($op);
 						return $depinfo;
 					} else {
 		    			$logger->info(qq(Parent module information for: ) 
@@ -179,6 +182,7 @@ sub get_module_deps {
 			    $depinfo = Module::Dependency::Info::getFilename($lookup_mod);
         	    if ( defined $depinfo ) {
 					if ( exists $args{raw_filename} ) {
+                        $timer->stop_timer($op);
 						return $depinfo;
 					} else {
 		                $logger->info(qq(Filename of '$lookup_mod is:));
@@ -510,6 +514,7 @@ $Config->define(q(debug|DEBUG|d=s@));
 $Config->define(q(nocolorlog|nocolourlog|nocl));
 $Config->define(q(colorlog));
 $Config->define(q(interactive|i!));
+$Config->define(q(useincpath|useinc|inc!));
 # a bit field that describes what values to return for a 'get' call
 $Config->define(q(returned_info=s));
 $Config->set(q(returned_info), CHILDREN);
@@ -592,9 +597,6 @@ if ( @{$Config->get(q(debug))} > 0 ) {
 	} # if ( grep(/all/, @{$Config->debug()}) )
 } # if ( scalar($Config->debug()) > 0 )
 
-if ( scalar(@{$Config->get(q(debug))}) ) {
-    warn qq(logger_conf is:\n$logger_conf);
-} # if ($Config->get(q(debug))) 
 
 my $moddep = new Modules::Dependency::Wrapper( 
 		index_file => $Config->get(q(dbfile)) );
@@ -608,11 +610,39 @@ print qq(=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n);
 print $Config->get(q(program_name)) . qq(, a Perl dependency shell, );
 print qq(script version: ) . sprintf("%1.1f", $main::VERSION) . qq(\n);
 print q(CVS: $Id$) . qq(\n);
-print qq(  For help with commands, type 'help' (without quotes) )
-    . qq(at the prompt;\n);
-print qq(  You can view an example of index generation with 'show example'\n);
+print q(  For help with the shell interface, type 'help help' );
+print qq((without the quotes)\n);
+print qq(  at the prompt; View an example of index generation with);
+print qq( 'show example'\n);;
 print qq(  The module index file currently is: ) . $Config->get(q(dbfile)) 
     . qq(\n);
+
+# check that there's actually paths in $Config->libpath; it's sucky to try and
+# create an index with no modules to index from
+my @libpath = @{$Config->get(q(libpath))};
+$logger->debug(q(There are ) . scalar(@libpath) . q( paths in libpath));
+$logger->debug(qq(The joined libpaths are: \n) . join(qq(\n), @libpath));
+$logger->debug(q(useincpath is currently set to: ) .
+        $Config->get(q(useincpath)));
+if ( scalar(@libpath) == 0 ) {
+    if ( ! $Config->get(q(useincpath)) ) {
+        $logger->error(qq(No Perl library paths available.\n));
+        $logger->warn(q(Huh.  The script doesn't know where to look for ));
+        $logger->warn(q(Perl modules on your system.));
+        $logger->warn(q(Re-run the script with '--libpath' to add paths,));
+        $logger->warn(q(or use '--useincpath' to allow @INC to be used.));
+        exit 1;
+    } # if ( ! defined $Config->get(q(useincpath)) )
+} # if ( scalar(@libpath) == 0 )
+
+# if the user specified --useincpath, then add it here
+if ( $Config->get(q(useincpath)) ) {
+    foreach my $incpath ( @INC ) { $Config->set(q(libpath), $incpath); }
+} # if ( $Config->get(q(useincpath)) ) 
+if ( scalar(@{$Config->get(q(debug))}) ) {
+    warn qq(logger_conf is:\n$logger_conf);
+} # if ($Config->get(q(debug))) 
+
 
 # yield to Term::ShellUI
 $term->run();
@@ -642,13 +672,15 @@ sub get_commands {
     	args => sub { shift->help_args(undef, @_); },
         meth => sub { shift->help_call(undef, @_); },
         doc => <<HELPDOC
-Some examples of the 'help' command:
+Some examples of commands using the 'help' command:
  
 help help
 he help
 he he
 help show
 he sh              
+
+HINT: Most commands can be abbreviated to two or three letters :)
 HELPDOC
 	}, # help
     '?'     =>  { syn => q(help) },
@@ -895,7 +927,7 @@ EXAMPLES
 							foreach my $countmod ( @modlist ) {
 								my $raw_string = q(raw_) . lc($return_type);
 								my $returned_list = $moddep->get_module_deps(
-									modlist     => $countmod,
+									modlist     => [ $countmod ],
 									$raw_string => 1,
 				                  	return_info => $return_type);
 								foreach my $module (@{$returned_list}) {
@@ -904,11 +936,13 @@ EXAMPLES
 							} # foreach my $countmod ( @modlist )
 							if ( scalar(keys(%returned_count)) > 0 ) {
 								$logger->info(q(Total dependencies by module:));
-								foreach my $mod_key ( keys(%returned_count) ) {
+								foreach my $mod_key ( 
+                                    sort (keys(%returned_count)) ) {
 								# list the modules here in most -> least count
 								# order
-									$logger->info(qq(\t$mod_key -> ) 
-										. $returned_count{$mod_key});
+									$logger->info(qq(\t)
+                                        . $returned_count{$mod_key} 
+                                        . qq( -> $mod_key) );
 								} # foreach my $mod_key ( keys(%returned_count)
 							} # if ( scalar(keys(%returned_count)) > 0 ) 
 						}, # show->modulist->count->proc
@@ -927,10 +961,10 @@ EXAMPLES
 					}, # show->modlist->count
                 }, # show->modlist->cmds
             }, # show->modlist
-            'mods'     => { syn => q(modlist) },
-            'mod'        => { syn => q(modlist) },
-            'mo'        => { syn => q(modlist) },
-            'ml'        => { syn => q(modlist) },
+            'mods'  => { syn => q(modlist) },
+            'mod'   => { syn => q(modlist) },
+            'mo'    => { syn => q(modlist) },
+            'ml'    => { syn => q(modlist) },
             ### returnedinfo
             'returnedinfo' => {
                 desc => q(Sets information is returned during a 'get' query),
@@ -1047,17 +1081,17 @@ EXAMPLES
 				$logger->debug( join(q(;), @_) );
                 if ( $Config->get(q(returned_info)) & CHILDREN ) {
                     $moddep->get_module_deps(
-                            modlist     => @modlist,
+                            modlist     => [ @modlist ], 
                             return_info => q(CHILDREN) );
                 } # if ( $Config->get(q(returned_info)) & CHILDREN )
                 if ( $Config->get(q(returned_info)) & PARENTS ) {
                     $moddep->get_module_deps(
-                            modlist     => @modlist,
+                            modlist     => [ @modlist ] ,
                             return_info => q(PARENTS) );
                 } # if ( $Config->get(q(returned_info)) & PARENTS )
                 if ( $Config->get(q(returned_info)) & FILENAME ) {
                     $moddep->get_module_deps(
-                            modlist     => @modlist,
+                            modlist     => [ @modlist ],
                             return_info => q(FILENAME) );
                 } # if ( $Config->get(q(returned_info)) & FILENAME )
 			} else {
