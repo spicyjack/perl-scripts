@@ -38,7 +38,7 @@ shell interface and via the command line.
 #   - parents
 #   - children
 #   - output filename; where to write the graph to
-# - add a 'filelist' command
+# - add a 'write list' command
 #   - use it with @modlist (below, in get_commands() ) to generate a complete
 #   list of Perl modules that would need to be present to get any one of the
 #   modules in that list to run on an embedded/standalone system
@@ -50,6 +50,46 @@ use strict;
 use warnings;
 use vars qw( $AUTOLOAD );
 use Log::Log4perl qw(get_logger :levels);
+use File::Basename;
+
+{ # begin private methods/variables
+
+# for tracking if the index has been created/generated
+my %_flags;
+
+sub _toggle_flag {
+	my $this = shift;
+	my $flag = shift;
+	my $logger = get_logger();
+
+	if ( $flag !~ /^_/ ) {
+		$flag = q(_) . $flag;
+	} # if ( $flag !~ /^_/ )
+	if ( exists $_flags{$flag} ) {
+		# run that flag through a NOT filter
+		$_flags{$flag} = ! $_flags{$flag};
+	} else {
+		$_flags{$flag} = 1;
+	} # if ( exists $_flags{$flag} )
+	$logger->debug(qq(_toggle_flag: $flag is now ) . $_flags{$flag});
+} # sub _toggle_flag
+
+sub _get_flag {
+	my $this = shift;
+	my $flag = shift;
+	my $logger = get_logger();
+	
+	# we do this so perl doesn't autovivify our flags before we say so
+	if ( exists $_flags{$flag} ) {
+		$logger->debug(qq(_get_flag called for $flag: ) . $_flags{$flag});
+		return $_flags{$flag};
+	} else {
+		$logger->debug(qq(_get_flag called for $flag: flag is undefined));
+		return undef;
+	} # if ( exists $_flags{$flag} )
+} # sub _get_flag
+
+} # end private methods/variables
 
 sub new {
 	my $class = shift;
@@ -74,6 +114,23 @@ sub new {
 	return $this;
 } # sub new
 
+sub show_not_generated_warning {
+	my $this = shift;
+	my $caller = shift;
+	my $logger = get_logger();
+
+	$logger->debug(qq(show_not_generated_warning called from $caller));
+	$logger->warn(q(The index is not available for queries.));
+	$logger->warn(qq(  index created:   ) 
+		. ( $this->is_index_created() ? q(true) : q(false) ) );
+	$logger->warn(qq(  index generated: ) 
+		. ( $this->is_index_generated() ? q(true) : q(false) ) );
+	$logger->warn(q(To generate an index, try these commands));
+	$logger->warn(qq(\tidx create));
+	$logger->warn(qq(\tidx generate));
+	$logger->warn(q(Use 'show example' for an index generation example.));
+} # sub show_not_generated_warning
+
 sub get_module_deps {
     my $this = shift;
 	my %args = @_;
@@ -81,58 +138,124 @@ sub get_module_deps {
     my $logger = get_logger();
     my $timer = $this->get_timer();
 
-    $timer->start_timer($op);
-	my @modlist = $args{modlist};
-	foreach my $lookup_mod ( @modlist ) {
-        my $depinfo;
-        if ( $args{return_info} eq q(CHILDREN)) {
-		    $depinfo = Module::Dependency::Info::getChildren($lookup_mod);
-    		if ( defined $depinfo ) {
-	    		$logger->info(qq(Dependency information for: ) . $lookup_mod);
-			    foreach my $depkey ( sort(@$depinfo) ) {
-			    	$logger->info(qq(\t$depkey));
-    			} # foreach my $depkey ( sort( keys(%$depinfo) ) )
-    		} else {
-    			$logger->info(qq(Module '$lookup_mod' has no dependencies));
-    		} # if ( defined $depinfo )
-        } # if ( $args{return_info} eq q(children))
-        if ( $args{return_info} eq q(PARENTS)) {
-		    $depinfo = Module::Dependency::Info::getParents($lookup_mod);
-    		if ( defined $depinfo ) {
-	    		$logger->info(qq(Parent module information for: ). $lookup_mod);
-			    foreach my $depkey ( sort(@$depinfo) ) {
-			    	$logger->info(qq(\t$depkey));
-    			} # foreach my $depkey ( sort( keys(%$depinfo) ) )
-    		} else {
-    			$logger->info(qq(Module '$lookup_mod' has no dependencies));
-    		} # if ( defined $depinfo )
-        } # if ( $args{return_info} eq q(parents))
-        if ( $args{return_info} eq q(FILENAME)) {
-		    $depinfo = Module::Dependency::Info::getFilename($lookup_mod);
-            if ( defined $depinfo ) {
-                $logger->info(qq(Filename of '$lookup_mod is:));
-                $logger->info($depinfo);
-            } else {
-                $logger->info(qq(No match found for '$depinfo'));
-            } # if ( defined $depinfo )
-        } # if ( $args{return_info} eq q(filename))
-	} # foreach my $module_lookup ( @modlist )
-	$logger->info( $timer->stop_timer($op) );
-    return 1;
-
+	if ( $this->is_index_created && $this->is_index_generated ) {
+	    $timer->start_timer($op);
+		my @modlist = $args{modlist};
+		foreach my $lookup_mod ( @modlist ) {
+    	    my $depinfo;
+        	if ( $args{return_info} eq q(CHILDREN)) {
+		    	$depinfo = Module::Dependency::Info::getChildren($lookup_mod);
+	    		if ( defined $depinfo ) {
+					if ( exists $args{raw_children} ) {
+						return $depinfo;
+					} else {
+		    			$logger->info(qq(Dependency information for: ) 
+							. $lookup_mod);
+					    foreach my $depchild ( sort(@$depinfo) ) {
+					    	$logger->info(qq(\t$depchild));
+    					} # foreach my $depkey ( sort( keys(%$depinfo) ) )
+					} # if ( exists $args{raw_modlist} )
+	    		} else {
+    				$logger->info(qq(Module '$lookup_mod' has no dependencies));
+    			} # if ( defined $depinfo )
+	        } # if ( $args{return_info} eq q(children))
+    	    if ( $args{return_info} eq q(PARENTS)) {
+			    $depinfo = Module::Dependency::Info::getParents($lookup_mod);
+    			if ( defined $depinfo ) {
+					if ( exists $args{raw_parents} ) {
+						return $depinfo;
+					} else {
+		    			$logger->info(qq(Parent module information for: ) 
+							. $lookup_mod);
+					    foreach my $depparent ( sort(@$depinfo) ) {
+					    	$logger->info(qq(\t$depparent));
+	    				} # foreach my $depkey ( sort( keys(%$depinfo) ) )
+					} # if ( exists $args{raw_parents} )
+    			} else {
+	    			$logger->info(qq(Module '$lookup_mod' has no dependencies));
+    			} # if ( defined $depinfo )
+        	} # if ( $args{return_info} eq q(parents))
+	        if ( $args{return_info} eq q(FILENAME)) {
+			    $depinfo = Module::Dependency::Info::getFilename($lookup_mod);
+        	    if ( defined $depinfo ) {
+					if ( exists $args{raw_filename} ) {
+						return $depinfo;
+					} else {
+		                $logger->info(qq(Filename of '$lookup_mod is:));
+    		            $logger->info($depinfo);
+					} # if ( exists $args{raw_filename} )
+    	        } else {
+        	        $logger->info(qq(No match found for '$depinfo'));
+            	} # if ( defined $depinfo )
+	        } # if ( $args{return_info} eq q(filename))
+		} # foreach my $module_lookup ( @modlist )
+		$logger->info( $timer->stop_timer($op) );
+    	return 1;
+	} else {
+		$this->show_not_generated_warning($op);
+		return undef;
+	} # if ( $this->is_index_created && $this->is_index_generated ) 
 } # sub get_module_deps
-	
+
+sub delete_index {
+	my $this = shift;
+	my %args = @_;
+	my $op = q(delete_index);
+    my $logger = get_logger();
+
+	if ( $this->is_index_created && $this->is_index_generated ) {
+        # try to nuke the file
+		# unlink returns the number of files deleted; kinda wierd
+        if ( unlink($args{dbfile}) == 0 ) { 
+        	$logger->error(q(Unable to delete index file ) . $args{dbfile}
+				. qq(: $!) );
+        	return undef;
+        } # if  ( unlink($args{dbfile}) ) == 0 )
+		Module::Dependency::Info::dropIndex();
+		$this->_toggle_flag(q(index_generated));
+		$this->_toggle_flag(q(index_created));
+    	return 1;
+	} else {
+        $this->show_not_generated_warning(q(delete_index));
+		return undef;
+    } # if ( $this->is_index_created && $this->is_index_generated )
+} # sub delete_index
+
 sub drop_index {
 	my $this = shift;
 	my $op = q(drop_index);
     my $logger = get_logger();
     my $timer = $this->get_timer();
 
-	$timer->start_timer($op);	
-	Module::Dependency::Info::dropIndex();
-	$logger->info( $timer->stop_timer($op) );
-    return 1;
+	if ( $this->is_index_created && $this->is_index_generated ) {
+		$timer->start_timer($op);	
+		Module::Dependency::Info::dropIndex();
+		$this->_toggle_flag(q(index_generated));
+		$logger->info( $timer->stop_timer($op) );
+    	return 1;
+	} else {
+        $this->show_not_generated_warning($op);
+		return undef;
+    } # if ( $this->is_index_created && $this->is_index_generated )
 } # sub drop_index
+
+sub show_index_count {
+	my $this = shift;
+	my $op = q(show_index_count);
+	my %args = @_;
+    my $timer = $this->get_timer();
+	my $logger = get_logger();
+
+	if ( $this->is_index_created && $this->is_index_generated ) {
+	    my $allitems = Module::Dependency::Info::allItems();
+    	my $allscripts = Module::Dependency::Info::allScripts();
+	    $logger->info(q(Loaded ) . scalar(@$allitems) . q( items total));
+	    $logger->info(q(Loaded ) . scalar(@$allscripts) . q( scripts total));
+	} else {
+		$this->show_not_generated_warning($op);
+        return undef;
+	} # if ( $this->is_index_created && $this->is_index_generated )
+} # sub show_index_count
 
 # go out and actually call makeIndex
 sub generate_index {
@@ -142,6 +265,9 @@ sub generate_index {
     my $timer = $this->get_timer();
 	my $logger = get_logger();
 
+	if ( ! $this->is_index_created() ) {
+		$this->show_not_generated_warning($op);
+	} # if ( $this->is_index_created )
     $timer->start_timer($op);	
 	# push the values from the pathlist argument into it's own array so it can
 	# be passed around to other methods/subroutines
@@ -149,10 +275,8 @@ sub generate_index {
 	$logger->debug(q(pathlist is: ) . join(q(:), @pathlist) );
 # FIXME hack Indexer.pm to shut up the warn statement
 	Module::Dependency::Indexer::makeIndex( @pathlist );
-    my $allitems = Module::Dependency::Info::allItems();
-    my $allscripts = Module::Dependency::Info::allScripts();
-    $logger->info(q(Loaded ) . scalar(@$allitems) . q( items total));
-    $logger->info(q(Loaded ) . scalar(@$allscripts) . q( scripts total));
+	$this->_toggle_flag(q(index_generated));
+	$this->show_index_count(index_generated => $this->is_index_generated());
 	$logger->info( $timer->stop_timer($op) );
     return 1;
 } # sub generate_index
@@ -166,10 +290,20 @@ sub create_index_file {
     my $timer = $this->get_timer();
     my $logger = get_logger();
 
-    $timer->start_timer($op);
-    Module::Dependency::Indexer::setIndex($args{index_file});
-    $logger->info( $timer->stop_timer($op) );
-    return 1;
+	# fileparse comes from File::Basename
+	my ($filename, $dirpath, $suffix) = fileparse($args{index_file});
+	if ( -w $dirpath ) {
+	    $timer->start_timer($op);
+   		Module::Dependency::Indexer::setIndex($args{index_file});
+	    $logger->info( $timer->stop_timer($op) );
+		$this->_toggle_flag(q(index_created));
+	    return $args{index_file};
+	} else {
+        $logger->warn(qq(Can't create index file:) . $filename);
+        $logger->warn(qq(Directory ') . $dirpath
+    	    . q(' not writeable for current user) );
+		return undef;
+    } # if ( -w $dirpath )
 } # sub create_index_file
 
 # meant to be used for loading indexes that have been saved
@@ -178,12 +312,18 @@ sub load_index_file {
 	my $op = q(load_index_file);
     my %args = @_;
     my $timer = $this->get_timer();
-	my $index_file = $args{index_file};
 	my $logger = get_logger();
 
 	# see if the file argument exists/is readable
     $timer->start_timer($op);	
-	Module::Dependency::Info::retrieveIndex($_[0]);
+	my $retrieved = Module::Dependency::Info::retrieveIndex($args{index_file});
+	if ( $retrieved ) {
+		$this->_toggle_flag(q(index_created));
+		$this->_toggle_flag(q(index_generated));
+	} else {
+		$logger->warn(q(Something happend when retrieving));
+		$logger->warn($args{index_file});
+	} # if ( $retrieved )
 	$logger->info( $timer->stop_timer($op) );
     return 1;
 } # sub load_index_file
@@ -195,6 +335,13 @@ sub AUTOLOAD {
 	return if $AUTOLOAD =~ /::DESTROY$/;
 
 	my $logger = get_logger();
+	if ( defined $setval ) { 
+		$logger->debug(qq(Entering AUTOLOADer with: ));
+		$logger->debug(qq($AUTOLOAD -> $setval));
+	} else {
+		$logger->debug(qq(Entering AUTOLOADer with: ));
+		$logger->debug(qq($AUTOLOAD));
+	} # if ( defined $setval )
 
 	if ( $AUTOLOAD =~ /.*::set(_\w+)/ ) {
 	    if ( defined $setval ) {
@@ -209,7 +356,15 @@ sub AUTOLOAD {
 	    } else {
     	    $logger->logdie(qq(Tried to obtain an undefined value for $1));
 	    } # if ( defined $this->{_TIMER} )
-	#} elsif if ( $AUTOLOAD =~ /.*::is(_[\w_]+)/ ) { # for shits and giggles
+	} elsif ( $AUTOLOAD =~ /.*::is(_[\w_]+)/ ) { 
+		if ( defined $this->_get_flag($1) ) {
+			$logger->debug(qq(AUTOLOAD: flag $1 is defined));
+			$logger->debug(qq(AUTOLOAD: and is currently set to ) 
+				. $this->_get_flag($1));
+			return $this->_get_flag($1);
+		} else {
+			return 0;
+		} # if ( exists $this->_{$1} )
 	} else {
 		$logger->warn(qq(No handler for AUTOLOAD request: $AUTOLOAD));
 	} # if ( $AUTOLOAD =~ /.*::get(_\w+)/ )
@@ -272,7 +427,7 @@ sub stop_timer {
     $logger->debug(ref($this) . qq(->stop_timer: entering as '$timer_name'));
     if ( exists $_timers{$timer_name} ) {
 		# return the time value interval between $timer_name and now
-		my $interval = tv_interval($_timers{$timer_name});
+		my $interval = sprintf("%0f", tv_interval($_timers{$timer_name}) );
 		# make sure you delete the timer key too
 		delete $_timers{$timer_name};
         return qq(OK: $timer_name took $interval seconds);
@@ -355,7 +510,6 @@ $Config->define(q(debug|DEBUG|d=s@));
 $Config->define(q(nocolorlog|nocolourlog|nocl));
 $Config->define(q(colorlog));
 $Config->define(q(interactive|i!));
-$Config->define(q(index_generated));
 # a bit field that describes what values to return for a 'get' call
 $Config->define(q(returned_info=s));
 $Config->set(q(returned_info), CHILDREN);
@@ -526,22 +680,13 @@ HELPDOC
                         # doing it
                         return unless ( 
                             &confirm(
-                            confirm_warning => 
+	                            confirm_warning => 
                                 qq(Do you really want to delete ) 
-                                . $Config->get(q(dbfile)),
-                            prompt => qq(Delete ) . $Config->get(q(dbfile))
-                                . q( [Y/n]? ) ) );
+    	                            . $Config->get(q(dbfile)),
+        	                    prompt => qq(Delete ) . $Config->get(q(dbfile))
+            	                    . q( [Y/n]? ) ) );
                     } # unless ( $Config->get(q(noconfirm)) )
-                    # try to nuke the file
-                    if ( unlink($Config->get(q(dbfile))) == 0 ) { 
-                        $logger->error(q(Unable to delete index file )
-                                . $Config->get(q(dbfile)) . qq(: $!) );
-                            return undef;
-                    } # if ( unlink($Config->get(q(dbfile))) == 0 )
-                    $moddep->drop_index();
-                    # let other methods know that there currently is no
-                    # index file loaded
-                    $Config->set(q(index_generated), 0);
+                    $moddep->delete_index();
                 }, # idx->delete->proc
             }, # idx->drop
             'del'     =>  { syn => q(delete) },
@@ -550,6 +695,19 @@ HELPDOC
                 desc => q(Generates an index file from a list of file paths),
                 proc => sub { 
                     my (@temp_path_list, @validated_path_list);
+					if ( ! $moddep->is_index_created() ) {
+                        # create an index using the built-in filename
+                        my $returned_file = $moddep->create_index_file(
+                            index_file => $Config->get(q(dbfile)) );
+    	                if ( defined $returned_file ) {
+        	                # set the database filename
+            	            $Config->set(q(dbfile), $returned_file);
+	                    } else {
+							$logger->warn(q(Could not create index file: )
+								. $Config->get(q(dbfile)) );
+							return;
+						} # if ( defined $returned_file )
+					} # if ( ! $moddep->is_index_created() )
                     if ( scalar(@_) > 0 ) { @temp_path_list = @_; }
 					@temp_path_list = @{$Config->get(q(libpath))};
 					foreach my $checkpath ( @temp_path_list ) {
@@ -566,9 +724,7 @@ HELPDOC
                     # the return value from generate_index is used as a flag
                     # to let other parts of the script know that an index is
                     # available to be queried against
-                    $Config->set(q(index_generated), 
-                        $moddep->generate_index(
-                            pathlist => @validated_path_list ) ); 
+                    $moddep->generate_index( pathlist => @validated_path_list );
 				} # idx->generate->proc
             }, # idx->generate
             'gen' => { syn => q(generate) },
@@ -577,23 +733,28 @@ HELPDOC
 			'create' => {
                 desc => q(Creates a new index file on disk),
                 proc => sub { 
-					if ( scalar(@_) > 0 ) {
-						# fileparse comes from File::Basename
-						my ($filename, $dirpath, $suffix) = fileparse($_[0]);
-						if ( -w $dirpath ) {
-	   						$Config->set(q(dbfile), $_[0]);
-		                    $moddep->create_index_file(
-									index_file => $Config->get(q(dbfile)) );
+					my $returned_file;
+					if ( ! $moddep->is_index_created () ) {
+						if ( scalar(@_) > 0 ) {
+							# create an index using the user-supplied filename
+							$returned_file = $moddep->create_index_file(
+								index_file => $_[0] );
 						} else {
-							$logger->warn(qq(Can't create index file:) . $_[0]);
-							$logger->warn(qq(Directory ') . $dirpath
-								. q(' not writeable for current user) );
-						} # if ( -w $dirpath )
+							# create an index using the built-in filename
+							$returned_file = $moddep->create_index_file(
+								index_file => $Config->get(q(dbfile)) );
+	                    }# if ( scalar(@_) > 0 )
+						if ( defined $returned_file ) {
+							# set the database filename
+							$Config->set(q(dbfile), $returned_file);
+							# set the 'created' flag
+						} # if ( defined $returned_file )
 					} else {
-                        $logger->warn(q(Hmm.  Nothing to create.));
-                        $logger->warn(q(Please pass a filename to the )
-                            . q('create' command) );
-                    }# if ( scalar(@_) > 0 )
+						$logger->warn(q(You currently have an index file at));
+						$logger->warn($Config->get(q(dbfile)));
+						$logger->warn(q(Delete it with 'idx drop' prior to));
+						$logger->warn(q(running this command));
+					} # if ( ! $moddep->is_index_created () )
 				} # idx->create->proc
             }, # idx->create
             'cr' => { syn => q(create) },
@@ -626,7 +787,7 @@ HELPDOC
                 }, # idx->load->proc
             }, # idx->load
             'lo'     =>  { syn => q(load) },
-            ### index
+            ### show
             'show' => {
                 desc => q(Displays the index filename),
                 proc => sub {
@@ -635,6 +796,14 @@ HELPDOC
                 }, # idx->show->proc
             }, # idx->show
             'sh' => { syn => q(show) },
+            ### count
+            'count' => {
+                desc => q(Displays the count of records in the index),
+                proc => sub {
+                    $moddep->show_index_count();
+                }, # idx->show->proc
+            }, # idx->show
+            'co' => { syn => q(count) },
         }, # idx->cmds
     }, # idx
 ### show
@@ -668,6 +837,100 @@ EXAMPLES
             }, # show->idx
             'index'     => { syn => q(idx) },
             'in'        => { syn => q(idx) },
+            'id'        => { syn => q(idx) },
+            ### count
+            'count' => {
+                desc => q(Displays the count of records in the index),
+                proc => sub {
+                    $moddep->show_index_count();
+                }, # idx->show->proc
+            }, # idx->show
+            'co' => { syn => q(count) },
+            ### libpath
+            'libpath' => {
+                desc => q(Displays the Perl library paths used to find modules),
+                proc => sub {
+                    $logger->info(q(The current Perl library paths are:));
+					foreach my $path ( @{$Config->get(q(libpath))} ) {
+	                    $logger->info(qq(\t$path));
+					} # foreach my $path ( $Config->get(q(libpath))
+                }, # show->libpath->proc
+            }, # show->libpath
+            'libpaths'	=> { syn => q(libpath) },
+            'lp'     	=> { syn => q(libpath) },
+            'lib'     	=> { syn => q(libpath) },
+            'li'     	=> { syn => q(libpath) },
+            ### modlist
+            'modlist' => {
+                desc => q(Displays the index filename),
+				cmds => {
+					### names 
+					'names' => {
+						desc => q(Shows the modules used for a 'get' command),
+						proc => sub {
+							$logger->info(q(The following modules will have));
+							$logger->info(q(depedency info returned with a ));
+							$logger->info(q('get' command:));
+							foreach my $modulename ( @modlist ) {
+								$logger->info(qq(\t$modulename));
+							} # foreach my $modulename ( @modlist )
+						}, # show->modlist->names->proc
+					}, # show->modlist->names
+					'na'	=> { syn => q(names) },
+					'nam'	=> { syn => q(names) },
+					### count
+					'count' => {
+						desc => q(A count of all of the dependent modules),
+						proc => sub {
+							# get the dependencies for each module, and then
+							# make a summary object which holds the information
+							# that we're looking for
+							my %returned_count;
+							my $return_type;
+							if ($Config->get(q(returned_info)) & CHILDREN){	
+								$return_type = q(CHILDREN);
+							} elsif ($Config->get(q(returned_info)) & PARENTS){
+								$return_type = q(PARENTS);
+							} # if ($Config->get(q(returned_info)) & CHILDREN)
+							foreach my $countmod ( @modlist ) {
+								my $raw_string = q(raw_) . lc($return_type);
+								my $returned_list = $moddep->get_module_deps(
+									modlist     => $countmod,
+									$raw_string => 1,
+				                  	return_info => $return_type);
+								foreach my $module (@{$returned_list}) {
+									$returned_count{$module}++;
+								} # foreach my $childcount
+							} # foreach my $countmod ( @modlist )
+							if ( scalar(keys(%returned_count)) > 0 ) {
+								$logger->info(q(Total dependencies by module:));
+								foreach my $mod_key ( keys(%returned_count) ) {
+								# list the modules here in most -> least count
+								# order
+									$logger->info(qq(\t$mod_key -> ) 
+										. $returned_count{$mod_key});
+								} # foreach my $mod_key ( keys(%returned_count)
+							} # if ( scalar(keys(%returned_count)) > 0 ) 
+						}, # show->modulist->count->proc
+					}, # show->modlist->count
+					'co'	=> { syn => q(count) },
+					'cou'	=> { syn => q(count) },
+					### size
+					'size' => {
+						desc => q(A list of dependent modules with sizes),
+						proc => sub {
+							my $filename = $moddep->get_module_deps(
+		                    	modlist     => @modlist,
+								raw_filename => 1,
+       							return_info => q(FILENAME) );
+						}, # show->modulist->size->proc
+					}, # show->modlist->count
+                }, # show->modlist->cmds
+            }, # show->modlist
+            'mods'     => { syn => q(modlist) },
+            'mod'        => { syn => q(modlist) },
+            'mo'        => { syn => q(modlist) },
+            'ml'        => { syn => q(modlist) },
             ### returnedinfo
             'returnedinfo' => {
                 desc => q(Sets information is returned during a 'get' query),
@@ -761,13 +1024,12 @@ EXAMPLES
 	'get'  =>  { desc => q(Get the dependencies for one or more Perl modules),
 	# if getfiles is defined, or the file is passed in on @_
     	proc => sub {
-            if ( ! $Config->get(q(index_generated)) ) {
-                $logger->warn(q(No index is available for queries.));
-                $logger->warn(q(To generate an index, try the 'idx generate'));
-                $logger->warn(q(command.  Use 'help idx' for more info on ));
-                $logger->warn(q(generating indexes.));
+            if ( ! $moddep->is_index_generated() 
+				|| ! $moddep->is_index_created() ) 
+			{
+				$moddep->show_not_generated_warning(q(get));
                 return;
-            } # if ( ! $Config->get(q(index_generated)) )
+            } # if ( ! $moddep->is_index_generated() )
 			# if either the @modlist or the @_ array has values 
 			if ( scalar (@modlist) || scalar(@_) ) {
                 # any files passed in replace the files that were in @modlist
