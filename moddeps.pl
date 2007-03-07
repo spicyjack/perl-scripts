@@ -974,6 +974,7 @@ EXAMPLES
 								. qq((<dir>) tags at the very least.\n);
 							print qq(See the 'gen_init_cpio' docs in )
 								. qq(the Linux kernel for usage info.\n);
+                            print qq(=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n);
 							# run through the module list and stat each file
 							# print out the file's details in initramfs format
 							# file <name> <source> <mode> <uid> <gid>
@@ -1012,6 +1013,9 @@ EXAMPLES
 								$logger->info(qq(\tsize -> filename));
 								# $^X is perl-ese for the running perl binary
 								my $perlsize = (stat($^X))[7];
+                                if ( ! defined $perlsize ) { 
+                                    $perlsize = q(undef);
+                                } # if ( ! defined $perlsize )
 								my $total_file_sizes = $perlsize;
 								$logger->info(qq(\t$perlsize -> ) . $^X);
 								# now do all of the modules
@@ -1263,6 +1267,8 @@ sub get_fullpath {
 	my $logger = get_logger();
 
 	foreach my $libpath ( @{$Config->get(q(libpath))} ) {
+        # strip extra slashes off of the end
+        $libpath =~ s/\/+$//;
 		my $fullpath = qq($libpath/$filename);
 		$logger->debug(qq(Searching $libpath for $filename));
 		if ( -r $fullpath ) {
