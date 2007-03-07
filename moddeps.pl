@@ -81,7 +81,7 @@ sub _get_flag {
 	
 	# we do this so perl doesn't autovivify our flags before we say so
 	if ( exists $_flags{$flag} ) {
-		$logger->debug(qq(_get_flag called for $flag: ) . $_flags{$flag});
+		#$logger->debug(qq(_get_flag called for $flag: ) . $_flags{$flag});
 		return $_flags{$flag};
 	} else {
 		$logger->debug(qq(_get_flag called for $flag: flag is undefined));
@@ -137,64 +137,74 @@ sub get_module_deps {
     my $op = q(get_module_deps);
     my $logger = get_logger();
     my $timer = $this->get_timer();
+	my $return_code;
 
 	if ( $this->is_index_created && $this->is_index_generated ) {
 		my @modlist = @{$args{modlist}};
-        $logger->debug(qq($op : modlist is ) . join(q(:), @modlist ) );
+        $logger->debug(qq($op : modlist is ) . join(q(; ), @modlist ) );
 	    $timer->start_timer($op);
 		foreach my $lookup_mod ( @modlist ) {
     	    my $depinfo;
         	if ( $args{return_info} eq q(CHILDREN)) {
 		    	$depinfo = Module::Dependency::Info::getChildren($lookup_mod);
 	    		if ( defined $depinfo ) {
-					if ( exists $args{raw_children} ) {
-                        $timer->stop_timer($op);
-						return $depinfo;
+					if ( exists $args{return_raw} ) {
+						$return_code = $depinfo;
 					} else {
 		    			$logger->info(qq(Dependency information for: ) 
 							. $lookup_mod);
 					    foreach my $depchild ( sort(@$depinfo) ) {
 					    	$logger->info(qq(\t$depchild));
     					} # foreach my $depkey ( sort( keys(%$depinfo) ) )
-					} # if ( exists $args{raw_modlist} )
+						$return_code = 1;
+					} # if ( exists $args{return_raw} )
 	    		} else {
     				$logger->info(qq(Module '$lookup_mod' has no dependencies));
+					$return_code = undef;
     			} # if ( defined $depinfo )
 	        } # if ( $args{return_info} eq q(children))
     	    if ( $args{return_info} eq q(PARENTS)) {
 			    $depinfo = Module::Dependency::Info::getParents($lookup_mod);
     			if ( defined $depinfo ) {
-					if ( exists $args{raw_parents} ) {
-                        $timer->stop_timer($op);
-						return $depinfo;
+					if ( exists $args{return_raw} ) {
+						$return_code = $depinfo;
 					} else {
 		    			$logger->info(qq(Parent module information for: ) 
 							. $lookup_mod);
 					    foreach my $depparent ( sort(@$depinfo) ) {
 					    	$logger->info(qq(\t$depparent));
 	    				} # foreach my $depkey ( sort( keys(%$depinfo) ) )
-					} # if ( exists $args{raw_parents} )
+						$return_code = 1;
+					} # if ( exists $args{return_raw} )
     			} else {
 	    			$logger->info(qq(Module '$lookup_mod' has no dependencies));
+					$return_code = undef;
     			} # if ( defined $depinfo )
         	} # if ( $args{return_info} eq q(parents))
 	        if ( $args{return_info} eq q(FILENAME)) {
 			    $depinfo = Module::Dependency::Info::getFilename($lookup_mod);
         	    if ( defined $depinfo ) {
-					if ( exists $args{raw_filename} ) {
-                        $timer->stop_timer($op);
-						return $depinfo;
+					if ( exists $args{return_raw} ) {
+						$return_code = $depinfo;
 					} else {
 		                $logger->info(qq(Filename of '$lookup_mod is:));
     		            $logger->info($depinfo);
-					} # if ( exists $args{raw_filename} )
+						$return_code = 1;
+					} # if ( exists $args{return_raw} )
     	        } else {
-        	        $logger->info(qq(No match found for '$depinfo'));
+        	        $logger->warn(qq(No filename found for '$lookup_mod'));
+					$return_code = undef;
             	} # if ( defined $depinfo )
 	        } # if ( $args{return_info} eq q(filename))
 		} # foreach my $module_lookup ( @modlist )
-		$logger->info( $timer->stop_timer($op) );
-    	return 1;
+
+		# stop the timer and return the $return_code
+		if ( exists $args{suppress_stop_time} ) {
+			$timer->stop_timer($op);
+		} else {
+			$logger->info( $timer->stop_timer($op) );
+		} # if ( exists $args{supress_stop_time} )
+    	return $return_code;
 	} else {
 		$this->show_not_generated_warning($op);
 		return undef;
@@ -339,13 +349,13 @@ sub AUTOLOAD {
 	return if $AUTOLOAD =~ /::DESTROY$/;
 
 	my $logger = get_logger();
-	if ( defined $setval ) { 
-		$logger->debug(qq(Entering AUTOLOADer with: ));
-		$logger->debug(qq($AUTOLOAD -> $setval));
-	} else {
-		$logger->debug(qq(Entering AUTOLOADer with: ));
-		$logger->debug(qq($AUTOLOAD));
-	} # if ( defined $setval )
+#if ( defined $setval ) { 
+#		$logger->debug(qq(Entering AUTOLOADer with: ));
+#		$logger->debug(qq($AUTOLOAD -> $setval));
+#	} else {
+#		$logger->debug(qq(Entering AUTOLOADer with: ));
+#		$logger->debug(qq($AUTOLOAD));
+#	} # if ( defined $setval )
 
 	if ( $AUTOLOAD =~ /.*::set(_\w+)/ ) {
 	    if ( defined $setval ) {
@@ -362,9 +372,9 @@ sub AUTOLOAD {
 	    } # if ( defined $this->{_TIMER} )
 	} elsif ( $AUTOLOAD =~ /.*::is(_[\w_]+)/ ) { 
 		if ( defined $this->_get_flag($1) ) {
-			$logger->debug(qq(AUTOLOAD: flag $1 is defined));
-			$logger->debug(qq(AUTOLOAD: and is currently set to ) 
-				. $this->_get_flag($1));
+#			$logger->debug(qq(AUTOLOAD: flag $1 is defined));
+#			$logger->debug(qq(AUTOLOAD: and is currently set to ) 
+#				. $this->_get_flag($1));
 			return $this->_get_flag($1);
 		} else {
 			return 0;
@@ -409,7 +419,7 @@ sub start_timer {
 	my $timer_name = shift;
 	my $logger = get_logger();
 	
-    $logger->debug(ref($this) . qq(->start_timer: entering as '$timer_name'));
+#$logger->debug(ref($this) . qq(->start_timer: entering as '$timer_name'));
 	if ( exists $_timers{$timer_name} ) {
 		$logger->logwarn(qq(Hmm. Timer '$timer_name' already exists.));
 		$logger->logdie(qq(Exiting program due to unknown timer key.));
@@ -418,8 +428,8 @@ sub start_timer {
     # the tv_interval function (later) expects an array reference, hence the
     # [brackets] around gettimeofday below
 	$_timers{$timer_name} = [gettimeofday];
-    $logger->debug(ref($this) . qq(->start_timer: leaving as '$timer_name'));
-    $logger->debug(q(with ') . join(q(.), @{$_timers{$timer_name}}) . q('));
+#$logger->debug(ref($this) . qq(->start_timer: leaving as '$timer_name'));
+#$logger->debug(q(with ') . join(q(.), @{$_timers{$timer_name}}) . q('));
 	return $_timers{$timer_name};
 } # sub start_timer
 
@@ -428,7 +438,7 @@ sub stop_timer {
 	my $timer_name = shift;
     my $logger = get_logger();
 
-    $logger->debug(ref($this) . qq(->stop_timer: entering as '$timer_name'));
+#$logger->debug(ref($this) . qq(->stop_timer: entering as '$timer_name'));
     if ( exists $_timers{$timer_name} ) {
 		# return the time value interval between $timer_name and now
 		my $interval = sprintf("%0f", tv_interval($_timers{$timer_name}) );
@@ -928,7 +938,7 @@ EXAMPLES
 								my $raw_string = q(raw_) . lc($return_type);
 								my $returned_list = $moddep->get_module_deps(
 									modlist     => [ $countmod ],
-									$raw_string => 1,
+									return_raw  => 1,
 				                  	return_info => $return_type);
 								foreach my $module (@{$returned_list}) {
 									$returned_count{$module}++;
@@ -936,6 +946,7 @@ EXAMPLES
 							} # foreach my $countmod ( @modlist )
 							if ( scalar(keys(%returned_count)) > 0 ) {
 								$logger->info(q(Total dependencies by module:));
+								$logger->info(qq(\tcount -> module name));
 								foreach my $mod_key ( 
                                     sort (keys(%returned_count)) ) {
 								# list the modules here in most -> least count
@@ -953,12 +964,87 @@ EXAMPLES
 					'size' => {
 						desc => q(A list of dependent modules with sizes),
 						proc => sub {
-							my $filename = $moddep->get_module_deps(
-		                    	modlist     => @modlist,
-								raw_filename => 1,
-       							return_info => q(FILENAME) );
+							my %filename_list;
+							# grab the names for the modules in @modlist and
+							# their children
+							foreach my $getnamemod ( @modlist ) {
+								# look up the filename of the module itself
+								my $mod_filename = $moddep->get_module_deps(
+									suppress_stop_time 	=> 1,
+									modlist     		=> [ $getnamemod ],
+									return_raw 			=> 1,
+				                  	return_info 		=> q(FILENAME));
+								$filename_list{$mod_filename} = undef;
+
+								#$logger->debug(qq($getnamemod: mod_filename));
+								#&_dump_hash(\%filename_list);
+
+								# grab a list of children modules
+								my $mod_children = $moddep->get_module_deps(
+									suppress_stop_time 	=> 1,
+									modlist     		=> [ $getnamemod ],
+									return_raw 			=> 1,
+				                  	return_info 		=> q(CHILDREN));
+
+								# now get their filenames as well
+								foreach my $child_key ( @{$mod_children} ) {
+									my $this_child = $moddep->get_module_deps(
+										suppress_stop_time 	=> 1,
+										modlist     		=> [ $child_key ],
+										return_raw 			=> 1,
+					                  	return_info 		=> q(FILENAME));
+									if ( defined $this_child ) {
+										$filename_list{$this_child} = undef;
+									} # if ( defined $this_child )
+								} # foreach $child_key ( @{$mod_children} )
+
+								#$logger->debug(qq($getnamemod: mod_children));
+								#&_dump_hash(\%filename_list);
+
+							} # foreach my $countmod ( @modlist )
+							# now get the full paths for all of the files
+							foreach my $filename_key ( keys(%filename_list) ) {
+								my $fullpath = 
+									&get_fullpath(	
+										filename => $filename_key,
+										Config => $Config );
+								# delete the old name from the list hash
+								delete($filename_list{$filename_key});
+								# add it back with the full name as the key and
+								# stat it at the same time
+								$filename_list{$fullpath} =
+									(stat($fullpath))[7];	
+							} # foreach my $filename_key ( keys(%filename_list)
+
+							#$logger->debug(q(dumping after fullpathing));
+							#&_dump_hash(\%filename_list);
+					
+							if ( scalar(keys(%filename_list)) > 0 ) {
+								$logger->info(q(File sizes by binary/module:));
+								$logger->info(qq(\tsize -> filename));
+								# $^X is perl-ese for the running perl binary
+								my $perlsize = (stat($^X))[7];
+								my $total_file_sizes = $perlsize;
+								$logger->info(qq(\t$perlsize -> ) . $^X);
+								# now do all of the modules
+								foreach my $mod_key ( 
+									sort(keys(%filename_list)) ) 
+								{
+									# list the module file sizes and the
+									# modules here in alphabet order
+									$logger->info(qq(\t) . 
+										$filename_list{$mod_key} 
+										. qq( -> $mod_key));
+									$total_file_sizes +=
+										$filename_list{$mod_key};
+								} # foreach my $mod_key ( keys(%returned_count)
+								$logger->info(qq(Total size of all files: ) 
+									. $total_file_sizes);
+							} # if ( scalar(keys(%filename_list)) > 0 )
 						}, # show->modulist->size->proc
-					}, # show->modlist->count
+					}, # show->modlist->size
+					'si'	=> { syn => q(size) },
+					'siz'	=> { syn => q(size) },
                 }, # show->modlist->cmds
             }, # show->modlist
             'mods'  => { syn => q(modlist) },
@@ -1119,6 +1205,42 @@ EXAMPLES
 	} # return
 } # sub get_commands
 
+sub get_fullpath {
+	my %args = @_;
+	my $Config = $args{Config};
+	my $filename = $args{filename};
+	my $logger = get_logger();
+
+	foreach my $libpath ( @{$Config->get(q(libpath))} ) {
+		my $fullpath = qq($libpath/$filename);
+		$logger->debug(qq(Searching $libpath for $filename));
+		if ( -r $fullpath ) {
+			# first filename found will win
+			return $fullpath;
+		} # if ( -r $mod_filename )
+	} # foreach my $libpath
+
+	# uh-oh, we shouldn't reach this, the original module path was found by
+	# searching the paths that the script already knows about
+	$logger->error_die(qq(Can't find the full path for '$filename'));
+} # sub get_fullname
+
+sub _dump_hash {
+	my $tmphash = shift;
+
+	if ( $logger->is_debug() ) {
+		my %dump_hash = %$tmphash;
+		$logger->debug(q(key/value pairs from %filename_list));
+		foreach my $kvp ( sort(keys(%dump_hash)) ){
+			if ( defined $dump_hash{$kvp} ) {
+				$logger->debug($kvp . q( -> ) . $dump_hash{$kvp} );
+			} else {
+				$logger->debug($kvp . q( -> 'undef') );
+			} # if ( defined $dump_hash{$kvp} )
+		} # foreach my $kvp (sort(keys(%filename_list))
+	} # if ( $logger->is_debug() )
+} # sub _dump_hash
+
 sub confirm {
 	my %args = @_;
 	my $logger = get_logger();
@@ -1135,23 +1257,25 @@ sub confirm {
 ############
 sub ShowHelp {
 # shows the help message
-    warn qq(\nUsage: $0 [options]\n);
+    warn qq(\nUsage: $0 [options]\n\n);
     warn qq([options] may consist of one or more of the following:\n);
     warn qq(\n General Options:\n);
     warn qq( -h|--help          show this help\n);
     warn qq( -f|--dbfile        file to use for storing index data\n);
     warn qq( -m|--module	    Perl module to work out dependencies for\n);
-    warn qq( (use --module multiple times to specifiy multiple modules)\n);
+    warn qq(   (use --module multiple times to specifiy multiple modules)\n);
     warn qq( -p|--libpath       Perl library path to search\n);
-    warn qq( (use --libpath multiple times to specifiy multiple paths)\n);
-    warn qq(\n Switches that control script behaivor:\n);
+    warn qq(   (use --libpath multiple times to specifiy multiple paths)\n);
+    warn q( -inc|--useincpath  add/use paths from the '@INC' variable). qq(\n);
+	warn qq(\n Switches that control script behaivor:\n);
     warn qq( -d|--debug         run in debug mode (extra noisy output)\n);
     warn qq( -i|--interactive   run in interactive mode (default)\n);
     warn qq( -noi|--nointeractive   Don't run in interactive mode\n);
     warn qq( -nc|--noconfirm    don't confirm before deleting files\n);
-    warn qq( -ns|--noseed       don't seed 'libpath' (use on Mac OS X)\n);
+    warn qq( -ns|--noseed       don't seed 'libpath'\n);
     warn qq( (Please use --libpath to specifiy non-standard paths on OS X)\n);
     warn qq( -nocl|--nocolorlog don't colorize the shell output\n);
+	warn qq(\n);
 	exit 0;
 } # sub ShowHelp
 
