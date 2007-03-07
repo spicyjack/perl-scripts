@@ -956,69 +956,57 @@ EXAMPLES
                                         . qq( -> $mod_key) );
 								} # foreach my $mod_key ( keys(%returned_count)
 							} # if ( scalar(keys(%returned_count)) > 0 ) 
-						}, # show->modulist->count->proc
+						}, # show->modlist->count->proc
 					}, # show->modlist->count
 					'co'	=> { syn => q(count) },
 					'cou'	=> { syn => q(count) },
+					### initramfslist
+					'initramfslist' => {
+						desc => 
+							q(Output a gen_init_cpio formatted list of modules),
+						proc => sub {
+							my %filename_list;
+							my @dependency_list = 
+								&get_filename_list(@modlist);
+
+							print qq(WARNING: this list needs work;\n);
+							print qq(You'll have to add directories )
+								. qq((<dir>) tags at the very least.\n);
+							print qq(See the 'gen_init_cpio' docs in )
+								. qq(the Linux kernel for usage info.\n);
+							# run through the module list and stat each file
+							# print out the file's details in initramfs format
+							# file <name> <source> <mode> <uid> <gid>
+							foreach my $dep_file (@dependency_list) {
+								my ($dev,$ino,$mode,$nlink,$uid,$gid,
+									$rdev,$size,$atime,$mtime,$ctime,
+									$blksize,$blocks) = stat($dep_file);
+								# mangle the mode
+								my $mangledmode 
+									= sprintf("%04o", $mode & 07777);
+								print qq(file $dep_file $dep_file $mangledmode )
+									. qq($uid $gid\n);
+							} # foreach my $dep_file (@dependency_list)
+						}, # show->modlist->initramfslist->proc
+					}, # show->modlist->initramfslist
+					'init'    	=> { syn => q(initramfslist) },
+					'ini'    	=> { syn => q(initramfslist) },
+					'il'    	=> { syn => q(initramfslist) },
+					'in'    	=> { syn => q(initramfslist) },
+					'ramfs' 	=> { syn => q(initramfslist) },
+					'initramfs' => { syn => q(initramfslist) },
 					### size
 					'size' => {
 						desc => q(A list of dependent modules with sizes),
 						proc => sub {
 							my %filename_list;
-							# grab the names for the modules in @modlist and
-							# their children
-							foreach my $getnamemod ( @modlist ) {
-								# look up the filename of the module itself
-								my $mod_filename = $moddep->get_module_deps(
-									suppress_stop_time 	=> 1,
-									modlist     		=> [ $getnamemod ],
-									return_raw 			=> 1,
-				                  	return_info 		=> q(FILENAME));
-								$filename_list{$mod_filename} = undef;
+							my @dependency_list = 
+								&get_filename_list(@modlist);
+							foreach my $dep_file (@dependency_list) {
+								$filename_list{$dep_file} 
+									= (stat($dep_file))[7];	
+							} # foreach my $dep_file (@dependency_list)
 
-								#$logger->debug(qq($getnamemod: mod_filename));
-								#&_dump_hash(\%filename_list);
-
-								# grab a list of children modules
-								my $mod_children = $moddep->get_module_deps(
-									suppress_stop_time 	=> 1,
-									modlist     		=> [ $getnamemod ],
-									return_raw 			=> 1,
-				                  	return_info 		=> q(CHILDREN));
-
-								# now get their filenames as well
-								foreach my $child_key ( @{$mod_children} ) {
-									my $this_child = $moddep->get_module_deps(
-										suppress_stop_time 	=> 1,
-										modlist     		=> [ $child_key ],
-										return_raw 			=> 1,
-					                  	return_info 		=> q(FILENAME));
-									if ( defined $this_child ) {
-										$filename_list{$this_child} = undef;
-									} # if ( defined $this_child )
-								} # foreach $child_key ( @{$mod_children} )
-
-								#$logger->debug(qq($getnamemod: mod_children));
-								#&_dump_hash(\%filename_list);
-
-							} # foreach my $countmod ( @modlist )
-							# now get the full paths for all of the files
-							foreach my $filename_key ( keys(%filename_list) ) {
-								my $fullpath = 
-									&get_fullpath(	
-										filename => $filename_key,
-										Config => $Config );
-								# delete the old name from the list hash
-								delete($filename_list{$filename_key});
-								# add it back with the full name as the key and
-								# stat it at the same time
-								$filename_list{$fullpath} =
-									(stat($fullpath))[7];	
-							} # foreach my $filename_key ( keys(%filename_list)
-
-							#$logger->debug(q(dumping after fullpathing));
-							#&_dump_hash(\%filename_list);
-					
 							if ( scalar(keys(%filename_list)) > 0 ) {
 								$logger->info(q(File sizes by binary/module:));
 								$logger->info(qq(\tsize -> filename));
@@ -1041,7 +1029,7 @@ EXAMPLES
 								$logger->info(qq(Total size of all files: ) 
 									. $total_file_sizes);
 							} # if ( scalar(keys(%filename_list)) > 0 )
-						}, # show->modulist->size->proc
+						}, # show->modlist->size->proc
 					}, # show->modlist->size
 					'si'	=> { syn => q(size) },
 					'siz'	=> { syn => q(size) },
@@ -1204,6 +1192,69 @@ EXAMPLES
 	'gr'     =>  { syn => q(graph) },
 	} # return
 } # sub get_commands
+
+sub get_filename_list {
+	my @modlist = @_;
+
+	my %filename_list;
+	# grab the names for the modules in @modlist and
+	# their children
+	foreach my $getnamemod ( @modlist ) {
+		# look up the filename of the module itself
+		my $mod_filename = $moddep->get_module_deps(
+			suppress_stop_time 	=> 1,
+			modlist     		=> [ $getnamemod ],
+			return_raw 			=> 1,
+			return_info 		=> q(FILENAME));
+		$filename_list{$mod_filename} = undef;
+
+		#$logger->debug(qq($getnamemod: mod_filename));
+		#&_dump_hash(\%filename_list);
+
+		# grab a list of children modules
+		my $mod_children = $moddep->get_module_deps(
+			suppress_stop_time 	=> 1,
+			modlist     		=> [ $getnamemod ],
+			return_raw 			=> 1,
+			return_info 		=> q(CHILDREN));
+
+		# now get their filenames as well
+		foreach my $child_key ( @{$mod_children} ) {
+			my $this_child = $moddep->get_module_deps(
+				suppress_stop_time 	=> 1,
+				modlist     		=> [ $child_key ],
+				return_raw 			=> 1,
+				return_info 		=> q(FILENAME));
+				
+			if ( defined $this_child ) {
+				$filename_list{$this_child} = undef;
+			} # if ( defined $this_child )
+		} # foreach $child_key ( @{$mod_children} )
+
+		#$logger->debug(qq($getnamemod: mod_children));
+		#&_dump_hash(\%filename_list);
+
+	} # foreach my $countmod ( @modlist )
+
+	# now get the full paths for all of the files
+	foreach my $filename_key ( keys(%filename_list) ) {
+		my $fullpath = &get_fullpath(	
+							filename => $filename_key,
+							Config => $Config );
+		# delete the old name from the list hash
+		delete($filename_list{$filename_key});
+		# add it back with the full name as the key and
+		# stat it at the same time
+		$filename_list{$fullpath} = undef;
+	} # foreach my $filename_key ( keys(%filename_list)
+
+	#$logger->debug(q(dumping after fullpathing));
+	#&_dump_hash(\%filename_list);
+					
+	# return the keys from %filename_list, which will be the list of resolved
+	# filenames
+	return keys(%filename_list);
+} # sub get_filename_list
 
 sub get_fullpath {
 	my %args = @_;
