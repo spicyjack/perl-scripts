@@ -26,6 +26,8 @@ shell interface and via the command line.
 # TODO
 # - pick 3 or 4 modules to 'get', and use the output from those to write tests
 # that can be run in non-interactive mode
+# - add a recursive get, which would traverse all of the modules listed with
+# 'get' and then get those modules as well
 # - add non-interactive config options
 # - finish the POD documentation
 # - add a 'libpaths' command
@@ -38,12 +40,14 @@ shell interface and via the command line.
 #   - parents
 #   - children
 #   - output filename; where to write the graph to
+
+# Done TODO's
 # - add a 'write list' command
-#   - use it with @modlist (below, in get_commands() ) to generate a complete
-#   list of Perl modules that would need to be present to get any one of the
-#   modules in that list to run on an embedded/standalone system
-#   - calculate the complete size of the filelist, including the Perl binary,
-#   in order to get an idea of how big it would all end up being
+#   DONE - use it with @modlist (below, in get_commands() ) to generate a
+#   complete list of Perl modules that would need to be present to get any one
+#   of the modules in that list to run on an embedded/standalone system
+#   DONE - calculate the complete size of the filelist, including the Perl
+#   binary, in order to get an idea of how big it would all end up being
 
 package Modules::Dependency::Wrapper;
 use strict;
