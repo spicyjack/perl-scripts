@@ -11,7 +11,6 @@ use warnings;
 use IO::YAML;
 use Data::Dumper;
 
-
 # create a YAML object using the DATA filehandle
 my $yaml = IO::YAML->new(\*DATA);
 #my $yaml = IO::YAML->new(q(yaml.txt));

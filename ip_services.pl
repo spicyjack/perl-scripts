@@ -74,6 +74,14 @@ if ( defined $DEBUG ) {
 
 my $yamlfile = IP::Services::YAMLFile->new(filename => $yaml_file);
 
+print qq(Dumping YAML file: $yaml_file\n);
+# oops, $yamlfile returns the YAML data stream hash reference; we need to dump
+# it ourselves
+#$yamlfile->dump();
+use Data::Dumper;
+print Dumper $yamlfile;
+print qq(\n);
+
 exit 0;
 
 # simple help subroutine
