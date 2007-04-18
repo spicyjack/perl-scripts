@@ -43,7 +43,7 @@ if ( exists $opts{h} ) {
 
 # set up %dnsinfo
 # FIXME automate the serial number
-%dnsinfo = (	serial => "2006091201", # serial number
+%dnsinfo = (	serial => "2007041001", # serial number
 				refresh => "3H", # refresh
 				retry => "45M", # how often to retry when initial try fails
 				expire => "8D", # max time to cache the zone
@@ -114,6 +114,8 @@ if ( exists $opts{h} ) {
                                 public => "y"},
             "cvs" =>        {   alias => "observer",
                                 public => "y"},
+            "cosas" =>        {   alias => "observer",
+                                public => "y"},
 
 ); # %hosts		
 							
@@ -150,7 +152,7 @@ foreach $domain ( keys(%domains) ) {
     if ( $domain eq q(antlinux.com) ) {
         print $OUT q($GENERATE 10-80 ${0,2,x}011bac A 172.27.1.$) . qq(\n);
     } # if ( $domain eq q(antlinux.com) )
-	print $OUT '@ IN SOA naranja.$domain. $soa_email.$domain. (' . qq(\n);
+	print $OUT '@ IN SOA naranja.' . "$domain. $soa_email.$domain. (" . qq(\n);
 	print $OUT "\t\t" . $dnsinfo{serial} . "\t; zone serial\n";
 	print $OUT "\t\t" . $dnsinfo{refresh} . "\t\t\t; refresh\n";
 	print $OUT "\t\t" . $dnsinfo{retry} . "\t\t\t; how often to retry\n";
