@@ -43,7 +43,23 @@ if ( exists $opts{h} ) {
 
 # set up %dnsinfo
 # FIXME automate the serial number
-%dnsinfo = (	serial => "2007041001", # serial number
+my $serial_file = q(/tmp/dns_serial.txt);
+my $serial;
+if ( -r $serial_file ) {
+    $serial = qx#/bin/cat $serial_file | tr -d '\n'#;
+    $serial++;
+} else {
+    $serial = 1;    
+}
+# write the serial to the tempfile
+qx#echo $serial > $serial_file#;
+# build up the complete serial number now
+my $date_command = q(/bin/date +%Y%m%d);
+my $date_serial = qx/$date_command | tr -d '\n'/;
+
+%dnsinfo = (	
+                # serial number
+                serial => $date_serial . sprintf('%02d', $serial),
 				refresh => "3H", # refresh
 				retry => "45M", # how often to retry when initial try fails
 				expire => "8D", # max time to cache the zone
@@ -64,6 +80,16 @@ if ( exists $opts{h} ) {
 													primary => "observer"},
                 "antlinux.com"              => {    internal => 'n',
 				                                    primary => 'observer'},
+                "tennsat.com"               => {    internal => "n",
+                                                    primary => "observer"},
+                "tiedyelady.com"            => {    internal => "n",
+                                                    primary => "observer"},
+                "erolotus.com"              => {    internal => "n",
+                                                    primary => "observer"},
+                "hobartrax.com"             => {    internal => "n",
+                                                    primary => "observer"},
+                "blkmtnpub.com"             => {    internal => "n",
+                                                    primary => "observer"},
 			);
 
 %hosts = (	"localhost"	=> { 	ip => "127.0.0.1",
@@ -74,47 +100,18 @@ if ( exists $opts{h} ) {
 								public => "y"},
 			"mail"		=> { 	alias => "observer",
 								public => "y"},
+            "dev"       => {    alias => "observer",
+                                public => "y"},
 			"www"		=> {	alias => "observer",
-								public => "y"},
-			"dns"		=> {	alias => "naranja",
-								public => "y"},
-			"kpri"		=> {	alias => "observer",
 								public => "y"},
 			"smtp" 		=> {	ip => "72.14.141.184",
 								public => "y"},
-			"sf" 		=> {	ip => "66.35.250.210",
-								public => "y"},
-            "portaboom" => {    alias => "observer",
-                                public => "y"},
-            "anywipe"   => {    alias => "observer",
-                                public => "y"},
-            "anyshell"  => {    alias => "observer",
-                                public => "y"},
-            "quickmap"  => {    alias => "observer",
-                                public => "y"},
-            "ff"        => {    alias => "observer",
-                                public => "y"},
-            "foto"      => {    alias => "observer",
-                                public => "y"},
-            "files"     => {    alias => "observer",
-                                public => "y"},
-            "gallery"   => {    alias => "observer",
-                                public => "y"},
-            "streamcast" => {   alias => "observer",
-                                public => "y"},
-            "vend"      => {   alias => "observer",
-                                public => "y"},
             "wiki"      => {   alias => "observer",
-                                public => "y"},
-            "propaganda" => {   alias => "observer",
-                                public => "y"},
-            "dev" =>        {   alias => "observer",
                                 public => "y"},
             "cvs" =>        {   alias => "observer",
                                 public => "y"},
-            "cosas" =>        {   alias => "observer",
+            "old"       => {    alias => "observer",
                                 public => "y"},
-
 ); # %hosts		
 							
 # are we running in DEBUG mode 
@@ -137,7 +134,7 @@ foreach $domain ( keys(%domains) ) {
 		warn "makedns: output will go to the screen instead of to files\n";
 		$OUT = *STDERR;
 	} else {
-		open(FH, ">$domain.dns");
+		open(FH, q(> ) . $domain . q(.dns) );
 		$OUT = *FH;
 	} # if ( defined $DEBUG )
 
@@ -146,8 +143,8 @@ foreach $domain ( keys(%domains) ) {
 	print $OUT "; Zone record file for $domain\n";
 	print $OUT "; created on $date\n";
 	print $OUT ";\n\n";
-	print $OUT "\$TTL 7D\n\n";
-    if ( $domain eq q(antlinux.com) ) {
+	print $OUT "\$TTL 3D\n\n";
+    if ( $domain eq q(portaboom.com) ) {
         print $OUT q($GENERATE 10-80 ${0,2,x}011bac A 172.27.1.$) . qq(\n);
     } # if ( $domain eq q(antlinux.com) )
 	print $OUT '@ IN SOA naranja.' . "$domain. $soa_email.$domain. (" . qq(\n);
@@ -189,6 +186,7 @@ foreach $domain ( keys(%domains) ) {
 		$tmp = <STDIN>;
 		undef $tmp;
 	} else {
+        print $OUT qq(; vi: set filetype=dns :\n);
 		close ($OUT);
 	} # if ( defined $DEBUG )
 } # foreach $domain ( keys(%domains) )
