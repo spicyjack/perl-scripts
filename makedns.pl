@@ -112,6 +112,14 @@ my $date_serial = qx/$date_command | tr -d '\n'/;
                                 public => "y"},
             "old"       => {    alias => "observer",
                                 public => "y"},
+            "cosas"       => {    alias => "observer",
+                                public => "y"},
+            "files"       => {    alias => "observer",
+                                public => "y"},
+            "gallery"       => {    alias => "observer",
+                                public => "y"},
+            "vend"       => {    alias => "observer",
+                                public => "y"},
 ); # %hosts		
 							
 # are we running in DEBUG mode 
