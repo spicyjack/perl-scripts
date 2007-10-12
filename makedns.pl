@@ -116,6 +116,8 @@ my $date_serial = qx/$date_command | tr -d '\n'/;
                                 public => "y"},
             "files"       => {    alias => "observer",
                                 public => "y"},
+#            "dropbox"       => {    ip => "observer",
+#                                public => "y"},
             "gallery"       => {    alias => "observer",
                                 public => "y"},
             "vend"       => {    alias => "observer",

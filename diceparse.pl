@@ -48,7 +48,8 @@ diceparse.pl [OPTIONS]
 General Options
 
   [-h|--help|--longhelp]   Shows script help information
-  [-r|-rl|-ranlength]      Create this many Diceware words randomly
+  [-r|-rl|-ranlength]      Create a passphrase using this many Diceware words 
+  [-n|-num|-number]        Create this many Diceware passphrases
   [-pr|-perlrandom]        Use Perl's rand() function instead of /dev/random
   [-s|-si|-stdin]          Read Diceware numbers from STDIN
   [-l|-dl|-list|-dicelist] Diceware wordlist to parse for user input.  
@@ -71,6 +72,7 @@ my $DEBUG; # are we debugging?
 my $perlrandom; # use rand() function instead of reading /dev/random directly
 my $ranlength; # how many random numbers to use for creating a diceware word
 my $random_dev = q(/dev/random); # random device file to read from
+my $req_passphrases = 1; # create this many passphrases
 my $dicelist; # path to the word list
 my $stdin; # read the numbers from standard input
 my %diceware; # wordlist with numbers as the index
@@ -83,6 +85,7 @@ my %diceware; # wordlist with numbers as the index
 	$parser->configure();
     $parser->getoptions(q(h|longhelp|help) => \&ShowHelp, 
 		q(pr|perlrand|perlrandom) => \$perlrandom,
+		q(n|num|number=i) => \$req_passphrases,
   		q(r|ranlength|rl=i) => \$ranlength,
 		q(randomdev|randev|rd=s) => \$random_dev,
         q(debug|D:i) => \$DEBUG,
@@ -123,6 +126,8 @@ my %diceware; # wordlist with numbers as the index
 	} # foreach
 	print qq(Read in $counter Diceware words\n) if ( defined $DEBUG );
 
+for (my $num_passphrases = 0; $num_passphrases < $req_passphrases ;
+        $num_passphrases++) {
     # if ranlength is not set, read in the dice numbers from the user
     my $dicein = q();
     if ( ! $ranlength ) {
@@ -196,7 +201,9 @@ my %diceware; # wordlist with numbers as the index
 		# just print the generated password
 		print $dicepassword; # . qq(\n);
 	}
-	### end main script ###
+
+} # for (my $num_passphrases = 0; $req_passphrases == $num_passphrases;
+### end main script ###
 
 sub ShowHelp {
 # shows the POD documentation (short or long version)
