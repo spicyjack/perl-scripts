@@ -1,14 +1,19 @@
 #!/usr/bin/perl
 
-use lib "/sw/lib/perl5/5.8.1"; # for the Mac
 my $i=0;	# a counter
 
-# print the runtime environment
-print "Content-type: text/html","\n\n";
-print "<html><body><pre>\n";
+# if this script is being called as a CGI, then print out some HTML to get the
+# output to format better in a browser
+if ( exists $ENV{'REQUEST_METHOD'} ) {
+    print "Content-type: text/html","\n\n";
+    print "<html><body><pre>\n";
+} # if ( exists $ENV{'REQUEST_METHOD'} )
+
 print "##################################################################\n";
 print "# Perl Runtime Environment (\%ENV)                                #\n";
 print "##################################################################\n";
+
+# print the runtime environment
 while (($key, $val) = each %ENV) {
     print "$i $key = $val\n";
 	$i++;	
@@ -21,9 +26,8 @@ $i=0;	# reset counter
 print "##################################################################\n";
 print "# Perl Module Include Paths (\@INC)                               #\n";
 print "##################################################################\n";
-printf "%d %s\n", $i++, $_ for @INC;
+printf "%0.2d %s\n", $i++, $_ for @INC;
 print "\n";
-# FIXME add leading zeros to the %d
 
 $i=0;	# reset counter
 
@@ -39,7 +43,10 @@ print "##################################################################\n";
 use File::Find;
 foreach $start (@INC) { find(\&modules, $start); }
 
-print "</body></html>\n";
+# print the butt-end of the HTML if this is CGI
+if ( exists $ENV{'REQUEST_METHOD'} ) {
+    print "</body></html>\n";
+} # if ( exists $ENV{'REQUEST_METHOD'} ) {
 
 sub modules {
 	if (-d && /^[a-z]/) { $File::Find::prune = 1; return; }

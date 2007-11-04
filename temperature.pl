@@ -64,7 +64,7 @@ sub change_slider_callback {
 	$vbox->pack_start ($labelframe, TRUE, TRUE, 0);
 
 	$label = Gtk2::Entry->new();
-	$label->set_text("#" . &stringify_color($color));
+	#$label->set_text("#" . &stringify_color($color));
 	#$label = Gtk2::Label->new_with_mnemonic("#" . &stringify_color($color));
 
 	$labelframe->add ($label);
