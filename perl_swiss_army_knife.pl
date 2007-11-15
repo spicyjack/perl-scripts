@@ -1,9 +1,19 @@
 #!/usr/bin/perl
+# $Id$
+
+# A script to print out a bunch of info about the current Perl environment
+# by Brian Manning (elspicyjack {at} gmail &sdot; com)
+
+# The original script most likely appears in the Perl Cookbook from O'Reilly.
+
+# if the script detects that it's running as under a CGI environment (the
+# REQUEST_METHOD environment variable is set), it will wrap the plaintext
+# output in the correct HTML tags so the browser will render it in the same
+# manner as if the script were running in a shell.
 
 my $i=0;	# a counter
 
-# if this script is being called as a CGI, then print out some HTML to get the
-# output to format better in a browser
+# are we CGI?
 if ( exists $ENV{'REQUEST_METHOD'} ) {
     print "Content-type: text/html","\n\n";
     print "<html><body><pre>\n";
