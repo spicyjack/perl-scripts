@@ -11,7 +11,8 @@
 # output in the correct HTML tags so the browser will render it in the same
 # manner as if the script were running in a shell.
 
-my $i=0;	# a counter
+my @found_modules; # a list of modules that were found in @INC paths
+my $i=1;	# a counter
 
 # are we CGI?
 if ( exists $ENV{'REQUEST_METHOD'} ) {
@@ -24,19 +25,19 @@ print "# Perl Runtime Environment (\%ENV)                                #\n";
 print "##################################################################\n";
 
 # print the runtime environment
-while (($key, $val) = each %ENV) {
-    print "$i $key = $val\n";
+foreach my $key ( sort(keys(%ENV)) ) {
+    print(sprintf("%2d", $i) . qq( $key = ) . $ENV{$key} . qq(\n));
 	$i++;	
 } # while (($key, $val) = each %ENV)
 print "\n";
 
-$i=0;	# reset counter
+$i=1;	# reset counter
 
 # print the @INC array
 print "##################################################################\n";
 print "# Perl Module Include Paths (\@INC)                               #\n";
 print "##################################################################\n";
-printf "%0.2d %s\n", $i++, $_ for @INC;
+printf qq(%2d %s\n), $i++, $_ for sort(@INC);
 print "\n";
 
 $i=0;	# reset counter
@@ -51,13 +52,22 @@ print "##################################################################\n";
 #   3. Format the filename so that it looks more like a module
 #   4. Print it
 use File::Find;
-foreach $start (@INC) { find(\&modules, $start); }
+foreach $start ( @INC ) { find(\&modules, $start); }
+
+# reset counter
+my $i=1;
+foreach $module ( sort(@found_modules) ) {
+    printf qq(%4d %s\n), $i++, $module;
+} # foreach $module ( sort(@found_modules) )
 
 # print the butt-end of the HTML if this is CGI
 if ( exists $ENV{'REQUEST_METHOD'} ) {
     print "</body></html>\n";
 } # if ( exists $ENV{'REQUEST_METHOD'} ) {
 
+exit 0;
+
+### modules ###
 sub modules {
 	if (-d && /^[a-z]/) { $File::Find::prune = 1; return; }
 		return unless /\.pm$/;
@@ -65,7 +75,7 @@ sub modules {
       	$filename =~ s!^$start/!!;
        	$filename =~ s!\.pm$!!;
         $filename =~ s!/!::!g;
-        print "$i $filename\n";
+        push(@found_modules, $filename);
 		$i++;
 } # sub modules
 
