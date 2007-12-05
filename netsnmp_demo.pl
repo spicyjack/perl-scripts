@@ -7,19 +7,31 @@ use warnings;
 #
 # demo of Net::SNMP
 
-#   This program is free software; you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation; version 2 dated June, 1991.
-#
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License
-#   along with this program;  if not, write to the Free Software
-#   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111, USA.
+# external modules
+use Net::SNMP;
 
+# create an SNMP session
+my ($snmp_session, $session_error) = Net->SNMP->session(
+    -hostname   => shift || q(localhost),
+    -community  => shift || q(public),
+    -port       => shift || q(161),
+); # my ($snmp_session, $session_error) = Net->SNMP->session
+
+# verify it was created correctly
+if ( ! defined ($snmp_session) ) {
+    printf(qq(Error creating SNMP session: %s), $session_error);
+    exit 1;
+} # if ( ! defined ($snmp_session) )
+
+my $sysUpTime = q(SNMPv2-MIB::sysUpTime);
+
+my $result = $snmp_session->get_request(-varbindlist => [$sysUpTime]);
+
+if ( ! defined ($result) ) {
+    printf(qq(Error getting %s: %s\n", $sysUpTime, $snmp_session->error));
+    $snmp_session->close;
+    exit 1;
+} # if ( ! defined ($result) ) 
 
 # vi: set ft=perl sw=4 ts=4 cin:
 # end of line
