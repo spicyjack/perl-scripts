@@ -15,6 +15,7 @@ my ($snmp_session, $session_error) = Net::SNMP->session(
     -hostname   => shift || q(localhost),
     -community  => shift || q(public),
     -port       => shift || q(161),
+    -version    => shift || q(2c),
 ); # my ($snmp_session, $session_error) = Net->SNMP->session
 
 # verify it was created correctly
