@@ -24,7 +24,9 @@ if ( ! defined ($snmp_session) ) {
 } # if ( ! defined ($snmp_session) )
 
 #my $sysUpTime = q(SNMPv2-MIB::sysUpTime);
-my $sysUpTime = q(.1.3.6.1.2.1.1.3);
+my $sysUpTime = q(.1.3.6.1.2.1.1.3.0);
+# not uptime, sysContact.0
+#my $sysUpTime = q(.1.3.6.1.2.1.1.4.0);
 
 my $result = $snmp_session->get_request(-varbindlist => [$sysUpTime]);
 
