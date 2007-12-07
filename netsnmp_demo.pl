@@ -24,10 +24,11 @@ if ( ! defined ($snmp_session) ) {
     exit 1;
 } # if ( ! defined ($snmp_session) )
 
-#my $sysUpTime = q(SNMPv2-MIB::sysUpTime);
-my $sysUpTime = q(.1.3.6.1.2.1.1.3.0);
-# not uptime, sysContact.0
-#my $sysUpTime = q(.1.3.6.1.2.1.1.4.0);
+my $snmpOidString; 
+#$snmpOidString = q(SNMPv2-MIB::sysUpTime);
+#$snmpOidString = q(.1.3.6.1.2.1.1.3.0); # SNMPv2-MIB::sysUpTime.0
+#my $sysUpTime = q(.1.3.6.1.2.1.1.4.0); # SNMPv2-MIB::sysContact.0 
+$snmpOidString = q(.1.3.6.1.4.1.2021.8.1.101.1); # UCD-SNMP-MIB::extOutput.1
 
 my $result = $snmp_session->get_request(-varbindlist => [$sysUpTime]);
 
