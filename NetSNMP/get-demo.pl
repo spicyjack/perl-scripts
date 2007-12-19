@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 # $Id$
-# Copyright (c)2001 by Brian Manning
+# borrowed from the Net::SNMP Perl POD page
 #
 # demo of Net::SNMP
 
