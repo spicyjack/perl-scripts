@@ -17,6 +17,7 @@ use strict;
 use warnings;
 
 # external modules
+use LWP::UserAgent;
 use Text::CSV;
 
 my $csv = Text::CSV->new( {
@@ -24,14 +25,22 @@ my $csv = Text::CSV->new( {
         eol             => qq(\n)
 });
 
-open(CSV,"<DownloadAllNumbers.htm");
-my $counter = 0;
-foreach my $line (<CSV>) {
-    # munge out extra spaces
-    chomp($line);
-    $line =~ s/\s+/ /g; 
-    my $status = $csv->parse($line);
-    print qq(Columns are: ) . join(q(:), $csv->fields() ) . qq(\n);
-    $counter++;
-    if ( $counter == 10 ) { exit 0; }
-} # foreach my $line (<CSV>)
+#open(CSV,"<DownloadAllNumbers.htm");
+my $ua = LWP::UserAgent->new();
+#my $response = $ua->get(q(http://tinyurl.com/yv3xd8));
+my $response = $ua->get(q(http://files.antlinux.com/docs/mm.html));
+if ( $response->is_success() ) {
+    my $counter = 0;
+    foreach my $line ( split(/\n/, $response->content()) ) {
+        print qq(Raw line is: >$line<\n);
+        # munge out extra spaces
+
+        chomp($line);
+
+        $line =~ s/\s+/ /g; 
+        my $status = $csv->parse($line);
+        print qq(Columns are: ) . join(q(:), $csv->fields() ) . qq(\n);
+        $counter++;
+        if ( $counter == 10 ) { exit 0; }
+    } # foreach my $line (<CSV>)
+} # if ( $response->is_success() )
