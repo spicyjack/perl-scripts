@@ -20,12 +20,12 @@ use warnings;
 use LWP::UserAgent;
 use Text::CSV;
 
+# space as a separator, eol is a newline
 my $csv = Text::CSV->new( {
         sep_char        => ' ',
         eol             => qq(\n)
 });
 
-#open(CSV,"<DownloadAllNumbers.htm");
 my $ua = LWP::UserAgent->new();
 #my $response = $ua->get(q(http://tinyurl.com/yv3xd8));
 my $response = $ua->get(q(http://files.antlinux.com/docs/mm.html));
