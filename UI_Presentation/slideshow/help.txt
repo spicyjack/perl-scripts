@@ -1,0 +1,135 @@
+﻿TITLE::HELP on Takahashi-Method-based Presentation in XUL 
+HEADER:: Takahashi-Method-based Presentation HELP
+Right Arrow to next slide
+----
+CHAPTER::Driving it
+HEADER::
+Navigation Keys
+----
+HEADER::Navigation Keys
+↵ - Step
+PgDn - Step
+----
+→ - Step
+↓ - Step 
+----
+Left Click -  
+Forward a whole slide
+----
+PgUp, ←,↑
+Back one slide
+----
+Home - Go to start
+End - Go to end
+----
+Ctrl-R
+Reload
+----
+Ctrl-E
+to enter 
+Edit mode
+----
+Ctrl-E
+again to exit
+[Try it now!]
+----
+Ctrl-Shift-E
+Toggle Eva mode
+----
+HEADER::
+CHAPTER::Editing
+Editing
+----
+HEADER::Edit Mode
+Ctrl-N
+Insert New page
+----
+Plain text is just printed
+----
+[it creates suspense]
+[[PRE:in code: [it creates suspense]:PRE]]
+
+----
+[[EM:emphasis:EM]]
+[[PRE:in code: [[EM:emphasis:EM]]:PRE]]
+
+----
+[[PRE:preformatted text:PRE]]
+[[PRE:in code:[[PRE:preformatted text:PRE]]:PRE]]
+
+----
+You can even include code in [[PRE:PRE:PRE]] sections:
+[[PRE:&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;Page title&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;p&gt;XUL Rules!&lt;/p&gt;
+  &lt;/body&gt;
+&lt;/html&gt;:PRE]]
+----
+Links
+----
+[[http://piro.sakura.ne.jp/]]
+[[PRE:in code: [[http://piro.sakura.ne.jp/]]:PRE]]
+----
+[[Link with Label|http://piro.sakura.ne.jp/]]
+[[PRE:in code: [[Link with Label|http://piro.sakura.ne.jp/]]:PRE]]
+----
+[[image src="car_old.jpg" width="400" height="290"]]
+[[PRE:in code: [[image src="car_old.jpg" width="400" height="290"]]:PRE]]
+----
+You can even include them inline [[image src="car_old.jpg" width="150" height="84"]]
+Or more than one per page:
+[[image src="car_old.jpg" width="300" height="168"]]
+----
+Full screen images:
+[[PRE:[[image src="car_old.jpg"]]:PRE]]
+----
+[[image src="car_old.jpg"]]
+----
+HEADER::URL parameters
+FOOTER::
+CHAPTER::URL parameters
+URL parameters
+----
+Start on any page:
+?page=3
+----
+Show a particular presentation:
+?data=mypresentation.txt
+----
+Start in edit mode:
+?edit=true
+----
+White on Black:
+?eva=true
+----
+HEADER::
+NOTICE
+----
+HEADER::Important point!
+CHAPTER::Download
+Users can download this
+software from any site
+that uses it in a presentation
+----
+Just 3 files
+to download
+---
+HEADER::Download here
+[[slideshow.xul]]
+[[slideshow.css]]
+[[monta-label.png]]
+----
+Please do not modify
+slideshow.xul
+----
+write your own
+*.txt file
+and link it with 
+?data=*.txt
+----
+HEADER::
+Open Source License
+MPL1.1

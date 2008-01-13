@@ -1,0 +1,38 @@
+TITLE::Web 2.0: RubyOnRails
+HEADER::www.seesaw.it presents...
+Sample 
+XUL
+Slideshow
+FOOTER::staff@seesaw.it
+----
+HEADER::
+WOW
+FOOTER::
+----
+HOW COOL
+----
+[[image src="car_old.jpg" width="800" height="583"]]
+----
+Next:
+Full screen Image
+----
+[[image src="car_old.jpg"]]
+----
+HEADER::Some Code
+[[PRE:
+class Author &lt; ActiveRecord::Base
+    has_many :authorships
+    has_many :books,
+        :through =&gt; :authorships
+end
+:PRE]]
+FOOTER::[this is an ActiveRecord sample]
+----
+HEADER::
+Thanks!
+FOOTER::
+----
+HEADER::Contact us...
+www.seesaw.it
+blog.seesaw.it
+FOOTER::staff@seesaw.it
