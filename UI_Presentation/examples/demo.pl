@@ -172,14 +172,29 @@ HELPDOC
                     system qq(/opt/local/bin/widget);
                 }, # run->Tk->proc
             }, # run->Tk
-            "Gtk2-Glade" => { 
+            "Gtk2-GladeXML" => { 
                 desc => qq(Runs the Gtk2-Glade Widget Demo),
                 proc => sub { 
-                    $logger->info(qq(Starting Tk Widget demo));
+                    $logger->info(qq(Starting Gtk2-GladeXML Widget demo));
                     system qq(perl /Users/brian/Files/Windows_Software/)
                         . qq(Gtk2Perl/examples/Gtk2-GladeXML/hello-world.pl);
                 }, # run->Gtk2-Glade->proc
             }, # run->Gtk2-Glade
+            "Gnome2-Canvas" => { 
+                desc => qq(Runs the Gnome2-Canvas Widget Demo),
+                proc => sub { 
+                    $logger->info(qq(Starting Gnome2-Canvas Widget demo));
+                    system qq(perl /Users/brian/Files/Windows_Software/)
+                        . qq(Gtk2Perl/examples/Gnome2-Canvas/canvas.pl);
+                }, # run->Gnome-Canvas->proc
+            }, # run->Gnome-Canvas
+            "file" => { 
+                desc => qq(Runs a file from the 'list' command),
+                proc => sub { 
+                    $logger->info(qq(Running file));
+                    system qq(perl Gtk2Perl/examples/Gnome-Canvas/canvas.pl);
+                }, # run->file->proc
+            }, # run->file
         }, # run->cmds            
     }, # run
 	'ru'     =>  { syn => q(run) },
@@ -189,13 +204,13 @@ HELPDOC
         desc => q(List demo scripts in the current directory),
         proc => sub { 
             $logger->info(q(Built-in apps: ));
-            foreach my $file ( qw(Tk Gtk2-Glade) ) {
+            foreach my $file ( qw(Tk Gtk2-GladeXML Gnome2-Canvas) ) {
                 $logger->info(qq(\t$file));
             } # foreach my $file ( qw(Tk GTK ) )
             my @filelist = bsd_glob(q(*.pl));
             $logger->info(q(Found ) . scalar(@filelist) . q( files total));
             foreach my $file ( @filelist ) {
-                next if ( $file =~ /data\.pl/ );
+                next if ( $file =~ /.*data\.pl/ );
                 $logger->info(qq(\t$file));
             } # foreach my $file ( @filelist )
         }, # list->proc
