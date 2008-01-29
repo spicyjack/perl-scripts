@@ -190,9 +190,16 @@ HELPDOC
             }, # run->Gnome-Canvas
             "file" => { 
                 desc => qq(Runs a file from the 'list' command),
+                minargs => 1,
+                maxargs => 1,
                 proc => sub { 
-                    $logger->info(qq(Running file));
-                    system qq(perl Gtk2Perl/examples/Gnome-Canvas/canvas.pl);
+                    my $file = shift;
+                    if ( defined $file && -e $file ) {
+                        $logger->info(qq(Running file $file));
+                        system qq(perl $file);
+                    } else {
+                        $logger->error(qq(Can't find file '$file'));
+                    } # if ( -e $file )
                 }, # run->file->proc
             }, # run->file
         }, # run->cmds            
@@ -208,11 +215,15 @@ HELPDOC
                 $logger->info(qq(\t$file));
             } # foreach my $file ( qw(Tk GTK ) )
             my @filelist = bsd_glob(q(*.pl));
-            $logger->info(q(Found ) . scalar(@filelist) . q( files total));
+            my @validlist;
             foreach my $file ( @filelist ) {
-                next if ( $file =~ /.*data\.pl/ );
+                #$logger->warn(qq(file is $file));
+                next if ( $file =~ /demo\.pl/ );
                 $logger->info(qq(\t$file));
+                push(@validlist, $file);
             } # foreach my $file ( @filelist )
+            $logger->info(q(Found ) . scalar(@validlist) 
+                . ' valid file(s) total');
         }, # list->proc
 	}, # list
 	'li'     =>  { syn => q(list) },
