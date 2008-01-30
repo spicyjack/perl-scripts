@@ -165,6 +165,15 @@ HELPDOC
     'run' => { 
         desc => q(Run a demo),
         cmds => {
+            "Win32::GUI" => { 
+                desc => qq(Runs the Win32::GUI Widget Demos),
+                proc => sub { 
+                    # FIXME
+                    # create a list of valid demos, list them under 'list',
+                    # run them here
+                    system qq(/opt/local/bin/widget);
+                }, # run->Tk->proc
+            }, # run->Tk
             "Tk" => { 
                 desc => qq(Runs the Perl/Tk Widget Demo),
                 proc => sub { 
@@ -172,16 +181,16 @@ HELPDOC
                     system qq(/opt/local/bin/widget);
                 }, # run->Tk->proc
             }, # run->Tk
-            "Gtk2-GladeXML" => { 
-                desc => qq(Runs the Gtk2-Glade Widget Demo),
+            "Gtk2::GladeXML" => { 
+                desc => qq(Runs the Gtk2::GladeXML Widget Demo),
                 proc => sub { 
                     $logger->info(qq(Starting Gtk2-GladeXML Widget demo));
                     system qq(perl /Users/brian/Files/Windows_Software/)
                         . qq(Gtk2Perl/examples/Gtk2-GladeXML/hello-world.pl);
                 }, # run->Gtk2-Glade->proc
             }, # run->Gtk2-Glade
-            "Gnome2-Canvas" => { 
-                desc => qq(Runs the Gnome2-Canvas Widget Demo),
+            "Gnome2::Canvas" => { 
+                desc => qq(Runs the Gnome2::Canvas Widget Demo),
                 proc => sub { 
                     $logger->info(qq(Starting Gnome2-Canvas Widget demo));
                     system qq(perl /Users/brian/Files/Windows_Software/)
@@ -211,9 +220,16 @@ HELPDOC
         desc => q(List demo scripts in the current directory),
         proc => sub { 
             $logger->info(q(Built-in apps: ));
-            foreach my $file ( qw(Tk Gtk2-GladeXML Gnome2-Canvas) ) {
-                $logger->info(qq(\t$file));
+            foreach my $file ( qw(Win32::GUI Tk 
+                        Gtk2::GladeXML Gnome2::Canvas) ) {
+                eval "use $file;";
+                if ( length($@) == 0 ) {
+                    # the eval didn't barf
+                    $logger->info(qq(\t$file));
+                } # if ( ! defined $@ )
             } # foreach my $file ( qw(Tk GTK ) )
+            # now get the scripts out on the filesystem
+            $logger->info(q(External scripts: ));
             my @filelist = bsd_glob(q(*.pl));
             my @validlist;
             foreach my $file ( @filelist ) {
