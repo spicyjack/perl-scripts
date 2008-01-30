@@ -1,11 +1,14 @@
 TITLE::User Interfaces in Perl - February 2008
-HEADER:: 
-[[image src="./header-200x63.jpg" width="200" height="63"]]
+HEADER::[[image src="./header-200x63.jpg" width="200" height="63"]]
 What is a user interface?
 FOOTER::http://sandiego.pm.org
 ----
 HEADER::
-WOW
+(Wikipedia) The user interface (of a computer program) refers to the
+graphical, textual and auditory information the program presents to the user,
+and the control sequences (such as keystrokes with the computer keyboard,
+movements of the computer mouse, and selections with the touchscreen) the user
+employs to control the program.
 FOOTER::
 ----
 HOW COOL
