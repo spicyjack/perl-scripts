@@ -34,4 +34,4 @@ FOOTER::
 HEADER::Contact us...
 www.seesaw.it
 blog.seesaw.it
-FOOTER::staff@seesaw.it
+FOOTER::http://sandiego.pm.org
