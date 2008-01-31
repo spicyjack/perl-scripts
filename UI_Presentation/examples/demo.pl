@@ -133,6 +133,12 @@ sub get_commands {
 	# grab the logger singleton object
 	my $logger = get_logger();
 
+    my %demos = { 
+        perl-qt     => [ q(/usr/bin/program), q(demo1), q(demo2)],
+        win32-gui   => [ q(/usr/bin/program), q(demo1), q(demo2)],
+        xlogo       => [ q(/usr/X11R6/bin/xlogo)],
+    }; # my %demos
+
     # this is an anonymous hash containing all of the menu items
 	return {
 ### help
@@ -161,6 +167,22 @@ HELPDOC
     'exit'  =>  { syn => q(quit) },
     'q'     =>  { syn => q(quit) },
     'x'     =>  { syn => q(quit) },
+### view
+    'view'  =>  {
+        desc => qq(Opens a file in vim),
+        minargs => 1,
+        maxargs => 1,
+        proc => sub { 
+            my $file = shift;
+            if ( &check_file( file=> $file) ) {
+                system(qq(/usr/bin/vim $file));
+            } else {
+                $logger->warn(qq(Can't find file '$file'));
+            } # if ( &check_file( file=> $file) )
+        } # view->proc
+	}, # view
+    'v'      =>  { syn => q(view) },
+    'vi'     =>  { syn => q(view) },
 ### run
     'run' => { 
         desc => q(Run a demo),
@@ -197,6 +219,17 @@ HELPDOC
                         . qq(Gtk2Perl/examples/Gnome2-Canvas/canvas.pl);
                 }, # run->Gnome-Canvas->proc
             }, # run->Gnome-Canvas
+            "xlogo" => { 
+                desc => qq(Runs the xlogo command to test the X server),
+                proc => sub {
+                    my $xlogo = q(/usr/X11R6/bin/xlogo);
+                    if ( -e $xlogo ) { 
+                        system($xlogo) 
+                    } else {
+                        $logger->warn(q(xlogo not found/not available));
+                    } # if ( -e $xlogo )
+                }, # run->xlogo->proc
+            }, # run->xlogo
             "file" => { 
                 desc => qq(Runs a file from the 'list' command),
                 minargs => 1,
@@ -257,6 +290,16 @@ sub confirm {
 	return 1 if ( $read =~ /y/ig ); 
 	return undef;
 } # sub confirm
+
+sub check_file {
+# confirms that a file exists
+    my %args = @_;
+    if ( -e $args{file} ) {
+        return 1;
+    } else {
+        return undef;
+    } # if ( -e $args{file} )
+} # sub check_file
 
 ############
 # ShowHelp #
