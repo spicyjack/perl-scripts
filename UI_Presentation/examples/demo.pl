@@ -134,9 +134,15 @@ sub get_commands {
 	my $logger = get_logger();
 
     my %demos = { 
+        # you can specify multiple demos this way; set the path to the demos,
+        # then specify the demos like this:
+        # [ $path, $demo1, $demo2, $demo3, etc. ] 
         perl-qt     => [ q(/usr/bin/program), q(demo1), q(demo2)],
         win32-gui   => [ q(/usr/bin/program), q(demo1), q(demo2)],
-        xlogo       => [ q(/usr/X11R6/bin/xlogo)],
+        xlogo       => [ q(/usr/X11R6/bin), q(xlogo)],
+        # no demo for demo.pl, we're already running it
+        demo.pl     => [ q(.) ],
+        log4perl    => [ q(.), q(log4perl.pl) ],
     }; # my %demos
 
     # this is an anonymous hash containing all of the menu items
@@ -267,7 +273,7 @@ HELPDOC
             my @validlist;
             foreach my $file ( @filelist ) {
                 #$logger->warn(qq(file is $file));
-                next if ( $file =~ /demo\.pl/ );
+                #next if ( $file =~ /demo\.pl/ );
                 $logger->info(qq(\t$file));
                 push(@validlist, $file);
             } # foreach my $file ( @filelist )

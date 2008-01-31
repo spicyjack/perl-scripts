@@ -1,40 +1,96 @@
 TITLE::User Interfaces in Perl - February 2008
 HEADER::[[image src="./header-200x63.jpg" width="200" height="63"]]
-What is a user interface?
+User Interfaces in Perl
+Presented by: Brian Manning
+San Diego Perl Mongers
+February 2008
 FOOTER::http://sandiego.pm.org
 ----
+A survey of Perl modules that
+you can use to interact with 
+Perl scripts beyond the usual...
+[[EM: print $prompt;:EM]]
+[[EM:$answer = <STDIN>;:EM]]
+----
+Modules presented today
+can usually be installed
+using nothing more than
+system package management
+tools, or a quick trip to 
+[[CPAN|http://www.cpan.org]]
+----
+Icon Key:
+[[image src="finder-50x50.png" width="50" height="50"]] - Mac OS X (using MacPorts)
+[[image src="linux-50x50.png" width="50" height="50"]] - Linux (using Debian)
+[[image src="windows-50x50.png" width="50" height="50"]] - Windows (using multiple sources)
+[[image src="yes_check-50x50.png" width="50" height="50"]] - Works!
+[[image src="question_mark-50x50.png" width="50" height="50"]] - May work, may not work...
+[[image src="red_x-50x50.png" width="50" height="50"]] - Does not work
+----
+Please...
+Save module suggestions until
+the end of the presentation,
+and post them to the list
+as well :)
+----
+What is a user interface?
+----
 HEADER::
-(Wikipedia) The user interface (of a computer program) refers to the
-graphical, textual and auditory information the program presents to the user,
-and the control sequences (such as keystrokes with the computer keyboard,
-movements of the computer mouse, and selections with the touchscreen) the user
-employs to control the program.
+(Wikipedia) The user interface (of a computer 
+program) refers to the graphical, textual and 
+auditory information the program presents to 
+the user, and the control sequences (such as
+keystrokes with the computer keyboard, movements 
+of the computer mouse, and selections with the
+touchscreen) the user employs to control the 
+program.
 FOOTER::
 ----
-HOW COOL
+Textual User Interfaces
 ----
-[[image src="car_old.jpg" width="800" height="583"]]
+[[Term::ShellUI|http://search.cpan.org/~bronson/Term-ShellUI-0.86/lib/Term/ShellUI.pm]]
+A fully-featured shell-like command 
+line environment
+[[image src="finder-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
+[[image src="linux-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
+[[image src="windows-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 ----
-Next:
-Full screen Image
+[[Log::Log4perl|http://search.cpan.org/~mschilli/Log-Log4perl-1.14/lib/Log/Log4perl.pm]]
+[[http://log4perl.sourceforge.net/]]
+Log4j implementation for Perl
+[[image src="finder-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
+[[image src="linux-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
+[[image src="windows-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 ----
-[[image src="car_old.jpg"]]
+Graphical User Interfaces
 ----
-HEADER::Some Code
-[[PRE:
-class Author &lt; ActiveRecord::Base
-    has_many :authorships
-    has_many :books,
-        :through =&gt; :authorships
-end
-:PRE]]
-FOOTER::[this is an ActiveRecord sample]
+[[Tk|http://search.cpan.org/~ni-s/Tk-804.027/pod/UserGuide.pod]]
+Tk applications in Perl 5 
+[[image src="finder-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
+[[image src="linux-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
+[[image src="windows-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
+----
+[[Gtk2|http://search.cpan.org/~tsch/Gtk2-1.164/Gtk2.pm]]
+Perl interface to the 2.x series
+of the Gimp Toolkit library
+[[image src="finder-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
+[[image src="linux-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
+[[image src="windows-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 ----
 HEADER::
 Thanks!
 FOOTER::
 ----
-HEADER::Contact us...
-www.seesaw.it
-blog.seesaw.it
-FOOTER::http://sandiego.pm.org
+HEADER::
+Contact us...
+san-diego-pm-request@pm.org
+http://sandiego.pm.org
+FOOTER::
+----
+[[image src="finder-50x50.png" width="50" height="50"]]
+[[image src="linux-50x50.png" width="50" height="50"]]
+[[image src="windows-50x50.png" width="50" height="50"]]
+[[image src="yes_check-50x50.png" width="50" height="50"]]
+[[image src="question_mark-50x50.png" width="50" height="50"]]
+[[image src="red_x-50x50.png" width="50" height="50"]]
+
