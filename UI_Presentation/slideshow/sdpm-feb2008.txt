@@ -1,5 +1,5 @@
 TITLE::User Interfaces in Perl - February 2008
-HEADER::[[image src="./header-200x63.jpg" width="200" height="63"]]
+HEADER::
 User Interfaces in Perl
 Presented by: Brian Manning
 San Diego Perl Mongers
@@ -49,15 +49,15 @@ FOOTER::
 Textual User Interfaces
 ----
 [[Term::ShellUI|http://search.cpan.org/~bronson/Term-ShellUI-0.86/lib/Term/ShellUI.pm]]
-A fully-featured shell-like command 
-line environment
+"A fully-featured shell-like command 
+line environment"
 [[image src="finder-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 [[image src="linux-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 [[image src="windows-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 ----
 [[Log::Log4perl|http://search.cpan.org/~mschilli/Log-Log4perl-1.14/lib/Log/Log4perl.pm]]
 [[http://log4perl.sourceforge.net/]]
-Log4j implementation for Perl
+"Log4j implementation for Perl"
 [[image src="finder-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 [[image src="linux-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 [[image src="windows-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
@@ -65,14 +65,15 @@ Log4j implementation for Perl
 Graphical User Interfaces
 ----
 [[Tk|http://search.cpan.org/~ni-s/Tk-804.027/pod/UserGuide.pod]]
-Tk applications in Perl 5 
+"Tk applications in Perl 5"
 [[image src="finder-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 [[image src="linux-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 [[image src="windows-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 ----
 [[Gtk2|http://search.cpan.org/~tsch/Gtk2-1.164/Gtk2.pm]]
-Perl interface to the 2.x series
-of the Gimp Toolkit library
+[[http://gtk2-perl.sourceforge.net/]]
+"Perl interface to the 2.x series
+of the Gimp Toolkit library"
 [[image src="finder-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 [[image src="linux-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 [[image src="windows-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
