@@ -78,9 +78,13 @@ of the Gimp Toolkit library"
 [[image src="linux-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 [[image src="windows-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 ----
-HEADER::
+Summary:
+Graphical User Interface
+Tk, Gtk2::Perl
+Textual User Interface
+Log::Log4perl, Term::ShellUI
+----
 Thanks!
-FOOTER::
 ----
 HEADER::
 Contact us...
