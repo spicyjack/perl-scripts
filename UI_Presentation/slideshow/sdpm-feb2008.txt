@@ -36,14 +36,15 @@ as well :)
 What is a user interface?
 ----
 HEADER::
-(Wikipedia) The user interface (of a computer 
-program) refers to the graphical, textual and 
-auditory information the program presents to 
-the user, and the control sequences (such as
-keystrokes with the computer keyboard, movements 
-of the computer mouse, and selections with the
-touchscreen) the user employs to control the 
-program.
+(Wikipedia) The user interface (of a
+computer program) refers to the graphical,
+textual and auditory information the
+program presents to the user, and the
+control sequences (such as keystrokes
+with the computer keyboard, movements 
+of the computer mouse, and selections
+with the touchscreen) the user employs
+to control the program.
 FOOTER::
 ----
 Textual User Interfaces
@@ -78,11 +79,18 @@ of the Gimp Toolkit library"
 [[image src="linux-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 [[image src="windows-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 ----
+Modules that could not be demo'ed:
+Camelbones (OS X)
+wxWidgets (OS X, Linux, Windows)
+FLTK (OS X, Linux, Cygwin)
+----
 Summary:
 Graphical User Interface
-Tk, Gtk2::Perl
+Tk, Gtk2::Perl, ЅDL-Perl, Perl::Qt3
 Textual User Interface
 Log::Log4perl, Term::ShellUI
+Multiple Mode
+UI::Dialog
 ----
 Thanks!
 ----
