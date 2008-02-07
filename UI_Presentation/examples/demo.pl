@@ -52,6 +52,7 @@ BEGIN {
     my %load_modules = ( 
                     q(AppConfig) => undef,
                     q(File::Glob) => q(:glob),
+                    q(JSON) => undef,
 					q(Log::Log4perl) => q(get_logger :levels),
                     q(Term::ShellUI) => undef, 
                     q(Time::HiRes) => q(gettimeofday tv_interval),
@@ -87,6 +88,8 @@ my @program_name = split(/\//,$0);
 $Config->define(q(program_name|pn=s));
 $Config->set(q(program_name), $program_name[-1]);
 $Config->define(q(help|h!));
+$Config->define(q(os_name));
+$Config->set(q(os_name), $^O);
 
 # do we need to show the help file?
 if ( $Config->get(q(help)) ) {
@@ -107,8 +110,20 @@ my $logger_conf = qq(log4perl.rootLogger = INFO, Screen\n)
 Log::Log4perl::init( \$logger_conf );
 my $logger = get_logger("");
 
+# create a JSON parser object
+my $json_parser = JSON->new->ascii->pretty->allow_nonref;
+# open the filehandle
+open(JSONFH, "< examples.json") || die qq(Can't open examples.json: $!);
+# read the lines into an array
+my @json_lines = <JSONFH>;
+# run it through the decoder to create the perl object reference
+my $json_object = $json_parser->decode( join(" ", @json_lines) );
+# recast the perl object reference into a hash
+my %example_object = %$json_object;
+# use the hash to get the list of examples for this platform
+my $example_slice = $example_object{$Config->get(q(os_name))};
 my $term = new Term::ShellUI( 	
-		commands => get_commands($Config),
+		commands => get_commands($Config, $example_slice),
 		app => q(UI demo),
 		prompt => q(UI_demo> ),);
 #		debug_complete => 2 );
@@ -117,8 +132,12 @@ print qq(=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n);
 print $Config->get(q(program_name)) . qq(, a Perl dependency shell, );
 print qq(script version: ) . sprintf("%1.1f", $main::VERSION) . qq(\n);
 print q(CVS: $Id$) . qq(\n);
-print qq(  For help with this script, type 'help' at the prompt\n);
+print qq(For help with this script, type 'help' at the prompt\n);
 
+print q(Available examples for platform ') . $Config->get(q(os_name)) 
+    . qq('\n);
+use Data::Dumper;
+print Dumper $example_slice;
 # yield to Term::ShellUI
 $term->run();
 
@@ -130,20 +149,12 @@ exit 0;
 sub get_commands {
 	# the config object
 	my $Config = shift; 
+# TODO parse $example_slice and see if all of the files it mentions are
+# available, if they are, list them when the user calls 'list', run them when
+# the user calls 'run', and open them in vim when the user calls 'view'
+	my $example_slice = shift; 
 	# grab the logger singleton object
 	my $logger = get_logger();
-
-    my %demos = { 
-        # you can specify multiple demos this way; set the path to the demos,
-        # then specify the demos like this:
-        # [ $path, $demo1, $demo2, $demo3, etc. ] 
-        perl-qt     => [ q(/usr/bin/program), q(demo1), q(demo2)],
-        win32-gui   => [ q(/usr/bin/program), q(demo1), q(demo2)],
-        xlogo       => [ q(/usr/X11R6/bin), q(xlogo)],
-        # no demo for demo.pl, we're already running it
-        demo.pl     => [ q(.) ],
-        log4perl    => [ q(.), q(log4perl.pl) ],
-    }; # my %demos
 
     # this is an anonymous hash containing all of the menu items
 	return {
