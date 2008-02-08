@@ -79,14 +79,45 @@ of the Gimp Toolkit library"
 [[image src="linux-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 [[image src="windows-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 ----
-Modules that could not be demo'ed:
-Camelbones (OS X)
-wxWidgets (OS X, Linux, Windows)
-FLTK (OS X, Linux, Cygwin)
+[[Win32::GUI|http://search.cpan.org/dist/Win32-GUI/]]
+[[http://perl-win32-gui.sourceforge.net]]
+"Perl Win32 Graphical 
+User Interface Extension"
+[[image src="finder-50x50.png" width="50" height="50"]][[image src="red_x-50x50.png" width="50" height="50"]]
+[[image src="linux-50x50.png" width="50" height="50"]][[image src="red_x-50x50.png" width="50" height="50"]]
+[[image src="windows-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
+----
+[[SDL_Perl|http://search.cpan.org/dist/SDL_Perl/]]
+[[http://sdl.perl.org/]]
+"Simple DirectMedia Layer for Perl"
+[[image src="finder-50x50.png" width="50" height="50"]][[image src="question_mark-50x50.png" width="50" height="50"]]
+[[image src="linux-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
+[[image src="windows-50x50.png" width="50" height="50"]][[image src="red_x-50x50.png" width="50" height="50"]]
+----
+[[Perl::Qt3|http://search.cpan.org/~ggarand/PerlQt-3.008/]]
+[[http://perlqt.sourceforge.net/]]
+"a set of Perl bindings for the Qt toolkit"
+[[image src="finder-50x50.png" width="50" height="50"]][[image src="question_mark-50x50.png" width="50" height="50"]]
+[[image src="linux-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
+[[image src="windows-50x50.png" width="50" height="50"]][[image src="question_mark-50x50.png" width="50" height="50"]]
+----
+"Multiple Mode" User Interfaces
+----
+[[UI::Dialog|http://search.cpan.org/~kck/UI-Dialog-1.08/lib/UI/Dialog.pod]]
+"UI::Dialog is a OOPerl wrapper for
+the various dialog applications."
+[[image src="finder-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
+[[image src="linux-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
+[[image src="windows-50x50.png" width="50" height="50"]][[image src="red_x-50x50.png" width="50" height="50"]]
+----
+Modules that could not be demonstrated:
+Camelbones (OS X) [[image src="question_mark-50x50.png" width="50" height="50"]]
+wxWidgets (OS X, Linux, Windows) [[image src="question_mark-50x50.png" width="50" height="50"]]
+FLTK (OS X, Linux, Cygwin) [[image src="question_mark-50x50.png" width="50" height="50"]]
 ----
 Summary:
 Graphical User Interface
-Tk, Gtk2::Perl, ЅDL-Perl, Perl::Qt3
+Tk, Gtk2::Perl, SDL_Perl, Perl::Qt3
 Textual User Interface
 Log::Log4perl, Term::ShellUI
 Multiple Mode
@@ -96,8 +127,10 @@ Thanks!
 ----
 HEADER::
 Contact us...
-san-diego-pm-request@pm.org
 http://sandiego.pm.org
+san-diego-pm-request@pm.org
+(Mailing list subscription address)
+
 FOOTER::
 ----
 [[image src="finder-50x50.png" width="50" height="50"]]
