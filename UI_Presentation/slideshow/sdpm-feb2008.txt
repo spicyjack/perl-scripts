@@ -6,6 +6,15 @@ San Diego Perl Mongers
 February 2008
 FOOTER::http://sandiego.pm.org
 ----
+Agenda
+- Introduction
+- What is a User Interface?
+- Textual User Interfaces
+- Graphical User Interfaces
+- Mixed Mode User Interfaces
+- Modules that could not be demoed
+- Questions
+----
 A survey of Perl modules that
 you can use to interact with 
 Perl scripts beyond the usual...
@@ -123,7 +132,7 @@ Log::Log4perl, Term::ShellUI
 Multiple Mode
 UI::Dialog
 ----
-Thanks!
+Questions?
 ----
 HEADER::
 Contact us...
