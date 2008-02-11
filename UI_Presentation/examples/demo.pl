@@ -241,7 +241,7 @@ HELPDOC
                     return;
                 } else {
                     # run perl with the name of the file
-                    system(q(/usr/bin/env perl ) . $examples{$file});
+                    system(q(env perl ) . $examples{$file});
                 } # if ( $file == q(xeyes) )
             } else {
                 $logger->warn(qq(No match for '$file'));

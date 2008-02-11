@@ -29,7 +29,7 @@
         "C:/perl/5.8.8/examples/Gnome2-Canvas": [ "canvas.pl" ],
         "C:/perl/5.8.8/examples/Gtk2": [ "program1.pl" ],
         "C:/perl/5.8.8/examples/Gtk2-Demo": [ "program1.pl" ],
-        "C:/perl/5.8.8/examples/": [ 
+        "C:/perl/5.8.8/examples": [ 
             "gyroscope.pl",
             "perl_swiss_army_knife.pl" 
          ]
