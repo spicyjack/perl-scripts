@@ -96,6 +96,13 @@ User Interface Extension"
 [[image src="linux-50x50.png" width="50" height="50"]][[image src="red_x-50x50.png" width="50" height="50"]]
 [[image src="windows-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 ----
+[[Perl::Qt3|http://search.cpan.org/~ggarand/PerlQt-3.008/]]
+[[http://perlqt.sourceforge.net/]]
+"a set of Perl bindings for the Qt toolkit"
+[[image src="finder-50x50.png" width="50" height="50"]][[image src="question_mark-50x50.png" width="50" height="50"]]
+[[image src="linux-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
+[[image src="windows-50x50.png" width="50" height="50"]][[image src="question_mark-50x50.png" width="50" height="50"]]
+----
 [[SDL_Perl|http://search.cpan.org/dist/SDL_Perl/]]
 [[http://sdl.perl.org/]]
 "Simple DirectMedia Layer for Perl"
@@ -103,12 +110,7 @@ User Interface Extension"
 [[image src="linux-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
 [[image src="windows-50x50.png" width="50" height="50"]][[image src="red_x-50x50.png" width="50" height="50"]]
 ----
-[[Perl::Qt3|http://search.cpan.org/~ggarand/PerlQt-3.008/]]
-[[http://perlqt.sourceforge.net/]]
-"a set of Perl bindings for the Qt toolkit"
-[[image src="finder-50x50.png" width="50" height="50"]][[image src="question_mark-50x50.png" width="50" height="50"]]
-[[image src="linux-50x50.png" width="50" height="50"]][[image src="yes_check-50x50.png" width="50" height="50"]]
-[[image src="windows-50x50.png" width="50" height="50"]][[image src="question_mark-50x50.png" width="50" height="50"]]
+An Interlude....
 ----
 "Multiple Mode" User Interfaces
 ----
@@ -126,20 +128,17 @@ FLTK (OS X, Linux, Cygwin) [[image src="question_mark-50x50.png" width="50" heig
 ----
 Summary:
 Graphical User Interface
-Tk, Gtk2::Perl, SDL_Perl, Perl::Qt3
+Tk, Gtk2::Perl, Perl::Qt3, SDL_Perl  
 Textual User Interface
 Log::Log4perl, Term::ShellUI
 Multiple Mode
 UI::Dialog
 ----
 "Hello World" Line Counts
-Tk: ?
-Gtk2-Perl: 7
-SDL_Perl: ?
-Perl::Qt3: ?
-Log::Log4perl: ?
-Term::ShellUI: ?
-UI::Dialog: ?
+Tk: 6
+Gtk2-Perl: 8
+Perl::Qt3: 8
+UI::Dialog: 5
 ----
 Questions?
 ----
