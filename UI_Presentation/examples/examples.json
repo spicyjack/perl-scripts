@@ -27,8 +27,11 @@
 {
     "MSWin32": {
         "C:/perl/5.8.8/examples/Gnome2-Canvas": [ "canvas.pl" ],
-        "C:/perl/5.8.8/examples/Gtk2": [ "program1.pl" ],
+        "C:/perl/5.8.8/examples/Gtk2": [  "calendar.pl", "colorlist.pl",
+            "layout.pl", "simplelist.pl" ],
         "C:/perl/5.8.8/examples/Gtk2-Demo": [ "program1.pl" ],
+        "C:/perl/5.8.8/examples/Gtk2-GladeXML": [ "hello-world.pl", 
+            "scribble.pl" ],
         "C:/perl/5.8.8/examples": [ 
             "gyroscope.pl",
             "perl_swiss_army_knife.pl" 
@@ -52,8 +55,11 @@
             "perl_swiss_army_knife.pl"
         ],
         "/home/demo/examples/Gnome2-Canvas": [ "canvas.pl" ],
-        "/home/demo/examples/Gtk2": [ "program1.pl" ],
+        "/home/demo/examples/Gtk2": [ "calendar.pl", "colorlist.pl",
+            "layout.pl", "simplelist.pl"],
         "/home/demo/examples/Gtk2-Demo": [ "program1.pl" ],
+        "/home/demo/examples/Gtk2-GladeXML": [ "hello-world.pl", 
+            "scribble.pl" ],
         "/usr/share/doc/libsdl-perl/test": [ "testmenu.pl" ],
         "/usr/share/doc/libqt-perl/examples/dclock": [ "dclock.pl" ],
         "/usr/share/doc/libqt-perl/examples/buttongroups": [ 
@@ -82,9 +88,11 @@
         "/Users/Shared/Files/Windows_Software/Gtk2Perl/examples/Gnome2-Canvas":
             [ "canvas.pl" ],
         "/Users/Shared/Files/Windows_Software/Gtk2Perl/examples/Gtk2": 
-            [ "program1.pl" ],
+            [  "calendar.pl", "colorlist.pl", "layout.pl", "simplelist.pl" ],
         "/Users/Shared/Files/Windows_Software/Gtk2Perl/examples/Gtk2-Demo": 
             [ "program1.pl" ],
+        "/Users/Shared/Files/Windows_Software/Gtk2Perl/examples/Gtk2-GladeXML":
+            [ "hello-world.pl", "scribble.pl" ],
         "/Users/Shared/Files/Windows_Software/Gtk2Perl/UI-Dialog": 
             [ "ascii.pl", "console.pl",
             "gdialog.pl", "xdialog.pl", "zenity.pl" ]
