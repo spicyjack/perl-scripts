@@ -78,7 +78,7 @@
             [ "demo.pl" , "log4perl.pl", "examples.json"],
         "/Users/Shared/Files/helloworld":
             [ "helloworld_gtk2.pl" , "helloworld_tk.pl", 
-             "helloworld_ui-dialog.pl" ]
+             "helloworld_ui-dialog.pl" ],
         "/Users/Shared/Files/Windows_Software/Gtk2Perl/examples/Gnome2-Canvas":
             [ "canvas.pl" ],
         "/Users/Shared/Files/Windows_Software/Gtk2Perl/examples/Gtk2": 
