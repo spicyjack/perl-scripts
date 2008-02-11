@@ -64,7 +64,8 @@
         "/home/demo/src/perl_scripts/UI_Presentation/examples":
             [ "demo.pl" , "log4perl.pl", "examples.json"],
         "/home/demo/src/helloworld":
-            [ "helloworld_gtk2.pl" , "helloworld_tk.pl", "helloworld_qt.pl" ]
+            [ "helloworld_gtk2.pl" , "helloworld_tk.pl", 
+            "helloworld_qt.pl", "helloworld_ui-dialog.pl" ]
     },
     "darwin": {
         "/usr/X11R6/bin": [ "xeyes" ],
@@ -76,7 +77,8 @@
         "/Users/Shared/Files/UI_Presentation/examples":
             [ "demo.pl" , "log4perl.pl", "examples.json"],
         "/Users/Shared/Files/helloworld":
-            [ "helloworld_gtk2.pl" , "helloworld_tk.pl"],
+            [ "helloworld_gtk2.pl" , "helloworld_tk.pl", 
+             "helloworld_ui-dialog.pl" ]
         "/Users/Shared/Files/Windows_Software/Gtk2Perl/examples/Gnome2-Canvas":
             [ "canvas.pl" ],
         "/Users/Shared/Files/Windows_Software/Gtk2Perl/examples/Gtk2": 
