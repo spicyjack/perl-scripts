@@ -134,10 +134,12 @@ print qq(script version: ) . sprintf("%1.1f", $main::VERSION) . qq(\n);
 print q(CVS: $Id$) . qq(\n);
 print qq(For help with this script, type 'help' at the prompt\n);
 
-print q(Available examples for platform ') . $Config->get(q(os_name)) 
-    . qq('\n);
-use Data::Dumper;
-print Dumper $example_slice;
+my ($total_examples, $checked_examples ) 
+    = &check_for_examples(example_slice => $example_slice);
+print qq($total_examples are available examples for platform ') 
+    . $Config->get(q(os_name)) . qq('\n);
+#use Data::Dumper;
+#print Dumper $example_slice;
 # yield to Term::ShellUI
 $term->run();
 
@@ -297,16 +299,36 @@ HELPDOC
 	} # return
 } # sub get_commands
 
-sub confirm {
-# confirms an action with the user prior to performing that action
-	my %args = @_;
-	my $logger = get_logger();
-	$logger->warn($args{confirm_warning});
-	print $args{prompt} . q( );
-	my $read = <STDIN>;
-	return 1 if ( $read =~ /y/ig ); 
-	return undef;
-} # sub confirm
+#############
+# Functions #
+#############
+sub check_for_examples {
+# check all of the examples listed in the 'examples.json' file; if you can't
+# read the file, don't list it.  Returns the total number of examples, and a
+# reference to the valid examples hash
+#print Dumper $example_slice;
+    # input arguments
+    my %args = @_;
+    # a hash of example filenames, and the full paths to those files
+    my %valid_examples;
+    # bless the $example_slice into a hash
+    my %examples = $args{example_slice};
+    # create a list of paths
+    my @path_keys = keys(%examples);
+    # enumerate over those paths
+    foreach my $path ( @path_keys ) {
+        # bless the list of examples contained in $path into an array 
+        my @examples_list = $examples{$path};
+        # then enumerate over each example in the @examples_list 
+        foreach my $example_file ( @examples_list ) {
+            # normalize the full path to the file
+            my $check_example = $path . q(/) . $examples{$example_file};
+            # then check the actual file (path + filename)
+            if ( &check_file(file => $check_example) ) {
+                if ( exists $valid_examples
+        } # if ( &check_file(file => $example_file) )
+    } # foreach my $key ( @check_keys )
+} # sub check_for_examples
 
 sub check_file {
 # confirms that a file exists
@@ -318,9 +340,17 @@ sub check_file {
     } # if ( -e $args{file} )
 } # sub check_file
 
-############
-# ShowHelp #
-############
+sub confirm {
+# confirms an action with the user prior to performing that action
+	my %args = @_;
+	my $logger = get_logger();
+	$logger->warn($args{confirm_warning});
+	print $args{prompt} . q( );
+	my $read = <STDIN>;
+	return 1 if ( $read =~ /y/ig ); 
+	return undef;
+} # sub confirm
+
 sub ShowHelp {
 # shows the help message
     my $logger = get_logger("");

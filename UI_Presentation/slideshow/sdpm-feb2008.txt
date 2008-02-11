@@ -132,6 +132,15 @@ Log::Log4perl, Term::ShellUI
 Multiple Mode
 UI::Dialog
 ----
+"Hello World" Line Counts
+Tk: ?
+Gtk2-Perl: 7
+SDL_Perl: ?
+Perl::Qt3: ?
+Log::Log4perl: ?
+Term::ShellUI: ?
+UI::Dialog: ?
+----
 Questions?
 ----
 HEADER::
