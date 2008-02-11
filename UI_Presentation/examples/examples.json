@@ -1,6 +1,6 @@
 // $Id$
 // Copyright (c) 2008 by Brian Manning <elspicyjack at gmail dot com>
-// - these comments will most likely be stripped out of the parsed file
+// - these comments will be stripped out of the parsed file
 // - valid JavaScript syntax is what we're looking for here
 // - don't get sloppy with punctionation like you can in perl; no extra commas
 //   after closing brackets/braces for example
@@ -39,7 +39,11 @@
         "/usr/bin": [ "widget" ],
         "/lib/perl5/vendor_perl/5.8/cygwin/Win32/GUI/demos": [ 
             "program1.pl"
-        ]
+        ],
+        "/home/demo/src/perl_scripts/UI_Presentation/examples":
+            [ "demo.pl" , "log4perl.pl", "examples.json"],
+        "/home/demo/src/helloworld":
+            [ "helloworld_tk.pl", "helloworld_win32.pl" ]
     },
     "linux": {
         "/usr/bin": [ "widget" ],
@@ -56,19 +60,31 @@
             "buttongroups.pl"
         ],
         "/home/demo/examples/UI-Dialog": [ "ascii.pl", "console.pl",
-            "gdialog.pl", "whiptail.pl", "xdialog.pl", "zenity.pl" ]
+            "gdialog.pl", "whiptail.pl", "xdialog.pl", "zenity.pl" ],
+        "/home/demo/src/perl_scripts/UI_Presentation/examples":
+            [ "demo.pl" , "log4perl.pl", "examples.json"],
+        "/home/demo/src/helloworld":
+            [ "helloworld_gtk2.pl" , "helloworld_tk.pl", "helloworld_qt.pl" ]
     },
     "darwin": {
+        "/usr/X11R6/bin": [ "xeyes" ],
         "/opt/local/bin": [ "widget" ],
-        "/Users/brian/Files/Windows_Software/Gtk2Perl/examples": [
+        "/Users/Shared/Files/Windows_Software/Gtk2Perl/examples": [
             "gyroscope.pl",
             "perl_swiss_army_knife.pl"
         ],
-        "/Users/brian/Files/Windows_Software/Gtk2Perl/examples/Gnome2-Canvas":
+        "/Users/Shared/Files/UI_Presentation/examples":
+            [ "demo.pl" , "log4perl.pl", "examples.json"],
+        "/Users/Shared/Files/helloworld":
+            [ "helloworld_gtk2.pl" , "helloworld_tk.pl"],
+        "/Users/Shared/Files/Windows_Software/Gtk2Perl/examples/Gnome2-Canvas":
             [ "canvas.pl" ],
-        "/Users/brian/Files/Windows_Software/Gtk2Perl/examples/Gtk2": 
+        "/Users/Shared/Files/Windows_Software/Gtk2Perl/examples/Gtk2": 
             [ "program1.pl" ],
-        "/Users/brian/Files/Windows_Software/Gtk2Perl/examples/Gtk2-Demo": 
-            [ "program1.pl" ]
+        "/Users/Shared/Files/Windows_Software/Gtk2Perl/examples/Gtk2-Demo": 
+            [ "program1.pl" ],
+        "/Users/Shared/Files/Windows_Software/Gtk2Perl/UI-Dialog": 
+            [ "ascii.pl", "console.pl",
+            "gdialog.pl", "xdialog.pl", "zenity.pl" ]
     }
 } // fin vim: filetype=javascript

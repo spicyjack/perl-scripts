@@ -70,13 +70,6 @@ BEGIN {
 	} # foreach ( keys(%load_modules) )
 } # BEGIN
 
-# the bitmask for what gets returned in a 'get' call
-use constant {
-    NONE        => 0b0000,
-    PARENTS     => 0b0001,
-    CHILDREN    => 0b0010,
-    FILENAME    => 0b0100,
-}; # use constant
 ### Begin Script ###
 
 # create a config object with some default variables
@@ -122,8 +115,11 @@ my $json_object = $json_parser->decode( join(" ", @json_lines) );
 my %example_object = %$json_object;
 # use the hash to get the list of examples for this platform
 my $example_slice = $example_object{$Config->get(q(os_name))};
+# now verify that all of the files in that list can be read
+my $checked_examples = &check_for_examples(example_slice => $example_slice);
+# then create the Term::ShellUI object
 my $term = new Term::ShellUI( 	
-		commands => get_commands($Config, $example_slice),
+		commands => get_commands($Config, $checked_examples),
 		app => q(UI demo),
 		prompt => q(UI_demo> ),);
 #		debug_complete => 2 );
@@ -133,13 +129,10 @@ print $Config->get(q(program_name)) . qq(, a Perl dependency shell, );
 print qq(script version: ) . sprintf("%1.1f", $main::VERSION) . qq(\n);
 print q(CVS: $Id$) . qq(\n);
 print qq(For help with this script, type 'help' at the prompt\n);
-
-my ($total_examples, $checked_examples ) 
-    = &check_for_examples(example_slice => $example_slice);
-print qq($total_examples are available examples for platform ') 
-    . $Config->get(q(os_name)) . qq('\n);
-#use Data::Dumper;
-#print Dumper $example_slice;
+# print out how many demo files were found on this platform
+my @checked_keys = keys(%$checked_examples);
+print qq(Found a total of ) . scalar(@checked_keys) 
+    . qq( examples for platform ') . $Config->get(q(os_name)) . qq('\n);
 # yield to Term::ShellUI
 $term->run();
 
@@ -151,10 +144,9 @@ exit 0;
 sub get_commands {
 	# the config object
 	my $Config = shift; 
-# TODO parse $example_slice and see if all of the files it mentions are
-# available, if they are, list them when the user calls 'list', run them when
-# the user calls 'run', and open them in vim when the user calls 'view'
-	my $example_slice = shift; 
+	my $examples_hash = shift; 
+    # recast the hash reference into a real hash
+    my %examples = %$examples_hash;
 	# grab the logger singleton object
 	my $logger = get_logger();
 
@@ -188,114 +180,122 @@ HELPDOC
     'x'     =>  { syn => q(quit) },
 ### view
     'view'  =>  {
-        desc => qq(Opens a file in vim),
+        desc => qq(Opens a file read-only in vim),
         minargs => 1,
         maxargs => 1,
         proc => sub { 
             my $file = shift;
-            if ( &check_file( file=> $file) ) {
-                system(qq(/usr/bin/vim $file));
+            if ( &check_file(file => $examples{$file}) ) {
+                if ( $file eq q(xeyes) ) {
+                    # we're done
+                    $logger->warn(q(You don't want to do that...));
+                    return;
+                } else {
+                    # run perl with the name of the file
+                    system(q(/usr/bin/vim -R ) . $examples{$file});
+                } # if ( $file == q(xeyes) )
             } else {
-                $logger->warn(qq(Can't find file '$file'));
+                $logger->warn(qq(No match for '$file'));
             } # if ( &check_file( file=> $file) )
         } # view->proc
 	}, # view
     'v'      =>  { syn => q(view) },
     'vi'     =>  { syn => q(view) },
+### edit
+    'edit'  =>  {
+        desc => qq(Edits a file in vim),
+        minargs => 1,
+        maxargs => 1,
+        proc => sub { 
+            my $file = shift;
+            if ( &check_file(file => $examples{$file}) ) {
+                if ( $file eq q(xeyes) ) {
+                    # we're done
+                    $logger->warn(q(You don't want to do that...));
+                    return;
+                } else {
+                    # run perl with the name of the file
+                    system(q(/usr/bin/vim ) . $examples{$file});
+                } # if ( $file == q(xeyes) )
+                
+            } else {
+                $logger->warn(qq(No match for '$file'));
+            } # if ( &check_file( file=> $file) )
+        } # view->proc
+	}, # view
+    'e'      =>  { syn => q(view) },
+    'ed'     =>  { syn => q(view) },
 ### run
     'run' => { 
         desc => q(Run a demo),
-        cmds => {
-            "Win32::GUI" => { 
-                desc => qq(Runs the Win32::GUI Widget Demos),
-                proc => sub { 
-                    # FIXME
-                    # create a list of valid demos, list them under 'list',
-                    # run them here
-                    system qq(/opt/local/bin/widget);
-                }, # run->Tk->proc
-            }, # run->Tk
-            "Tk" => { 
-                desc => qq(Runs the Perl/Tk Widget Demo),
-                proc => sub { 
-                    $logger->info(qq(Starting Tk Widget demo));
-                    system qq(/opt/local/bin/widget);
-                }, # run->Tk->proc
-            }, # run->Tk
-            "Gtk2::GladeXML" => { 
-                desc => qq(Runs the Gtk2::GladeXML Widget Demo),
-                proc => sub { 
-                    $logger->info(qq(Starting Gtk2-GladeXML Widget demo));
-                    system qq(perl /Users/brian/Files/Windows_Software/)
-                        . qq(Gtk2Perl/examples/Gtk2-GladeXML/hello-world.pl);
-                }, # run->Gtk2-Glade->proc
-            }, # run->Gtk2-Glade
-            "Gnome2::Canvas" => { 
-                desc => qq(Runs the Gnome2::Canvas Widget Demo),
-                proc => sub { 
-                    $logger->info(qq(Starting Gnome2-Canvas Widget demo));
-                    system qq(perl /Users/brian/Files/Windows_Software/)
-                        . qq(Gtk2Perl/examples/Gnome2-Canvas/canvas.pl);
-                }, # run->Gnome-Canvas->proc
-            }, # run->Gnome-Canvas
-            "xlogo" => { 
-                desc => qq(Runs the xlogo command to test the X server),
-                proc => sub {
-                    my $xlogo = q(/usr/X11R6/bin/xlogo);
-                    if ( -e $xlogo ) { 
-                        system($xlogo) 
-                    } else {
-                        $logger->warn(q(xlogo not found/not available));
-                    } # if ( -e $xlogo )
-                }, # run->xlogo->proc
-            }, # run->xlogo
-            "file" => { 
-                desc => qq(Runs a file from the 'list' command),
-                minargs => 1,
-                maxargs => 1,
-                proc => sub { 
-                    my $file = shift;
-                    if ( defined $file && -e $file ) {
-                        $logger->info(qq(Running file $file));
-                        system qq(perl $file);
-                    } else {
-                        $logger->error(qq(Can't find file '$file'));
-                    } # if ( -e $file )
-                }, # run->file->proc
-            }, # run->file
-        }, # run->cmds            
+        minargs => 1,
+        maxargs => 1,
+        proc => sub {
+            my $file = shift;
+            if ( &check_file(file => $examples{$file}) ) {
+                if ( $file eq q(xeyes) ) {
+                    # call the name of the file by itself
+                    system($examples{$file});
+                } elsif ( $file eq q(examples.json) ) {
+                    $logger->warn(q(You don't want to do that...));
+                    return;
+                } else {
+                    # run perl with the name of the file
+                    system(q(/usr/bin/env perl ) . $examples{$file});
+                } # if ( $file == q(xeyes) )
+            } else {
+                $logger->warn(qq(No match for '$file'));
+            } # if ( &check_file( file=> $file) )
+        }, # run->proc            
     }, # run
 	'ru'     =>  { syn => q(run) },
+### linecount
+    'loc' => { 
+        desc => q(Count how many lines of code),
+        minargs => 1,
+        maxargs => 1,
+        proc => sub {
+            my $file = shift;
+            if ( &check_file(file => $examples{$file}) ) {
+                if ( $file eq q(xeyes) ) {
+                    # call the name of the file by itself
+                    $logger->warn(q(You don't want to do that...));
+                    return;
+                } else {
+                    open(FH, "<" . $examples{$file});
+                    my $loc_counter;
+                    foreach my $line ( <FH> ) {
+                        next if ( $line =~ /^#/ );
+                        next if ( $line =~ /^$/ );
+                        next if ( $line =~ /\/\// );
+                        $loc_counter++;
+                    } # foreach $line ( <FH> )
+                    close(FH);
+                    $logger->info(q(File ') . $examples{$file} . q(')); 
+                    $logger->info(qq(has $loc_counter lines of code));
+                } # if ( $file == q(xeyes) )
+            } else {
+                $logger->warn(qq(No match for '$file'));
+            } # if ( &check_file( file=> $file) )
+        }, # run->proc            
+    }, # run
+	'lines'     =>  { syn => q(loc) },
+	'count'     =>  { syn => q(loc) },
 ### list
 	'list'	=>  { 
         #maxargs => 1,
         desc => q(List demo scripts in the current directory),
         proc => sub { 
-            $logger->info(q(Built-in apps: ));
-            foreach my $file ( qw(Win32::GUI Tk 
-                        Gtk2::GladeXML Gnome2::Canvas) ) {
-                eval "use $file;";
-                if ( length($@) == 0 ) {
-                    # the eval didn't barf
-                    $logger->info(qq(\t$file));
-                } # if ( ! defined $@ )
-            } # foreach my $file ( qw(Tk GTK ) )
-            # now get the scripts out on the filesystem
-            $logger->info(q(External scripts: ));
-            my @filelist = bsd_glob(q(*.pl));
-            my @validlist;
-            foreach my $file ( @filelist ) {
-                #$logger->warn(qq(file is $file));
-                #next if ( $file =~ /demo\.pl/ );
-                $logger->info(qq(\t$file));
-                push(@validlist, $file);
-            } # foreach my $file ( @filelist )
-            $logger->info(q(Found ) . scalar(@validlist) 
-                . ' valid file(s) total');
+            my @keys = keys(%examples);
+            $logger->info(q(Found the following demo scripts:));
+            foreach my $key (@keys) {
+                $logger->info(qq(\t) . $key);
+            } # foreach my $key (@keys)
+            $logger->info(q(Found ) . scalar(@keys) . qq( demo files total));
         }, # list->proc
 	}, # list
-	'li'     =>  { syn => q(list) },
-	'lis'    =>  { syn => q(list) },
+	'li'    =>  { syn => q(list) },
+	'l'     =>  { syn => q(list) },
 	} # return
 } # sub get_commands
 
@@ -309,25 +309,34 @@ sub check_for_examples {
 #print Dumper $example_slice;
     # input arguments
     my %args = @_;
+	my $logger = get_logger();
+
     # a hash of example filenames, and the full paths to those files
     my %valid_examples;
     # bless the $example_slice into a hash
-    my %examples = $args{example_slice};
+    my %examples = %{$args{example_slice}};
     # create a list of paths
     my @path_keys = keys(%examples);
+    $logger->debug(q(Path keys are: ) . join(":", @path_keys));
     # enumerate over those paths
     foreach my $path ( @path_keys ) {
         # bless the list of examples contained in $path into an array 
-        my @examples_list = $examples{$path};
+        my @examples_list = @{$examples{$path}};
         # then enumerate over each example in the @examples_list 
+        $logger->debug(q(examples list is: ) . join(":", @examples_list));
         foreach my $example_file ( @examples_list ) {
             # normalize the full path to the file
-            my $check_example = $path . q(/) . $examples{$example_file};
+            my $check_example = $path . q(/) . $example_file;
             # then check the actual file (path + filename)
             if ( &check_file(file => $check_example) ) {
-                if ( exists $valid_examples
-        } # if ( &check_file(file => $example_file) )
-    } # foreach my $key ( @check_keys )
+                # dirty nasty greasy hack to get the last element of the split
+                my $basename = (split("/", $check_example))[-1];
+                $basename =~ s/\.pl$//;
+                $valid_examples{$basename} = $check_example;
+            } # if ( &check_file(file => $check_example) )
+        } # foreach my $example_file ( @examples_list )
+    } # foreach my $path ( @path_keys )
+    return \%valid_examples;
 } # sub check_for_examples
 
 sub check_file {
