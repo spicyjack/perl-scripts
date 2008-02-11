@@ -11,6 +11,7 @@ Agenda
 - What is a User Interface?
 - Textual User Interfaces
 - Graphical User Interfaces
+- An Interlude
 - Mixed Mode User Interfaces
 - Modules that could not be demoed
 - Questions
@@ -41,6 +42,8 @@ Save module suggestions until
 the end of the presentation,
 and post them to the list
 as well :)
+(san-diego-pm@pm.org)
+
 ----
 What is a user interface?
 ----
@@ -145,8 +148,7 @@ Questions?
 HEADER::
 Contact us...
 http://sandiego.pm.org
-san-diego-pm-request@pm.org
-(Mailing list subscription address)
+san-diego-pm@pm.org
 
 FOOTER::
 ----
