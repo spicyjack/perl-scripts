@@ -36,6 +36,9 @@
             "gyroscope.pl",
             "perl_swiss_army_knife.pl" 
          ]
+        "C:/apps/cygwin/home/demo/src/perl_scripts/UI_Presentation/examples":
+            [ "demo.pl" , "log4perl.pl", "examples.json"],
+
     },
     "cygwin": {
         //"/bin": [ "win32-gui-demos.pl" ],
