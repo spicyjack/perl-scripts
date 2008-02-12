@@ -1,14 +1,32 @@
 User Interfaces in Perl Presentation Materials
 San Diego Perl Mongers, February 2008
 
-Preѕented by: Brian Manning <elspicyjack at gmail dot com>
+Presented by: Brian Manning <elspicyjack at gmail dot com>
 
 This is the presentation itself, the 'presentation viewer', and the scripts
 demonstrated for the presentation.  In order to get the examples to work, you
 will have to change the paths listed in 'examples.json' to match where you
-have placed the examples on your system, then run 'demo.pl', so that it
-launches the other examples.  You can also launch the other examples by hand
+have placed the examples on your system, then run 'demo.pl', which is used to
+launch the other examples.  You can also launch the other examples by hand
 by calling them as 'perl example.pl'.
+
+The presentation can be viewed by calling the 'slideshow.xul' file in a
+browser; the URL would look something like this:
+
+file:///path/to/slideshow.xul?data=sdpm-feb2008.txt?eva=true
+
+or online, it would look something like this:
+
+http://www.somehost.com/slideshow.xul?data=sdpm-feb2008.txt?eva=true
+
+Use the arrow keys on the keyboard to move around.  You can also call...
+
+file:///path/to/slideshow.xul?data=help.txt 
+
+to get the presentation help file, which explains how to use it much better
+than I want to here.
+
+Presentation Credits:
 
 WHAT:   The presentation viewer, 'Takahashi-Method-based' XUL presentation
         tool
@@ -27,6 +45,7 @@ WHAT:   log4perl.pl
 WHY:    A quick demo of Log4perl
 WHERE:
 http://search.cpan.org/author/MSCHILLI/Log-Log4perl-1.14/lib/Log/Log4perl.pm
+http://cvs.antlinux.com/cvsweb.cgi/perl_scripts/UI_Presentation/examples/log4perl.pl
 
 WHAT:   examples.json 
 WHY:    a list of examples in JSON (JavaScript Object Notation) format.  The
@@ -36,6 +55,7 @@ WHY:    a list of examples in JSON (JavaScript Object Notation) format.  The
 WHERE:  http://en.wikipedia.org/JSON, 
         http://www.json.org
         http://search.cpan.org/author/MAKAMAKA/JSON-2.06/lib/JSON.pm
+        http://cvs.antlinux.com/cvsweb.cgi/perl_scripts/UI_Presentation/examples/examples.json
 
 WHAT:   widget
 WHY:    The do-everything example for the Tk toolkit.  Install the Perl-TK
@@ -81,7 +101,7 @@ WHY:    An example of multiple modes of UI::Dialog; you'll need at least one
         gdialog, xdialog, zenity
 WHERE:  http://search.cpan.org/author/KCK/UI-Dialog-1.08/lib/UI/Dialog.pod
 
-Honorable mentions:
+Honorable mentions (things I wanted to get working but couldn't):
 
 - Camelbones (http://camelbones.sourceforge.net/) - OS X
 - wxPerl (http://wxperl.eu/download.html) - Windows/Linux/OS X
