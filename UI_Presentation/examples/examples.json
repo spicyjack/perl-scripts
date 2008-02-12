@@ -38,10 +38,10 @@
          ]
     },
     "cygwin": {
-        "/bin": [ "win32-gui-demos.pl" ],
+        //"/bin": [ "win32-gui-demos.pl" ],
         "/usr/bin": [ "widget" ],
         "/lib/perl5/vendor_perl/5.8/cygwin/Win32/GUI/demos": [ 
-            "program1.pl"
+            "Notepad.pl", "Draw.pl", "MonthCal.pl"
         ],
         "/home/demo/src/perl_scripts/UI_Presentation/examples":
             [ "demo.pl" , "log4perl.pl", "examples.json"],
