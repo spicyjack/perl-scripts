@@ -342,11 +342,9 @@ sub check_for_examples {
 sub check_file {
 # confirms that a file exists
     my %args = @_;
-    if ( -e $args{file} ) {
-        return 1;
-    } else {
-        return undef;
-    } # if ( -e $args{file} )
+    if ( defined $args{file} ) {
+        if ( -e $args{file} ) { return 1; } # if ( -e $args{file} )
+    } # if ( defined $args{file} )
 } # sub check_file
 
 sub confirm {
