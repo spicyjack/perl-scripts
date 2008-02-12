@@ -6,6 +6,9 @@ San Diego Perl Mongers
 February 2008
 FOOTER::http://sandiego.pm.org
 ----
+ESSID: Cerebrus
+(case sensitive)
+----
 Agenda
 - Introduction
 - What is a User Interface?
@@ -15,6 +18,8 @@ Agenda
 - Mixed Mode User Interfaces
 - Modules that could not be demoed
 - Questions
+----
+Introduction
 ----
 A survey of Perl modules that
 you can use to interact with 
