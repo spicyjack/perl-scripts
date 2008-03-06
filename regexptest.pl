@@ -5,8 +5,15 @@
 print "please input a test string: ";
 $input = <STDIN>;
 chomp($input);
-$input =~ s/[^(\d{1,2})]/$1/g;
-print "substituted input is: >$input<\n";
-print "first variable is >$1<\n";
-print "Thanks for playing!!\n";
+# .1.3.6.1.2.1.25.2
+# period, one or more digits, repeated one or more times
+# $input =~ s/^([.\d+]+)$/$1/g;
+# print "substituted text is >$1<\n";
+
+if ( $input =~ /^[\.\d+]\{1,\}$/ ) {
+    print "matched pattern /^([.\d+]+)\$/: >$input<\n";
+    print "Thanks for playing!!\n";
+} else {
+    print "Does not match pattern /^([.\d+]+)\$/\n";
+} # if ( $input =~
 
