@@ -1,4 +1,4 @@
-#!/usr/bin/perl -T
+#!/usr/bin/perl
 
 use strict;
 use warnings;
@@ -39,6 +39,96 @@ that are in one archive and not the other and vice versa.
 =cut
 
 package main;
+use Getopt::Long;
+use Log::Log4perl qw(get_logger :levels);
+use Time::Local;
+use Pod::Usage;
+
+my ($DEBUG, $first_file, $second_file);
+my $colorlog = 1;
+
+my $goparse = Getopt::Long::Parser->new();
+$goparse->getoptions(   q(DEBUG|D)                      => \$DEBUG,
+                        q(help|h)                       => \&ShowHelp,
+                        q(first-file|first|1st|1=s)     => \$first_file,
+                        q(second-file|second|2nd|2=s)   => \$second_file,
+                        q(colorlog!)                    => \$colorlog,
+                    ); # $goparse->getoptions
+
+# set up the logger
+my $logger_conf = qq(log4perl.rootLogger = INFO, Screen\n);
+if ( $colorlog ) {
+    $logger_conf .= qq(log4perl.appender.Screen = )
+        . qq(Log::Log4perl::Appender::ScreenColoredLevels\n);
+} else {
+    $logger_conf .= qq(log4perl.appender.Screen = )
+        . qq(Log::Log4perl::Appender::Screen\n);
+} # if ( $Config->get(q(colorlog)) )
+
+$logger_conf .= qq(log4perl.appender.Screen.stderr = 1\n)
+    . qq(log4perl.appender.Screen.layout = PatternLayout\n)
+    . q(log4perl.appender.Screen.layout.ConversionPattern = %d %p %m%n)
+    . qq(\n);
+#log4perl.appender.Screen.layout.ConversionPattern = %d %p> %F{1}:%L %M - %m%n
+# create the logger object
+Log::Log4perl::init( \$logger_conf );
+my $logger = get_logger("");
+if ( defined $DEBUG ) {
+    $logger->level($DEBUG);
+} else {
+    $logger->level($INFO);
+} # if ( defined $DEBUG )
+
+# check to make sure we can read the input files
+if ( defined $first_file ) {
+    if ( ! -r $first_file ) {
+        $logger->fatal(q(Can't find/read ) . $first_file);
+        &HelpDie;
+    } # if ( ! -r $first_file )
+} else {
+    $logger->fatal(q(First file not specified with --first-file switch));
+    &HelpDie;
+} # if ( defined $first_file )
+
+if ( defined $second_file ) {
+    if ( ! -r $second_file ) {
+        $logger->fatal(q(Can't find/read ) . $second_file);
+        &HelpDie;
+    } # if ( ! -r $second_file )
+} else {
+    $logger->fatal(q(Second file not specified with --second-file switch));
+    &HelpDie;
+} # if ( defined $first_file ) 
+
+my $diff = Archive::Diff->new();
+
+#$diff->compare(first => $first_file, second => $second_file);
+
+exit 0;
+
+sub HelpDie {
+    my $logger = get_logger();
+    $logger->fatal(qq(Use '$0 --help' to view script options));
+    exit 1;
+
+} # sub HelpDie 
+
+# simple help subroutine
+sub ShowHelp {
+# shows the POD documentation (short or long version)
+    my $whichhelp = shift;  # retrieve what help message to show
+    shift; # discard the value
+
+    # call pod2usage and have it exit non-zero
+    # if if one of the 2 shorthelp options were not used, call longhelp
+    if ( ($whichhelp eq q(help))  || ($whichhelp eq q(h)) ) {
+        pod2usage(-exitstatus => 1);
+    } else {
+        pod2usage(-exitstatus => 1, -verbose => 2);
+    } # if ( ($whichhelp eq q(help))  || ($whichhelp eq q(h)) )
+} # sub ShowHelp
+
+### end package main
 
 =pod
 
@@ -52,6 +142,26 @@ filename.
 =cut
 
 package Archive;
+#use Moose; # comes with 'strict' and 'warnings'
+
+#has q(attrib) => ( is => q(rw), isa => q(Archive::Attributes));
+#has q(files) => ( is => q(rw), isa => q(ArrayRef[Archive::File]) );
+
+sub new {
+    print qq(This is Archive->new\n);
+} # sub new
+=pod
+
+=head2 Package Archive::Diff
+
+=cut
+
+package Archive::Diff;
+
+sub new {
+    print qq(This is Archive::Diff->new\n);
+    my $archive = Archive->new();
+} # sub new
 
 =pod 
 
