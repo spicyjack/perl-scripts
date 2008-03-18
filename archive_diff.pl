@@ -1,7 +1,5 @@
 #!/usr/bin/perl
 
-use strict;
-use warnings;
 # $Id$
 # Copyright (c)2008 by Brian Manning <elspicyjack at gmail dot com>
 #
@@ -19,6 +17,11 @@ use warnings;
 #   You should have received a copy of the GNU General Public License
 #   along with this program;  if not, write to the Free Software
 #   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111, USA.
+
+# FIXME
+# - go through the moose archives and see if anyone has tried something
+# similar to what you are trying to do re: object creation and having
+# something that checks for external files
 
 =pod
 
@@ -38,13 +41,17 @@ that are in one archive and not the other and vice versa.
 
 =cut
 
+#### Package 'main' ####
 package main;
+
+use strict;
+use warnings;
 use Getopt::Long;
 use Log::Log4perl qw(get_logger :levels);
 use Time::Local;
 use Pod::Usage;
 
-my ($DEBUG, $first_file, $second_file);
+my ($DEBUG, $first_file, $second_file, $first_obj, $second_obj);
 my $colorlog = 1;
 
 my $goparse = Getopt::Long::Parser->new();
@@ -80,21 +87,18 @@ if ( defined $DEBUG ) {
 } # if ( defined $DEBUG )
 
 # check to make sure we can read the input files
+# if they're both readable, read them and bless them into objects
 if ( defined $first_file ) {
-    if ( ! -r $first_file ) {
-        $logger->fatal(q(Can't find/read ) . $first_file);
-        &HelpDie;
-    } # if ( ! -r $first_file )
+    # read in the file and bless it into an Archive object
+    $first_obj = Archive->new( filename => $first_file );
 } else {
     $logger->fatal(q(First file not specified with --first-file switch));
     &HelpDie;
 } # if ( defined $first_file )
 
 if ( defined $second_file ) {
-    if ( ! -r $second_file ) {
-        $logger->fatal(q(Can't find/read ) . $second_file);
-        &HelpDie;
-    } # if ( ! -r $second_file )
+    # read in the file and bless it into an Archive object
+    $second_obj = Archive->new( filename => $second_file );
 } else {
     $logger->fatal(q(Second file not specified with --second-file switch));
     &HelpDie;
@@ -110,7 +114,6 @@ sub HelpDie {
     my $logger = get_logger();
     $logger->fatal(qq(Use '$0 --help' to view script options));
     exit 1;
-
 } # sub HelpDie 
 
 # simple help subroutine
@@ -135,27 +138,67 @@ sub ShowHelp {
 =head2 Package Archive
 
 The Archive object grabs information from an archive of some kind and allows
-this information to be queried.  The L<Archive> object contains an
-L<Archive::Attributes> object and a hash of L<Archive::File> objects keyed by
-filename.
+this information to be queried.  The L<Archive> object has the following
+attributes:
+
+=over 5
+
+=item attrib
+
+The archive attributes.  Contained in an object of L<Archive::Attributes>
+type.
+
+=item filename 
+
+The name of the archive file.  The file is checked to see if it exists and is
+readable when an object is created from this class.
+
+=item contents
+
+A hash of L<Archive::File> objects keyed by filename.
+
+=back 5
 
 =cut
 
+#### Package 'Archive' ####
 package Archive;
-#use Moose; # comes with 'strict' and 'warnings'
+use Moose; # comes with 'strict' and 'warnings'
+use Moose::Util::TypeConstraints;
 
-#has q(attrib) => ( is => q(rw), isa => q(Archive::Attributes));
-#has q(files) => ( is => q(rw), isa => q(ArrayRef[Archive::File]) );
+# a subtype for holding the name of a file in the archive
+# this should make it so that the file is checked when the object is created
+# Str is from Moose::Util::TypeConstraints
+subtype ArchiveFilename
+    => as Str
+    => where { ( -r $_ ) };
 
-sub new {
-    print qq(This is Archive->new\n);
-} # sub new
+has q(attrib) => ( is => q(rw), isa => q(Archive::Attributes));
+has q(filename) => ( is => q(rw), isa => q(ArchiveFilename), required => 1 );
+has q(contents) => ( is => q(rw), isa => q(HashRef[Archive::File]) );
+
+
 =pod
 
 =head2 Package Archive::Diff
 
+This file takes two L<Archive> objects as arguments, and when queried using
+the object methods, will return a formatted list that shows the differences in
+the contents of the two archives.
+
+=head3 simple_diff()
+
+Shows a simple comparison, whether or not a file is in one archive or the
+other.
+
+=head3 full_diff()
+
+Shows not only if files are in one archive but not another, but if the same
+file in both archives differs in timestamp or uncompressed size.
+
 =cut
 
+#### Package 'Archive::Diff' ####
 package Archive::Diff;
 
 sub new {
@@ -163,22 +206,34 @@ sub new {
     my $archive = Archive->new();
 } # sub new
 
+#### end Package 'Archive::Attributes' ####
+
 =pod 
 
 =head2 Package Archive::Attributes
 
-Contains attributes for an archive file.  Can be queried using the following
-methods:
+Contains metadata attributes for an archive file.  
 
-=head3 version
+=over 5
 
-Version of the program that created this archive.  May or may not come from
+=item version
+
+The version of the program that created this archive.  May or may not come from
 the archive itself;  a asterisk B<*> denotes the version number of the program
 on the system, as the archive itѕelf does not hold any version information.
 
+=back 5
+
 =cut
 
+#### Package 'Archive::Attributes' ####
 package Archive::Attributes;
+use Moose;
+use Moose::Util::TypeConstraints;
+
+has q(version) => ( is => q(rw), isa => q(Str) );
+
+#### end Package 'Archive::Attributes' ####
 
 =pod 
 
@@ -189,17 +244,40 @@ likely create as many L<Archive::File> objects as you had individual files and
 directories in an archive.  L<Archive::File> can be queried using the
 following methods:
 
-=head3 name
+=head3 Attributes 
 
-=head3 timestamp
+=over 5 
 
-=head3 usize
+=item name
 
-=head3 attributes
+The name of the file that is a member of this L<Archive>.
+
+=item timestamp
+
+The timestamp of the file as stored in the archive.
+
+=item  orig_size
+
+The uncompressed size of the file stored in the archive.
+
+=item attributes
+
+The attributes stored with the file in the archive.
+
+=back 5
 
 =cut
 
 package Archive::File;
+use Moose;
+use Moose::Util::TypeConstraints;
+
+has q(name) => ( is => q(rw), isa => q(Str) );
+has q(timestamp) => ( is => q(rw), isa => q(Str) );
+has q(usize) => ( is => q(rw), isa => q(Str) );
+has q(attributes) => ( is => q(rw), isa => q(Str) );
+
+#### end Package 'Archive::File' ####
 
 =pod
 
