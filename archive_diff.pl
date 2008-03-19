@@ -83,13 +83,14 @@ has q(contents) => ( is => q(rw), isa => q(HashRef[Archive::File]) );
 
 =pod
 
-=head3 get_filename()
+=head3 parse()
 
-Returns the filename of the archive
+Parses (lists) the contents of the archive, and populates the appropriate
+object attributes.
 
 =cut 
 
-sub get_filename { return shift->filename; }
+sub parse { return 1; }
 
 #### end Package 'Archive' ####
 
@@ -128,11 +129,9 @@ file in both archives differs in timestamp or uncompressed size.
 
 sub simple_diff {
 	my $self = shift;
-	my $first = $self->first;
-	my $second = $self->second;
 
-	print qq(The first filename is ) . $first->filename . qq(\n);
-	print qq(The second filename is ) . $second->filename . qq(\n);
+	print qq(The first filename is ) . $self->first->filename . qq(\n);
+	print qq(The second filename is ) . $self->second->filename . qq(\n);
 } # sub simple_diff
 
 #### end Package 'Archive::Diff' ####
@@ -211,16 +210,17 @@ package main;
 use strict;
 use warnings;
 use Getopt::Long;
-use Log::Log4perl qw(get_logger :levels);
+use Log::Log4perl qw(get_logger);
+use Log::Log4perl::Level;
 use Time::Local;
 use Pod::Usage;
 
-my ($DEBUG, $first_file, $second_file, $first_obj, $second_obj, $colorlog);
+my ($VERBOSE, $first_file, $second_file, $first_obj, $second_obj, $colorlog);
 # colorize Log4perl output by default 
 $colorlog = 1;
 
 my $goparse = Getopt::Long::Parser->new();
-$goparse->getoptions(   q(DEBUG|D)                      => \$DEBUG,
+$goparse->getoptions(   q(verbose|v)                      => \$VERBOSE,
                         q(help|h)                       => \&ShowHelp,
                         q(first-file|first|1st|1=s)     => \$first_file,
                         q(second-file|second|2nd|2=s)   => \$second_file,
@@ -248,19 +248,15 @@ $logger_conf .= qq(log4perl.appender.Screen.stderr = 1\n)
 # create the logger object
 Log::Log4perl::init( \$logger_conf );
 my $logger = get_logger("");
-if ( defined $DEBUG ) {
-    $logger->level($DEBUG);
-} else {
-    $logger->level($INFO);
-} # if ( defined $DEBUG )
+# change the log level from INFO if the user requests more gar-bage
+if ( $VERBOSE ) { $logger->level($DEBUG); }
 
 # check to make sure we can read the input files
 # if they're both readable, read them and bless them into objects
 if ( defined $first_file ) {
     # read in the file and bless it into an Archive object
-    $first_obj = Archive->new( filename => $first_file );
-    if ( $@ ) {}
-
+    $first_obj = eval { Archive->new( filename => $first_file ); };
+    if ( $@ ) { &FileReadDie($@); }
 } else {
     $logger->fatal(q(First file not specified with --first-file switch));
     &HelpDie;
@@ -268,15 +264,19 @@ if ( defined $first_file ) {
 
 if ( defined $second_file ) {
     # read in the file and bless it into an Archive object
-    $second_obj = Archive->new( filename => $second_file );
+    $second_obj = eval { Archive->new( filename => $second_file ); };
+    if ( $@ ) { &FileReadDie($@); }
 } else {
     $logger->fatal(q(Second file not specified with --second-file switch));
     &HelpDie;
 } # if ( defined $first_file ) 
 
-# print some debugging
-print qq(The first object's filename is ) . $first_obj->get_filename();
-print qq(The second object's filename is ) . $second_obj->get_filename();
+$logger->info(qq(=-=-=-=-=-= Begin $0 =-=-=-=-=-=));
+$logger->info(qq(Parsing first archive file));
+$first_obj->parse();
+$logger->info(qq(Parsing second archive file));
+$first_obj->parse();
+$logger->info(qq(=-=-=-= Archive Diff Report =-=-=-=));
 my $diff = Archive::Diff->new( first => $first_obj, second => $second_obj );
 
 $diff->simple_diff();
@@ -288,6 +288,19 @@ sub HelpDie {
     $logger->fatal(qq(Use '$0 --help' to view script options));
     exit 1;
 } # sub HelpDie 
+
+sub FileReadDie {
+    my $error_msg = shift;
+    my $logger = get_logger();
+    $logger->fatal(qq(Hmmm, something happened trying to read:));
+    $logger->fatal($first_file);
+    if ( $logger->is_debug() ) { 
+        print $error_msg; 
+    } else {
+        $logger->fatal(qq(Uѕe --verbose for more error output));
+    } # if ( $logger->is_debug() )
+    &HelpDie;
+} # sub FileReadDie
 
 # simple help subroutine
 sub ShowHelp {
