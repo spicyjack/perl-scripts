@@ -39,109 +39,6 @@ the author's version number.
 
  perl archive_diff.pl -1 first_filelist.txt -2 second_filelist.txt 
 
-=cut
-
-#### Package 'main' ####
-package main;
-
-use strict;
-use warnings;
-use Getopt::Long;
-use Log::Log4perl qw(get_logger :levels);
-use Time::Local;
-use Pod::Usage;
-
-my ($DEBUG, $first_file, $second_file, $first_obj, $second_obj, $colorlog);
-# colorize Log4perl output by default 
-$colorlog = 1;
-
-my $goparse = Getopt::Long::Parser->new();
-$goparse->getoptions(   q(DEBUG|D)                      => \$DEBUG,
-                        q(help|h)                       => \&ShowHelp,
-                        q(first-file|first|1st|1=s)     => \$first_file,
-                        q(second-file|second|2nd|2=s)   => \$second_file,
-                        q(colorlog!)                    => \$colorlog,
-                    ); # $goparse->getoptions
-
-# always turn off color logs under Windows, the terms don't do ANSI
-if ( $^O =~ /MSWin32/ ) { $colorlog = 0; } 
-
-# set up the logger
-my $logger_conf = qq(log4perl.rootLogger = INFO, Screen\n);
-if ( $colorlog ) {
-    $logger_conf .= qq(log4perl.appender.Screen = )
-        . qq(Log::Log4perl::Appender::ScreenColoredLevels\n);
-} else {
-    $logger_conf .= qq(log4perl.appender.Screen = )
-        . qq(Log::Log4perl::Appender::Screen\n);
-} # if ( $Config->get(q(colorlog)) )
-
-$logger_conf .= qq(log4perl.appender.Screen.stderr = 1\n)
-    . qq(log4perl.appender.Screen.layout = PatternLayout\n)
-    . q(log4perl.appender.Screen.layout.ConversionPattern = %d %p %m%n)
-    . qq(\n);
-#log4perl.appender.Screen.layout.ConversionPattern = %d %p> %F{1}:%L %M - %m%n
-# create the logger object
-Log::Log4perl::init( \$logger_conf );
-my $logger = get_logger("");
-if ( defined $DEBUG ) {
-    $logger->level($DEBUG);
-} else {
-    $logger->level($INFO);
-} # if ( defined $DEBUG )
-
-# check to make sure we can read the input files
-# if they're both readable, read them and bless them into objects
-if ( defined $first_file ) {
-    # read in the file and bless it into an Archive object
-    $first_obj = Archive->new( filename => $first_file );
-} else {
-    $logger->fatal(q(First file not specified with --first-file switch));
-    &HelpDie;
-} # if ( defined $first_file )
-
-if ( defined $second_file ) {
-    # read in the file and bless it into an Archive object
-    $second_obj = Archive->new( filename => $second_file );
-} else {
-    $logger->fatal(q(Second file not specified with --second-file switch));
-    &HelpDie;
-} # if ( defined $first_file ) 
-
-# print some debugging
-print qq(The first object's filename is ) . $first_obj->get_filename();
-print qq(The second object's filename is ) . $second_obj->get_filename();
-my $diff = Archive::Diff->new( first => $first_obj, second => $second_obj );
-
-$diff->simple_diff();
-
-exit 0;
-
-sub HelpDie {
-    my $logger = get_logger();
-    $logger->fatal(qq(Use '$0 --help' to view script options));
-    exit 1;
-} # sub HelpDie 
-
-# simple help subroutine
-sub ShowHelp {
-# shows the POD documentation (short or long version)
-    my $whichhelp = shift;  # retrieve what help message to show
-    shift; # discard the value
-
-    # call pod2usage and have it exit non-zero
-    # if if one of the 2 shorthelp options were not used, call longhelp
-    if ( ($whichhelp eq q(help))  || ($whichhelp eq q(h)) ) {
-        pod2usage(-exitstatus => 1);
-    } else {
-        pod2usage(-exitstatus => 1, -verbose => 2);
-    } # if ( ($whichhelp eq q(help))  || ($whichhelp eq q(h)) )
-} # sub ShowHelp
-
-### end package main
-
-=pod
-
 =head2 Package Archive
 
 The Archive object grabs information from an archive of some kind and allows
@@ -307,6 +204,107 @@ has q(usize) => ( is => q(rw), isa => q(Str) );
 has q(attributes) => ( is => q(rw), isa => q(Str) );
 
 #### end Package 'Archive::File' ####
+
+#### Package 'main' ####
+package main;
+
+use strict;
+use warnings;
+use Getopt::Long;
+use Log::Log4perl qw(get_logger :levels);
+use Time::Local;
+use Pod::Usage;
+
+my ($DEBUG, $first_file, $second_file, $first_obj, $second_obj, $colorlog);
+# colorize Log4perl output by default 
+$colorlog = 1;
+
+my $goparse = Getopt::Long::Parser->new();
+$goparse->getoptions(   q(DEBUG|D)                      => \$DEBUG,
+                        q(help|h)                       => \&ShowHelp,
+                        q(first-file|first|1st|1=s)     => \$first_file,
+                        q(second-file|second|2nd|2=s)   => \$second_file,
+                        q(colorlog!)                    => \$colorlog,
+                    ); # $goparse->getoptions
+
+# always turn off color logs under Windows, the terms don't do ANSI
+if ( $^O =~ /MSWin32/ ) { $colorlog = 0; } 
+
+# set up the logger
+my $logger_conf = qq(log4perl.rootLogger = INFO, Screen\n);
+if ( $colorlog ) {
+    $logger_conf .= qq(log4perl.appender.Screen = )
+        . qq(Log::Log4perl::Appender::ScreenColoredLevels\n);
+} else {
+    $logger_conf .= qq(log4perl.appender.Screen = )
+        . qq(Log::Log4perl::Appender::Screen\n);
+} # if ( $Config->get(q(colorlog)) )
+
+$logger_conf .= qq(log4perl.appender.Screen.stderr = 1\n)
+    . qq(log4perl.appender.Screen.layout = PatternLayout\n)
+    . q(log4perl.appender.Screen.layout.ConversionPattern = %d %p %m%n)
+    . qq(\n);
+#log4perl.appender.Screen.layout.ConversionPattern = %d %p> %F{1}:%L %M - %m%n
+# create the logger object
+Log::Log4perl::init( \$logger_conf );
+my $logger = get_logger("");
+if ( defined $DEBUG ) {
+    $logger->level($DEBUG);
+} else {
+    $logger->level($INFO);
+} # if ( defined $DEBUG )
+
+# check to make sure we can read the input files
+# if they're both readable, read them and bless them into objects
+if ( defined $first_file ) {
+    # read in the file and bless it into an Archive object
+    $first_obj = Archive->new( filename => $first_file );
+    if ( $@ ) {}
+
+} else {
+    $logger->fatal(q(First file not specified with --first-file switch));
+    &HelpDie;
+} # if ( defined $first_file )
+
+if ( defined $second_file ) {
+    # read in the file and bless it into an Archive object
+    $second_obj = Archive->new( filename => $second_file );
+} else {
+    $logger->fatal(q(Second file not specified with --second-file switch));
+    &HelpDie;
+} # if ( defined $first_file ) 
+
+# print some debugging
+print qq(The first object's filename is ) . $first_obj->get_filename();
+print qq(The second object's filename is ) . $second_obj->get_filename();
+my $diff = Archive::Diff->new( first => $first_obj, second => $second_obj );
+
+$diff->simple_diff();
+
+exit 0;
+
+sub HelpDie {
+    my $logger = get_logger();
+    $logger->fatal(qq(Use '$0 --help' to view script options));
+    exit 1;
+} # sub HelpDie 
+
+# simple help subroutine
+sub ShowHelp {
+# shows the POD documentation (short or long version)
+    my $whichhelp = shift;  # retrieve what help message to show
+    shift; # discard the value
+
+    # call pod2usage and have it exit non-zero
+    # if if one of the 2 shorthelp options were not used, call longhelp
+    if ( ($whichhelp eq q(help))  || ($whichhelp eq q(h)) ) {
+        pod2usage(-exitstatus => 1);
+    } else {
+        pod2usage(-exitstatus => 1, -verbose => 2);
+    } # if ( ($whichhelp eq q(help))  || ($whichhelp eq q(h)) )
+} # sub ShowHelp
+
+### end package main
 
 =pod
 
