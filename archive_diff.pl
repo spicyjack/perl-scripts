@@ -114,8 +114,10 @@ sub parse {
         next if ( $line =~ /^$/ );
         # if the line starts with a date string
         if ( $line =~ /^\d\d\d\d-\d\d-\d\d/ ) {
+            chomp($line);
             # found a file entry
             $line =~ s/  +/ /g;
+            $line =~ s/\r$//g;
             #$logger->debug(q(de-spaceified line is:));
             #$logger->debug($line);
             my @splitline = split(/ /, $line);
@@ -139,7 +141,11 @@ sub parse {
                 $logger->fatal(q(Too many arguments in archive file output));
                 exit 1;
             } # if ( scalar(@splitline) == 5 )
-            $self->contents ( { $archive_file->name => $archive_file} );
+            $logger->debug(q(Adding ) . $archive_file->name 
+                . q( to contents hash));
+            $self->contents( { $archive_file->name => $archive_file} );
+            $logger->debug(q(there are now ) . scalar(keys(%{$self->contents}))
+                . q( records in self->contents));
         } # if ( $line =~ /^\d\d\d\d-\d\d-\d\d/ )
     } # while (<FH>)
     $logger->info(qq(Total files in archive: ) . $total_files);
