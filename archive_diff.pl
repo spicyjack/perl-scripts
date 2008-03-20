@@ -22,13 +22,15 @@
 # - go through the moose archives and see if anyone has tried something
 # similar to what you are trying to do re: object creation and having
 # something that checks for external files
+# - create a set of external modules, or call to internal Perl-ish modules
+# that will list the contents of various archive formats
+#   - start with lzma first
 
 =pod
 
 =head1 NAME
 
-B<archive_diff.pl> compares the contents of two archives, checking for files
-that are in one archive and not the other and vice versa.
+B<archive_diff.pl> - compare files listed in two archives
 
 =head1 VERSION
 
@@ -39,7 +41,12 @@ the author's version number.
 
  perl archive_diff.pl -1 first_filelist.txt -2 second_filelist.txt 
 
-=head2 Package Archive
+=head1 DESCRIPTION
+
+B<archive_diff.pl> compares the files listed in two archives, checking for
+files that are in one archive and not the other and vice versa.
+
+=head2 Module Archive
 
 The Archive object grabs information from an archive of some kind and allows
 this information to be queried.  The L<Archive> object has the following
@@ -69,6 +76,8 @@ A hash of L<Archive::File> objects keyed by filename.
 package Archive;
 use Moose; # comes with 'strict' and 'warnings'
 use Moose::Util::TypeConstraints;
+use Log::Log4perl qw(get_logger);
+use Date::Parse;
 
 # a subtype for holding the name of a file in the archive
 # this should make it so that the file is checked when the object is created
@@ -79,6 +88,8 @@ subtype ArchiveFilename
 
 has q(attrib) => ( is => q(rw), isa => q(Archive::Attributes));
 has q(filename) => ( is => q(rw), isa => q(ArchiveFilename), required => 1 );
+# FIXME abstract the HashRef[Archive::File] into it's own object,
+# Archive::FileList?
 has q(contents) => ( is => q(rw), isa => q(HashRef[Archive::File]) );
 
 =pod
@@ -90,15 +101,57 @@ object attributes.
 
 =cut 
 
-sub parse { return 1; }
+sub parse { 
+    my $self = shift;
+    my $total_files;
+    my $logger = get_logger();
+
+    # open the file and read it's contents
+    open(FH, q(<) . $self->filename);
+    while (<FH>) {
+        my $line = $_;
+        # skip blank lines
+        next if ( $line =~ /^$/ );
+        # if the line starts with a date string
+        if ( $line =~ /^\d\d\d\d-\d\d-\d\d/ ) {
+            # found a file entry
+            $line =~ s/  +/ /g;
+            #$logger->debug(q(de-spaceified line is:));
+            #$logger->debug($line);
+            my @splitline = split(/ /, $line);
+            #$logger->debug(join(q(:), @splitline));
+            $total_files++;
+            #$logger->debug(q(this line has ) .scalar(@splitline) .q( fields));
+            # create the archive file object
+            my $archive_file = Archive::File->new( 
+                timestamp => str2time($splitline[0] . q( ) . $splitline[1]),
+                attributes => $splitline[2],
+                orig_size => $splitline[3],
+            );
+            # some records have 5 fields, some have 6 (extra field is
+            # compressed file size).  compensate
+            if ( scalar(@splitline) == 5 ) {
+                $archive_file->{name} = $splitline[4];
+            } elsif ( scalar(@splitline) == 6 ) {
+                $archive_file->{comp_size} = $splitline[4];
+                $archive_file->{name} = $splitline[5];
+            } else {
+                $logger->fatal(q(Too many arguments in archive file output));
+                exit 1;
+            } # if ( scalar(@splitline) == 5 )
+            $self->contents ( { $archive_file->name => $archive_file} );
+        } # if ( $line =~ /^\d\d\d\d-\d\d-\d\d/ )
+    } # while (<FH>)
+    $logger->info(qq(Total files in archive: ) . $total_files);
+} # sub parse
 
 #### end Package 'Archive' ####
 
 =pod
 
-=head2 Package Archive::Diff
+=head2 Module Archive::Diff
 
-This file takes two L<Archive> objects as arguments, and when queried using
+This object takes two L<Archive> objects as arguments, and when queried using
 the object methods, will return a formatted list that shows the differences in
 the contents of the two archives.
 
@@ -109,6 +162,8 @@ the contents of the two archives.
 package Archive::Diff;
 use Moose; # comes with 'strict' and 'warnings'
 use Moose::Util::TypeConstraints;
+use Log::Log4perl qw(get_logger);
+use Time::Local;
 
 has q(first) => ( is => q(rw), isa => q(Archive), required => 1 );
 has q(second) => ( is => q(rw), isa => q(Archive), required => 1 );
@@ -129,16 +184,21 @@ file in both archives differs in timestamp or uncompressed size.
 
 sub simple_diff {
 	my $self = shift;
+    my $logger = get_logger();
 
-	print qq(The first filename is ) . $self->first->filename . qq(\n);
-	print qq(The second filename is ) . $self->second->filename . qq(\n);
+	$logger->info(q(The first filename is ) . $self->first->filename);
+    $logger->info(q(The second filename is ) . $self->second->filename);
+    $logger->info(q(There are ) . scalar( keys( %{$self->first->contents} ) )
+        . qq( keys in the first Archive object));
+    $logger->info(q(first key is ) 
+        . join(":", keys( %{$self->first->contents} ) ) );
 } # sub simple_diff
 
 #### end Package 'Archive::Diff' ####
 
 =pod 
 
-=head2 Package Archive::Attributes
+=head2 Module Archive::Attributes
 
 Contains metadata attributes for an archive file.  
 
@@ -147,8 +207,8 @@ Contains metadata attributes for an archive file.
 =item version
 
 The version of the program that created this archive.  May or may not come from
-the archive itself;  a asterisk B<*> denotes the version number of the program
-on the system, as the archive itѕelf does not hold any version information.
+the archive itself;  an asterisk B<*> denotes the version number of the program
+on the system, as the archive itself does not hold any version information.
 
 =back
 
@@ -165,7 +225,7 @@ has q(version) => ( is => q(rw), isa => q(Str) );
 
 =pod 
 
-=head2 Package Archive::File
+=head2 Module Archive::File
 
 An object that holds information about a file in an archive.  You would most
 likely create as many L<Archive::File> objects as you had individual files and
@@ -173,33 +233,39 @@ directories in an archive.  L<Archive::File> has the following attributes:
 
 =over 5 
 
-=item name
-
-The name of the file that is a member of this L<Archive>.
-
 =item timestamp
 
 The timestamp of the file as stored in the archive.
-
-=item  orig_size
-
-The uncompressed size of the file stored in the archive.
 
 =item attributes
 
 The attributes stored with the file in the archive.
 
+=item  orig_size
+
+The uncompressed size of the file stored in the archive.
+
+=item comp_size
+
+The compressed size of the file (if given by the compression program)
+
+=item name
+
+The name of the file that is a member of this L<Archive>.
+
 =back
 
 =cut
 
+#### Package 'Archive::File' ####
 package Archive::File;
 use Moose;
 use Moose::Util::TypeConstraints;
 
 has q(name) => ( is => q(rw), isa => q(Str) );
-has q(timestamp) => ( is => q(rw), isa => q(Str) );
-has q(usize) => ( is => q(rw), isa => q(Str) );
+has q(timestamp) => ( is => q(rw), isa => q(Int) );
+has q(orig_size) => ( is => q(rw), isa => q(Int) );
+has q(comp_size) => ( is => q(rw), isa => q(Int) );
 has q(attributes) => ( is => q(rw), isa => q(Str) );
 
 #### end Package 'Archive::File' ####
@@ -212,7 +278,7 @@ use warnings;
 use Getopt::Long;
 use Log::Log4perl qw(get_logger);
 use Log::Log4perl::Level;
-use Time::Local;
+
 use Pod::Usage;
 
 my ($VERBOSE, $first_file, $second_file, $first_obj, $second_obj, $colorlog);
@@ -276,7 +342,7 @@ $logger->info(qq(Parsing first archive file));
 $first_obj->parse();
 $logger->info(qq(Parsing second archive file));
 $first_obj->parse();
-$logger->info(qq(=-=-=-= Archive Diff Report =-=-=-=));
+$logger->info(qq(=-=-=-=-=-= Archive Diff Report =-=-=-=-=-=));
 my $diff = Archive::Diff->new( first => $first_obj, second => $second_obj );
 
 $diff->simple_diff();
@@ -317,7 +383,7 @@ sub ShowHelp {
     } # if ( ($whichhelp eq q(help))  || ($whichhelp eq q(h)) )
 } # sub ShowHelp
 
-### end package main
+#### end Package main ####
 
 =pod
 
