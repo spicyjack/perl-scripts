@@ -68,7 +68,10 @@ user.
 
 How many changes in state that have occured since the last 'pulse'.
 
+=back 
+
 =cut
+
 has q(count_pulse) => ( is => q(rw), isa => q(Int), default => 10 );
 has q(_beats) => ( is => q(rw), isa => q(Int), default => 1);
 
@@ -89,9 +92,8 @@ sub throb {
     if ( defined $args{total_lines} ) {
 #print qq(total lines mod count pulse is ) .
 #$args{total_lines} % $self->count_pulse() . qq(\n);
-#        if ( ( $args{total_lines} % $self->count_pulse() ) == 0 ) {
+        if ( ( $args{total_lines} % $self->count_pulse() ) == 0 ) {
             print qq(self->_beats is ) . $self->_beats() . qq(\r);
-            sleep 1;
             if ( $self->_beats == 1 ) { print q(- ); } 
             elsif ( $self->_beats == 2 ) { print q(\ ); } 
             elsif ( $self->_beats == 3 ) { print q(| ); } 
@@ -101,7 +103,7 @@ sub throb {
             } # if ( $self->_beats == 1 )
             $self->_beats($self->_beats() + 1);
             print q(Total Lines counted: ) . $args{total_lines} . qq(\r);
-#        } # if ( ( $args{total_lines} % $self->count_pulse() ) == 0 )
+        } # if ( ( $args{total_lines} % $self->count_pulse() ) == 0 )
     } # if ( defined $args{total_lines} )
 } # sub throb
 
@@ -193,6 +195,8 @@ sub parse {
     # open the file and read it's contents
     open(FH, q(<) . $self->archfilename);
     my $throbber = Throbber->new( count_pulse => $self->count_pulse() );
+    # turn off line buffering on STDOUT
+    $| = 1;
     while (<FH>) {
         my $line = $_;
         # skip blank lines
@@ -238,6 +242,9 @@ sub parse {
         } # if ( $line =~ /^\d\d\d\d-\d\d-\d\d/ )
     } # while (<FH>)
     $logger->info(qq(Total files in archive: ) . $total_lines);
+    # turn line buffering back on on STDOUT
+    $| = 0;
+
 } # sub parse
 
 #### end Package 'Archive' ####
