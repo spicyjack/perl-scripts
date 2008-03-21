@@ -19,9 +19,7 @@
 #   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111, USA.
 
 # FIXME
-# - go through the moose archives and see if anyone has tried something
-# similar to what you are trying to do re: object creation and having
-# something that checks for external files
+# - create a nice dot counter for files, set the initial dot count at 20?
 # - create a set of external modules, or call to internal Perl-ish modules
 # that will list the contents of various archive formats
 #   - start with lzma first
@@ -66,7 +64,8 @@ readable when an object is created from this class.
 
 =item contents
 
-A hash of L<Archive::File> objects keyed by filename.
+A pointer to an L<Archive::FileList> object which is used to store filenames
+from the archive.
 
 =back
 
@@ -74,10 +73,10 @@ A hash of L<Archive::File> objects keyed by filename.
 
 #### Package 'Archive' ####
 package Archive;
+use Date::Parse;
+use Log::Log4perl qw(get_logger);
 use Moose; # comes with 'strict' and 'warnings'
 use Moose::Util::TypeConstraints;
-use Log::Log4perl qw(get_logger);
-use Date::Parse;
 
 # a subtype for holding the name of a file in the archive
 # this should make it so that the file is checked when the object is created
@@ -87,12 +86,15 @@ subtype ArchiveFilename
     => where { ( -r $_ ) };
 
 has q(attrib) => ( is => q(rw), isa => q(Archive::Attributes));
-has q(filename) => ( is => q(rw), isa => q(ArchiveFilename), required => 1 );
-# FIXME abstract the HashRef[Archive::File] into it's own object,
-# Archive::FileList?
-has q(contents) => ( is => q(rw), isa => q(HashRef[Archive::File]) );
+has q(archfilename) => (is => q(rw), isa => q(ArchiveFilename), required => 1);
+has q(filelist) => ( is => q(rw), isa => q(Archive::FileList) );
 
 =pod
+
+=head3 BUILD()
+
+Initializes the L<Archive::FileList> object so it can store individual
+L<Archive::File> records.
 
 =head3 parse()
 
@@ -101,13 +103,20 @@ object attributes.
 
 =cut 
 
+sub BUILD {
+    my $self = shift;
+    my $logger = get_logger();
+    $logger->debug(q(Entering Archive->BUILD() ));
+    $self->filelist(Archive::FileList->new());
+} # sub BUILD
+
 sub parse { 
     my $self = shift;
     my $total_files;
     my $logger = get_logger();
 
     # open the file and read it's contents
-    open(FH, q(<) . $self->filename);
+    open(FH, q(<) . $self->archfilename);
     while (<FH>) {
         my $line = $_;
         # skip blank lines
@@ -126,6 +135,7 @@ sub parse {
             #$logger->debug(q(this line has ) .scalar(@splitline) .q( fields));
             # create the archive file object
             my $archive_file = Archive::File->new( 
+                # str2time comes from Date::Parse
                 timestamp => str2time($splitline[0] . q( ) . $splitline[1]),
                 attributes => $splitline[2],
                 orig_size => $splitline[3],
@@ -142,10 +152,11 @@ sub parse {
                 exit 1;
             } # if ( scalar(@splitline) == 5 )
             $logger->debug(q(Adding ) . $archive_file->name 
-                . q( to contents hash));
-            $self->contents( { $archive_file->name => $archive_file} );
-            $logger->debug(q(there are now ) . scalar(keys(%{$self->contents}))
-                . q( records in self->contents));
+                . q( to filelist object));
+            $self->filelist->add(   key => $archive_file->name(),
+                                    object => $archive_file );
+            $logger->debug(q(there are now ) . $self->filelist->get_count()
+                . q( records in self->filelist));
         } # if ( $line =~ /^\d\d\d\d-\d\d-\d\d/ )
     } # while (<FH>)
     $logger->info(qq(Total files in archive: ) . $total_files);
@@ -166,9 +177,9 @@ the contents of the two archives.
 
 #### Package 'Archive::Diff' ####
 package Archive::Diff;
+use Log::Log4perl qw(get_logger);
 use Moose; # comes with 'strict' and 'warnings'
 use Moose::Util::TypeConstraints;
-use Log::Log4perl qw(get_logger);
 use Time::Local;
 
 has q(first) => ( is => q(rw), isa => q(Archive), required => 1 );
@@ -192,12 +203,12 @@ sub simple_diff {
 	my $self = shift;
     my $logger = get_logger();
 
-	$logger->info(q(The first filename is ) . $self->first->filename);
-    $logger->info(q(The second filename is ) . $self->second->filename);
-    $logger->info(q(There are ) . scalar( keys( %{$self->first->contents} ) )
-        . qq( keys in the first Archive object));
-    $logger->info(q(first key is ) 
-        . join(":", keys( %{$self->first->contents} ) ) );
+	$logger->info(q(The first filename is ) . $self->first->archfilename);
+    $logger->info(q(The second filename is ) . $self->second->archfilename);
+    $logger->info(q(There are ) . $self->first->filelist->get_count()
+        . qq( files in the first Archive object));
+    $logger->info(q(There are ) . $self->second->filelist->get_count()
+        . qq( files in the second Archive object));
 } # sub simple_diff
 
 #### end Package 'Archive::Diff' ####
@@ -222,12 +233,132 @@ on the system, as the archive itself does not hold any version information.
 
 #### Package 'Archive::Attributes' ####
 package Archive::Attributes;
-use Moose;
+use Moose; # comes with 'strict' and 'warnings'
 use Moose::Util::TypeConstraints;
 
 has q(version) => ( is => q(rw), isa => q(Str) );
 
 #### end Package 'Archive::Attributes' ####
+
+=pod 
+
+=head2 Module Archive::FileList
+
+An object that keeps a list of L<Archive::File> objects keyed by filename.
+The object has the following attributes:
+
+=over 5
+
+=item _filelist
+
+An internal holder of the file list hash.  Use the get_keys() method to obtain
+the list of files being held by this hash.
+
+=cut
+
+#### Package 'Archive::FileList' ####
+package Archive::FileList;
+use Log::Log4perl qw(get_logger);
+use Moose; # comes with 'strict' and 'warnings'
+use Moose::Util::TypeConstraints;
+
+has q(_filelist) => ( is => q(rw), isa => q(HashRef) );
+
+=pod
+
+=head3 BUILD
+
+Initializes the _filelist hash.
+
+=head3 add([key|filename] => $filename, [object|value] => Archive::File object)
+
+Adds a file from the archive to the L<Archive::FileList> object using the
+filename as a key and the L<Archive::File> object as the value.
+
+=head3 get_count()
+
+Returns a count of how many L<Archive::File> objects are currently being
+stored in the L<Archive::FileList> object.
+
+=head3 get_keys()
+
+Returns a sorted list of filenames that are stored inside the
+L<Archive::FileList> object.
+
+=head3 get_unsorted_keys()
+
+Returns an unsorted list of filenames that are stored inside the
+L<Archive::FileList> object.
+
+=head3 get([key|filename] => $key)
+
+Returns the L<Archive::File> object specified by the contents of $key.
+
+=cut
+
+sub BUILD {
+    my $self = shift;
+    my $logger = get_logger();
+    $logger->debug(q(Entering Archive::FileList->BUILD() ));
+
+    $self->_filelist({});
+} # sub BUILD
+
+sub add {
+    my $self = shift;
+    my %args = @_;
+    my $logger = get_logger();
+
+    my ($filename, $fileobj);
+    my %filelist = %{$self->_filelist()};
+    # since we support two different signatures for passing in the
+    # Archive::File object...
+    if ( exists $args{key} ) { $filename = $args{key}; }
+    if ( exists $args{filename} ) { $filename = $args{filename}; }
+    if ( exists $args{value} ) { $fileobj = $args{value}; }
+    if ( exists $args{object} ) { $fileobj = $args{object}; }
+    die q(File name/object not passed in to add method) 
+        unless ( defined $fileobj && defined $filename );
+    # verify we got an Archive::File object; blessed is imported from Moose
+    my $fileobj_type = blessed $fileobj;
+    if ( $fileobj_type eq q(Archive::File) ) {
+        # now see if that filename is already in the file list
+        if ( exists($filelist{$filename}) ) {
+            # yes, it exists; throw an error
+            $logger->error(q(File: ) . $fileobj->name());
+            $logger->error(q( already exists in filelist));
+        } else {
+            # no, it doesn't exist; add it
+            $filelist{$filename} = $fileobj;
+            # reassign the temp list to the object
+            $self->_filelist({%filelist});
+        } # if ( exists($filehash{$fileobj->name()} )
+    } # if ( $fileobj_type eq q(Archive::File) )
+} # sub add
+
+sub get_count {
+    my $self = shift;
+
+    my %filelist = %{$self->_filelist};
+    return scalar(keys(%filelist));
+} # sub count
+
+sub get_keys {
+    my $self = shift;
+    return sort($self->get_unsorted_keys);
+} # sub keys
+
+sub get_unsorted_keys {
+    my $self = shift;
+    my %filelist = %{$self->_filelist};
+    return keys(%filelist);
+} # sub unsorted_keys
+
+sub get {
+    my $self = shift;
+} # sub get
+
+#### end Package 'Archive::FileList' ####
 
 =pod 
 
@@ -265,14 +396,15 @@ The name of the file that is a member of this L<Archive>.
 
 #### Package 'Archive::File' ####
 package Archive::File;
-use Moose;
+use Moose; # comes with 'strict' and 'warnings'
 use Moose::Util::TypeConstraints;
 
-has q(name) => ( is => q(rw), isa => q(Str) );
+# these are stored in the order that they are retrieved from a 7zip archive
 has q(timestamp) => ( is => q(rw), isa => q(Int) );
+has q(attributes) => ( is => q(rw), isa => q(Str) );
 has q(orig_size) => ( is => q(rw), isa => q(Int) );
 has q(comp_size) => ( is => q(rw), isa => q(Int) );
-has q(attributes) => ( is => q(rw), isa => q(Str) );
+has q(name) => ( is => q(rw), isa => q(Str) );
 
 #### end Package 'Archive::File' ####
 
@@ -327,7 +459,7 @@ if ( $VERBOSE ) { $logger->level($DEBUG); }
 # if they're both readable, read them and bless them into objects
 if ( defined $first_file ) {
     # read in the file and bless it into an Archive object
-    $first_obj = eval { Archive->new( filename => $first_file ); };
+    $first_obj = eval { Archive->new( archfilename => $first_file ); };
     if ( $@ ) { &FileReadDie($@); }
 } else {
     $logger->fatal(q(First file not specified with --first-file switch));
@@ -336,7 +468,7 @@ if ( defined $first_file ) {
 
 if ( defined $second_file ) {
     # read in the file and bless it into an Archive object
-    $second_obj = eval { Archive->new( filename => $second_file ); };
+    $second_obj = eval { Archive->new( archfilename => $second_file ); };
     if ( $@ ) { &FileReadDie($@); }
 } else {
     $logger->fatal(q(Second file not specified with --second-file switch));
@@ -347,7 +479,7 @@ $logger->info(qq(=-=-=-=-=-= Begin $0 =-=-=-=-=-=));
 $logger->info(qq(Parsing first archive file));
 $first_obj->parse();
 $logger->info(qq(Parsing second archive file));
-$first_obj->parse();
+$second_obj->parse();
 $logger->info(qq(=-=-=-=-=-= Archive Diff Report =-=-=-=-=-=));
 my $diff = Archive::Diff->new( first => $first_obj, second => $second_obj );
 
