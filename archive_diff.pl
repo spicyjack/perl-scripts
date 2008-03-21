@@ -19,7 +19,6 @@
 #   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111, USA.
 
 # FIXME
-# - create a nice dot counter for files, set the initial dot count at 20?
 # - create a set of external modules, or call to internal Perl-ish modules
 # that will list the contents of various archive formats
 #   - start with lzma first
@@ -45,69 +44,6 @@ B<archive_diff.pl> compares the files listed in two archives, checking for
 files that are in one archive and not the other and vice versa.
 
 =cut
-
-#### Package 'Throbber' ####
-package Throbber;
-use Moose; # comes with 'strict' and 'warnings'
-
-=pod
-
-=head2 Module Throbber
-
-Moves some text on the screen while processing is going on in the background.
-The L<Throbber> object has the following attributes:
-
-=over 5
-
-=item count_pulse
-
-How many changes in state before generating a 'pulse' that is visible to the
-user.
-
-=item _beats
-
-How many changes in state that have occured since the last 'pulse'.
-
-=back 
-
-=cut
-
-has q(count_pulse) => ( is => q(rw), isa => q(Int), default => 10 );
-has q(_beats) => ( is => q(rw), isa => q(Int), default => 1);
-
-=pod
-
-=head3 throb($number)
-
-Tells the L<Throbber> object to manipulate the text on the screen so the user
-knows that the computer is busy processing data.  The $number value is the
-number of lines processed so far.
-
-=cut
-
-sub throb {
-    my $self = shift;
-    my %args = @_;
-
-    if ( defined $args{total_lines} ) {
-#print qq(total lines mod count pulse is ) .
-#$args{total_lines} % $self->count_pulse() . qq(\n);
-        if ( ( $args{total_lines} % $self->count_pulse() ) == 0 ) {
-            print qq(self->_beats is ) . $self->_beats() . qq(\r);
-            if ( $self->_beats == 1 ) { print q(- ); } 
-            elsif ( $self->_beats == 2 ) { print q(\ ); } 
-            elsif ( $self->_beats == 3 ) { print q(| ); } 
-            elsif ( $self->_beats == 4 ) { 
-                print q(/ ); 
-                $self->_beats(0);
-            } # if ( $self->_beats == 1 )
-            $self->_beats($self->_beats() + 1);
-            print q(Total Lines counted: ) . $args{total_lines} . qq(\r);
-        } # if ( ( $args{total_lines} % $self->count_pulse() ) == 0 )
-    } # if ( defined $args{total_lines} )
-} # sub throb
-
-#### end Package 'Throbber' ####
 
 #### Package 'Archive' ####
 package Archive;
@@ -143,8 +79,8 @@ from the archive.
 
 =item count_pulse
 
-How many lines to parse before the throbber updates itself.  Defaults to 10
-lines per pulse.
+How many lines to parse before the throbber (user work being done indicator)
+updates itself.  Defaults to 10 lines per pulse.
 
 =back
 
@@ -166,8 +102,8 @@ has q(count_pulse) => ( is => q(rw), isa => q(Int), default => 10 );
 
 =head3 BUILD()
 
-Initializes the L<Archive::FileList> object so it can store individual
-L<Archive::File> records.
+This method is called automatically, it initializes the L<Archive::FileList>
+object so it can store individual L<Archive::File> records.  
 
 =cut
 
@@ -274,28 +210,28 @@ The first archive to be compared.
 
 The second archive to be compared.
 
+=item common
+
+An archive that contains a list of files that are common to both the first and
+second archives.
+
 =back
 
 =cut
 
 has q(first) => ( is => q(rw), isa => q(Archive), required => 1 );
 has q(second) => ( is => q(rw), isa => q(Archive), required => 1 );
-
+has q(common) => ( is => q(rw), isa => q(Archive::FileList) );
 =pod
 
-=head3 simple_diff()
+=head3 simple_stats()
 
-Shows a simple comparison, whether or not a file is in one archive or the
-other.
-
-=head3 full_diff()
-
-Shows not only if files are in one archive but not another, but if the same
-file in both archives differs in timestamp or uncompressed size.
+Shows simple statistics about each file contained inside of the
+L<Archive::Diff> object.
 
 =cut
 
-sub simple_diff {
+sub simple_stats {
 	my $self = shift;
     my $logger = get_logger();
 
@@ -305,7 +241,85 @@ sub simple_diff {
         . qq( files in the first Archive object));
     $logger->info(q(There are ) . $self->second->filelist->get_count()
         . qq( files in the second Archive object));
+    # get a common files object
+    $logger->info(q(Running a diff on the first and second files...));
+    my $common = $self->do_diff();
+    $logger->info(q(There are now ) . $self->first->filelist->get_count()
+        . qq( files in the first Archive object));
+    $logger->info(q(There are now ) . $self->second->filelist->get_count()
+        . qq( files in the second Archive object));
+    $logger->info(q(There are ) . $common->filelist->get_count()
+        . qq( files in the second Archive object));
+
 } # sub simple_diff
+
+=pod
+
+=head3 simple_diff()
+
+Shows the files in both archives, with notation to the left of the file that
+shows which archive the file is in.  For example:
+
+ my $archive_diff = Archive::Diff( first => $first, second => $second);
+ $archive_diff->simple_diff();
+
+ 1 2 /path/to/some/firstfile
+ 1   /path/to/some/secondfile
+   2 /path/to/some/thirdfile
+
+Given the three files listed above, 'firstfile' is in both archives,
+'secondfile' is only in the first archive, and 'thirdfile' is only in the
+second archive.
+
+=cut
+
+sub simple_diff {
+    my $self = shift;
+    my $logger = get_logger();
+
+    $self->do_diff();
+    $logger->info(q(There were ) . $self->common->get_count() 
+        . q( common files between the first and second archives));
+} # sub simple_diff
+
+=pod
+
+=head3 full_diff()
+
+Shows not only if files are in one archive but not another, but if the same
+file in both archives differs in timestamp or uncompressed size.
+
+=cut
+
+# FIXME
+# here's how this diff will be obtained
+# - create a filelist for files that both archives have in common
+# - go through the first list; for each file in the first list, compare it
+# with the files in the second list; if the file exists in both lists, add it
+# to the common list and then delete it from both lists
+# - what's left over in the first and second lists are the files that unique
+# to that list, and a list of common files
+# - get the keys to all three lists, add them to a DiffList object, then tell
+# that DiffList object to sort and display the list
+
+sub do_diff {
+    my $self = shift;
+    $self->common( Archive::FileList->new() ); 
+
+    # get a list of files from the first filelist
+    foreach my $firstkey ( $self->first->filelist->get_keys() ) {
+        # for each file in that list, see if the same file exists in the
+        # second filelist
+        if ( $self->second->filelist->exists($firstkey) ) { 
+            $self->common->add( 
+                filename => $firstkey, 
+                object => $self->first->filelist->get($firstkey),
+            );
+            $self->first->filelist->del($firstkey);
+            $self->second->filelist->del($firstkey);
+        } # if ( $self->second->exists($firstkey)
+    } # foreach my $firstkey ( $self->first->get_keys() )
+} # sub do_diff
 
 #### end Package 'Archive::Diff' ####
 
@@ -356,6 +370,8 @@ The object has the following attributes:
 An internal holder of the file list hash.  Use the get_keys() method to obtain
 the list of files being held by this hash.
 
+=back 
+
 =cut
 
 has q(_filelist) => ( is => q(rw), isa => q(HashRef) );
@@ -364,7 +380,7 @@ has q(_filelist) => ( is => q(rw), isa => q(HashRef) );
 
 =head3 BUILD
 
-Initializes the _filelist hash.
+This method is called automatically, it initializes the _filelist hash.
 
 =cut
 
@@ -417,6 +433,54 @@ sub add {
     } # if ( $fileobj_type eq q(Archive::File) )
 } # sub add
 
+=pod
+
+=head3 del([key|filename] => $filename)
+
+Deletes a file from the L<Archive::FileList> object using the filename as a
+key.
+
+=cut
+
+sub del {
+    my $self = shift;
+    my %args = @_;
+    my $logger = get_logger();
+
+    my ($filename);
+    my %filelist = %{$self->_filelist()};
+    # since we support two different signatures for passing in the
+    # Archive::File object...
+    if ( exists $args{key} ) { $filename = $args{key}; }
+    if ( exists $args{filename} ) { $filename = $args{filename}; }
+    die q(File name/object not passed in to add method) 
+        unless ( defined $filename );
+    # verify we got an Archive::File object; blessed is imported from Moose
+    if ( exists($filelist{$filename}) ) {
+        # yes, it exists; delete the key
+        delete $filelist{$filename};
+        # reassign the temp list to the object
+        $self->_filelist({%filelist});
+    } else {
+        # no, it doesn't exist; throw an error
+        $logger->error(qq(key $filename));
+        $logger->error(q(does not exists in the filelist));
+    } # if ( exists($filelist{$filename}) )
+} # sub del
+
+=pod
+
+=head3 delete([key|filename] => $filename)
+
+A synonym for the B<del()> method.
+
+=cut
+
+sub delete {
+    my $self = shift;
+    $self->del(@_);
+} # sub delete
+
 =pod 
 
 =head3 get_count()
@@ -466,12 +530,57 @@ sub get_unsorted_keys {
 
 =head3 get([key|filename] => $key)
 
-Returns the L<Archive::File> object specified by the contents of $key.
+Returns the L<Archive::File> object specified by the contents of $key.  Will
+throw a warning if there is no L<Archive::File> object stored that matches the
+$key.
 
 =cut
 
 sub get {
     my $self = shift;
+    my %args = @_;
+    my $logger = get_logger();
+
+    my ($filename, $fileobj);
+    my %filelist = %{$self->_filelist()};
+    # since we support two different signatures for passing in the
+    # Archive::File object...
+    if ( exists $args{key} ) { $filename = $args{key}; }
+    if ( exists $args{filename} ) { $filename = $args{filename}; }
+    if ( exists $filelist{$filename} ) {
+        return $filelist{$filename};
+    } else {
+        $logger->warn(qq(key $filename));
+        $logger->warn(q(does not exist in filelist));
+        return 0;
+    } # if ( exists $filelist{$filename} )
+} # sub get
+
+=pod
+
+=head3 exists([key|filename] => $key)
+
+Returns false by default.  Returns true if the string specified in $key is an
+L<Archive::File> object is in the filelist.  
+
+=cut
+
+sub exists {
+    my $self = shift;
+    my %args = @_;
+    my $logger = get_logger();
+
+    my ($filename, $fileobj);
+    my %filelist = %{$self->_filelist()};
+    # since we support two different signatures for passing in the
+    # Archive::File object...
+    if ( exists $args{key} ) { $filename = $args{key}; }
+    if ( exists $args{filename} ) { $filename = $args{filename}; }
+    if ( exists $filelist{$filename} ) {
+        return 1;
+    } else {
+        return 0;
+    } # if ( exists $filelist{$filename} )
 } # sub get
 
 #### end Package 'Archive::FileList' ####
@@ -524,6 +633,69 @@ has q(name) => ( is => q(rw), isa => q(Str) );
 
 #### end Package 'Archive::File' ####
 
+#### Package 'Throbber' ####
+package Throbber;
+use Moose; # comes with 'strict' and 'warnings'
+
+=pod
+
+=head2 Module Throbber
+
+Moves some text on the screen while processing is going on in the background.
+The L<Throbber> object has the following attributes:
+
+=over 5
+
+=item count_pulse
+
+How many changes in state before generating a 'pulse' that is visible to the
+user.
+
+=item _beats
+
+How many changes in state that have occured since the last 'pulse'.
+
+=back 
+
+=cut
+
+has q(count_pulse) => ( is => q(rw), isa => q(Int), default => 10 );
+has q(_beats) => ( is => q(rw), isa => q(Int), default => 1);
+
+=pod
+
+=head3 throb($number)
+
+Tells the L<Throbber> object to see if it needs to manipulate the text on the
+screen.  The L<Throbber> object does this so the user knows that the computer
+is busy processing data.  The $number value is the number of lines processed
+so far.
+
+=cut
+
+sub throb {
+    my $self = shift;
+    my %args = @_;
+
+    if ( defined $args{total_lines} ) {
+        if ( ( $args{total_lines} % $self->count_pulse() ) == 0 ) {
+            print qq(self->_beats is ) . $self->_beats() . qq(\r);
+            if ( $self->_beats == 1 ) { print q(- ); } 
+            elsif ( $self->_beats == 2 ) { print q(\ ); } 
+            elsif ( $self->_beats == 3 ) { print q(| ); } 
+            elsif ( $self->_beats == 4 ) { 
+                print q(/ ); 
+                # reset the throbber beat counter
+                $self->_beats(0);
+            } # if ( $self->_beats == 1 )
+            $self->_beats($self->_beats() + 1);
+            print q(Total Lines counted: ) . $args{total_lines} . qq(\r);
+        } # if ( ( $args{total_lines} % $self->count_pulse() ) == 0 )
+    } # if ( defined $args{total_lines} )
+} # sub throb
+
+#### end Package 'Throbber' ####
+
 #### Package 'main' ####
 package main;
 
@@ -540,7 +712,7 @@ my ($VERBOSE, $first_file, $second_file, $first_obj, $second_obj, $colorlog);
 $colorlog = 1;
 
 my $goparse = Getopt::Long::Parser->new();
-$goparse->getoptions(   q(verbose|v)                      => \$VERBOSE,
+$goparse->getoptions(   q(verbose|v)                    => \$VERBOSE,
                         q(help|h)                       => \&ShowHelp,
                         q(first-file|first|1st|1=s)     => \$first_file,
                         q(second-file|second|2nd|2=s)   => \$second_file,
@@ -599,6 +771,7 @@ $second_obj->parse();
 $logger->info(qq(=-=-=-=-=-= Archive Diff Report =-=-=-=-=-=));
 my $diff = Archive::Diff->new( first => $first_obj, second => $second_obj );
 
+$diff->simple_stats();
 $diff->simple_diff();
 
 exit 0;
@@ -616,7 +789,7 @@ sub FileReadDie {
     if ( $logger->is_debug() ) { 
         print $error_msg; 
     } else {
-        $logger->fatal(qq(Uѕe --verbose for more error output));
+        $logger->fatal(qq(Use --verbose for more error output));
     } # if ( $logger->is_debug() )
     &HelpDie;
 } # sub FileReadDie
