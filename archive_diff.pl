@@ -44,6 +44,78 @@ the author's version number.
 B<archive_diff.pl> compares the files listed in two archives, checking for
 files that are in one archive and not the other and vice versa.
 
+=cut
+
+#### Package 'Throbber' ####
+package Throbber;
+use Moose; # comes with 'strict' and 'warnings'
+
+=pod
+
+=head2 Module Throbber
+
+Moves some text on the screen while processing is going on in the background.
+The L<Throbber> object has the following attributes:
+
+=over 5
+
+=item count_pulse
+
+How many changes in state before generating a 'pulse' that is visible to the
+user.
+
+=item _beats
+
+How many changes in state that have occured since the last 'pulse'.
+
+=cut
+has q(count_pulse) => ( is => q(rw), isa => q(Int), default => 10 );
+has q(_beats) => ( is => q(rw), isa => q(Int), default => 1);
+
+=pod
+
+=head3 throb($number)
+
+Tells the L<Throbber> object to manipulate the text on the screen so the user
+knows that the computer is busy processing data.  The $number value is the
+number of lines processed so far.
+
+=cut
+
+sub throb {
+    my $self = shift;
+    my %args = @_;
+
+    if ( defined $args{total_lines} ) {
+#print qq(total lines mod count pulse is ) .
+#$args{total_lines} % $self->count_pulse() . qq(\n);
+#        if ( ( $args{total_lines} % $self->count_pulse() ) == 0 ) {
+            print qq(self->_beats is ) . $self->_beats() . qq(\r);
+            sleep 1;
+            if ( $self->_beats == 1 ) { print q(- ); } 
+            elsif ( $self->_beats == 2 ) { print q(\ ); } 
+            elsif ( $self->_beats == 3 ) { print q(| ); } 
+            elsif ( $self->_beats == 4 ) { 
+                print q(/ ); 
+                $self->_beats(0);
+            } # if ( $self->_beats == 1 )
+            $self->_beats($self->_beats() + 1);
+            print q(Total Lines counted: ) . $args{total_lines} . qq(\r);
+#        } # if ( ( $args{total_lines} % $self->count_pulse() ) == 0 )
+    } # if ( defined $args{total_lines} )
+} # sub throb
+
+#### end Package 'Throbber' ####
+
+#### Package 'Archive' ####
+package Archive;
+use Date::Parse;
+use Log::Log4perl qw(get_logger);
+use Moose; # comes with 'strict' and 'warnings'
+use Moose::Util::TypeConstraints;
+
+=pod
+
 =head2 Module Archive
 
 The Archive object grabs information from an archive of some kind and allows
@@ -67,16 +139,14 @@ readable when an object is created from this class.
 A pointer to an L<Archive::FileList> object which is used to store filenames
 from the archive.
 
+=item count_pulse
+
+How many lines to parse before the throbber updates itself.  Defaults to 10
+lines per pulse.
+
 =back
 
 =cut
-
-#### Package 'Archive' ####
-package Archive;
-use Date::Parse;
-use Log::Log4perl qw(get_logger);
-use Moose; # comes with 'strict' and 'warnings'
-use Moose::Util::TypeConstraints;
 
 # a subtype for holding the name of a file in the archive
 # this should make it so that the file is checked when the object is created
@@ -88,6 +158,7 @@ subtype ArchiveFilename
 has q(attrib) => ( is => q(rw), isa => q(Archive::Attributes));
 has q(archfilename) => (is => q(rw), isa => q(ArchiveFilename), required => 1);
 has q(filelist) => ( is => q(rw), isa => q(Archive::FileList) );
+has q(count_pulse) => ( is => q(rw), isa => q(Int), default => 10 );
 
 =pod
 
@@ -96,12 +167,7 @@ has q(filelist) => ( is => q(rw), isa => q(Archive::FileList) );
 Initializes the L<Archive::FileList> object so it can store individual
 L<Archive::File> records.
 
-=head3 parse()
-
-Parses (lists) the contents of the archive, and populates the appropriate
-object attributes.
-
-=cut 
+=cut
 
 sub BUILD {
     my $self = shift;
@@ -110,13 +176,23 @@ sub BUILD {
     $self->filelist(Archive::FileList->new());
 } # sub BUILD
 
+=pod
+
+=head3 parse()
+
+Parses (lists) the contents of the archive, and populates the appropriate
+object attributes.
+
+=cut 
+
 sub parse { 
     my $self = shift;
-    my $total_files;
+    my $total_lines;
     my $logger = get_logger();
 
     # open the file and read it's contents
     open(FH, q(<) . $self->archfilename);
+    my $throbber = Throbber->new( count_pulse => $self->count_pulse() );
     while (<FH>) {
         my $line = $_;
         # skip blank lines
@@ -127,12 +203,12 @@ sub parse {
             # found a file entry
             $line =~ s/  +/ /g;
             $line =~ s/\r$//g;
-            #$logger->debug(q(de-spaceified line is:));
-            #$logger->debug($line);
             my @splitline = split(/ /, $line);
-            #$logger->debug(join(q(:), @splitline));
-            $total_files++;
-            #$logger->debug(q(this line has ) .scalar(@splitline) .q( fields));
+            if ( $logger->is_debug() ) {
+                $logger->debug(join(q(:), @splitline));
+                $logger->debug(q(this line has ) . scalar(@splitline) 
+                    . q( fields));
+            } # if ( $logger->is_debug() )
             # create the archive file object
             my $archive_file = Archive::File->new( 
                 # str2time comes from Date::Parse
@@ -157,23 +233,14 @@ sub parse {
                                     object => $archive_file );
             $logger->debug(q(there are now ) . $self->filelist->get_count()
                 . q( records in self->filelist));
+            $total_lines++;
+            $throbber->throb(total_lines => $total_lines);
         } # if ( $line =~ /^\d\d\d\d-\d\d-\d\d/ )
     } # while (<FH>)
-    $logger->info(qq(Total files in archive: ) . $total_files);
+    $logger->info(qq(Total files in archive: ) . $total_lines);
 } # sub parse
 
 #### end Package 'Archive' ####
-
-=pod
-
-=head2 Module Archive::Diff
-
-This object takes two L<Archive> objects as arguments, and when queried using
-the object methods, will return a formatted list that shows the differences in
-the contents of the two archives.
-
-
-=cut
 
 #### Package 'Archive::Diff' ####
 package Archive::Diff;
@@ -181,6 +248,28 @@ use Log::Log4perl qw(get_logger);
 use Moose; # comes with 'strict' and 'warnings'
 use Moose::Util::TypeConstraints;
 use Time::Local;
+
+=pod
+
+=head2 Module Archive::Diff
+
+This object takes two L<Archive> objects as arguments, and when queried using
+the object methods, will return a formatted list that shows the differences in
+the contents of the two archives.  This module has the following attributes:
+
+=over 5
+
+=item first
+
+The first archive to be compared.
+
+=item second
+
+The second archive to be compared.
+
+=back
+
+=cut
 
 has q(first) => ( is => q(rw), isa => q(Archive), required => 1 );
 has q(second) => ( is => q(rw), isa => q(Archive), required => 1 );
@@ -213,6 +302,11 @@ sub simple_diff {
 
 #### end Package 'Archive::Diff' ####
 
+#### Package 'Archive::Attributes' ####
+package Archive::Attributes;
+use Moose; # comes with 'strict' and 'warnings'
+use Moose::Util::TypeConstraints;
+
 =pod 
 
 =head2 Module Archive::Attributes
@@ -231,14 +325,15 @@ on the system, as the archive itself does not hold any version information.
 
 =cut
 
-#### Package 'Archive::Attributes' ####
-package Archive::Attributes;
-use Moose; # comes with 'strict' and 'warnings'
-use Moose::Util::TypeConstraints;
-
 has q(version) => ( is => q(rw), isa => q(Str) );
 
 #### end Package 'Archive::Attributes' ####
+
+#### Package 'Archive::FileList' ####
+package Archive::FileList;
+use Log::Log4perl qw(get_logger);
+use Moose; # comes with 'strict' and 'warnings'
+use Moose::Util::TypeConstraints;
 
 =pod 
 
@@ -256,12 +351,6 @@ the list of files being held by this hash.
 
 =cut
 
-#### Package 'Archive::FileList' ####
-package Archive::FileList;
-use Log::Log4perl qw(get_logger);
-use Moose; # comes with 'strict' and 'warnings'
-use Moose::Util::TypeConstraints;
-
 has q(_filelist) => ( is => q(rw), isa => q(HashRef) );
 
 =pod
@@ -270,39 +359,24 @@ has q(_filelist) => ( is => q(rw), isa => q(HashRef) );
 
 Initializes the _filelist hash.
 
-=head3 add([key|filename] => $filename, [object|value] => Archive::File object)
-
-Adds a file from the archive to the L<Archive::FileList> object using the
-filename as a key and the L<Archive::File> object as the value.
-
-=head3 get_count()
-
-Returns a count of how many L<Archive::File> objects are currently being
-stored in the L<Archive::FileList> object.
-
-=head3 get_keys()
-
-Returns a sorted list of filenames that are stored inside the
-L<Archive::FileList> object.
-
-=head3 get_unsorted_keys()
-
-Returns an unsorted list of filenames that are stored inside the
-L<Archive::FileList> object.
-
-=head3 get([key|filename] => $key)
-
-Returns the L<Archive::File> object specified by the contents of $key.
-
 =cut
 
 sub BUILD {
     my $self = shift;
     my $logger = get_logger();
-    $logger->debug(q(Entering Archive::FileList->BUILD() ));
+    $logger->debug(q(Entering Archive::FileList->BUILD));
 
     $self->_filelist({});
 } # sub BUILD
+
+=pod
+
+=head3 add([key|filename] => $filename, [object|value] => Archive::File object)
+
+Adds a file from the archive to the L<Archive::FileList> object using the
+filename as a key and the L<Archive::File> object as the value.
+
+=cut
 
 sub add {
     my $self = shift;
@@ -336,6 +410,15 @@ sub add {
     } # if ( $fileobj_type eq q(Archive::File) )
 } # sub add
 
+=pod 
+
+=head3 get_count()
+
+Returns a count of how many L<Archive::File> objects are currently being
+stored in the L<Archive::FileList> object.
+
+=cut
+
 sub get_count {
     my $self = shift;
 
@@ -343,10 +426,28 @@ sub get_count {
     return scalar(keys(%filelist));
 } # sub count
 
+=pod
+
+=head3 get_keys()
+
+Returns a sorted list of filenames that are stored inside the
+L<Archive::FileList> object.
+
+=cut
+
 sub get_keys {
     my $self = shift;
     return sort($self->get_unsorted_keys);
 } # sub keys
+
+=pod
+
+=head3 get_unsorted_keys()
+
+Returns an unsorted list of filenames that are stored inside the
+L<Archive::FileList> object.
+
+=cut
 
 sub get_unsorted_keys {
     my $self = shift;
@@ -354,11 +455,24 @@ sub get_unsorted_keys {
     return keys(%filelist);
 } # sub unsorted_keys
 
+=pod
+
+=head3 get([key|filename] => $key)
+
+Returns the L<Archive::File> object specified by the contents of $key.
+
+=cut
+
 sub get {
     my $self = shift;
 } # sub get
 
 #### end Package 'Archive::FileList' ####
+
+#### Package 'Archive::File' ####
+package Archive::File;
+use Moose; # comes with 'strict' and 'warnings'
+use Moose::Util::TypeConstraints;
 
 =pod 
 
@@ -393,11 +507,6 @@ The name of the file that is a member of this L<Archive>.
 =back
 
 =cut
-
-#### Package 'Archive::File' ####
-package Archive::File;
-use Moose; # comes with 'strict' and 'warnings'
-use Moose::Util::TypeConstraints;
 
 # these are stored in the order that they are retrieved from a 7zip archive
 has q(timestamp) => ( is => q(rw), isa => q(Int) );
@@ -496,8 +605,7 @@ sub HelpDie {
 sub FileReadDie {
     my $error_msg = shift;
     my $logger = get_logger();
-    $logger->fatal(qq(Hmmm, something happened trying to read:));
-    $logger->fatal($first_file);
+    $logger->fatal(qq(Hmmm, something happened trying to read a file));
     if ( $logger->is_debug() ) { 
         print $error_msg; 
     } else {
