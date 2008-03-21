@@ -14,3 +14,4 @@ use Moose;
 my $demo = FilenameDemo->new( filename => $0 );
 
 print qq(My name is ) . $demo->filename . qq(\n);
+print qq(I am a ) . blessed $demo . qq( type of object\n);
