@@ -222,6 +222,20 @@ second archives.
 has q(first) => ( is => q(rw), isa => q(Archive), required => 1 );
 has q(second) => ( is => q(rw), isa => q(Archive), required => 1 );
 has q(common) => ( is => q(rw), isa => q(Archive::FileList) );
+
+=pod
+
+=head3 BUILD()
+
+Initializes the common L<Archive::FileList> object.
+
+=cut
+
+sub BUILD {
+    my $self = shift;
+    $self->common( Archive::FileList->new() ); 
+}  # sub BUILD
+
 =pod
 
 =head3 simple_stats()
@@ -241,16 +255,8 @@ sub simple_stats {
         . qq( files in the first Archive object));
     $logger->info(q(There are ) . $self->second->filelist->get_count()
         . qq( files in the second Archive object));
-    # get a common files object
-    $logger->info(q(Running a diff on the first and second files...));
-    my $common = $self->do_diff();
-    $logger->info(q(There are now ) . $self->first->filelist->get_count()
-        . qq( files in the first Archive object));
-    $logger->info(q(There are now ) . $self->second->filelist->get_count()
-        . qq( files in the second Archive object));
-    $logger->info(q(There are ) . $common->filelist->get_count()
-        . qq( files in the second Archive object));
-
+    $logger->info(q(There are ) . $self->common->get_count()
+        . qq( files in the 'common' Archive object));
 } # sub simple_diff
 
 =pod
@@ -277,9 +283,8 @@ sub simple_diff {
     my $self = shift;
     my $logger = get_logger();
 
+    $logger->info(q(Running a diff on the first and second files...));
     $self->do_diff();
-    $logger->info(q(There were ) . $self->common->get_count() 
-        . q( common files between the first and second archives));
 } # sub simple_diff
 
 =pod
@@ -304,20 +309,23 @@ file in both archives differs in timestamp or uncompressed size.
 
 sub do_diff {
     my $self = shift;
-    $self->common( Archive::FileList->new() ); 
+    my $logger = get_logger();
+
 
     # get a list of files from the first filelist
     foreach my $firstkey ( $self->first->filelist->get_keys() ) {
         # for each file in that list, see if the same file exists in the
         # second filelist
-        if ( $self->second->filelist->exists($firstkey) ) { 
+        $logger->debug(qq(do_diff: Checking $firstkey));
+        if ( $self->second->filelist->exists(key => $firstkey) ) { 
+            $logger->debug(qq(do_diff: matched $firstkey));
             $self->common->add( 
                 filename => $firstkey, 
-                object => $self->first->filelist->get($firstkey),
+                object => $self->first->filelist->get( key => $firstkey ),
             );
-            $self->first->filelist->del($firstkey);
-            $self->second->filelist->del($firstkey);
-        } # if ( $self->second->exists($firstkey)
+            $self->first->filelist->del(key => $firstkey);
+            $self->second->filelist->del(key => $firstkey);
+        } # if ( $self->second->exists(key => $firstkey)
     } # foreach my $firstkey ( $self->first->get_keys() )
 } # sub do_diff
 
@@ -707,7 +715,8 @@ use Log::Log4perl::Level;
 
 use Pod::Usage;
 
-my ($VERBOSE, $first_file, $second_file, $first_obj, $second_obj, $colorlog);
+my ($VERBOSE, $first_file, $second_file, $first_obj, $second_obj, 
+        $write_diffs, $colorlog);
 # colorize Log4perl output by default 
 $colorlog = 1;
 
@@ -717,6 +726,7 @@ $goparse->getoptions(   q(verbose|v)                    => \$VERBOSE,
                         q(first-file|first|1st|1=s)     => \$first_file,
                         q(second-file|second|2nd|2=s)   => \$second_file,
                         q(colorlog!)                    => \$colorlog,
+                        q(write|w)                      => \$write_diffs,
                     ); # $goparse->getoptions
 
 # always turn off color logs under Windows, the terms don't do ANSI
@@ -769,10 +779,37 @@ $first_obj->parse();
 $logger->info(qq(Parsing second archive file));
 $second_obj->parse();
 $logger->info(qq(=-=-=-=-=-= Archive Diff Report =-=-=-=-=-=));
-my $diff = Archive::Diff->new( first => $first_obj, second => $second_obj );
 
+my $diff = Archive::Diff->new( first => $first_obj, second => $second_obj );
+$logger->info(qq(=-=-=-=-=-= 'Before' Report =-=-=-=-=-=));
 $diff->simple_stats();
 $diff->simple_diff();
+$logger->info(qq(=-=-=-=-=-= 'After' Report =-=-=-=-=-=));
+$diff->simple_stats();
+
+# print to the screen first
+$logger->info(qq(=-=-=-=-=-= Common File List =-=-=-=-=-=));
+foreach ( $diff->common->get_keys() ) { $logger->info($_); }
+$logger->info(qq(=-=-=-=-=-= 'First' File List =-=-=-=-=-=));
+foreach ( $diff->first->filelist->get_keys() ) { $logger->info($_); }
+$logger->info(qq(=-=-=-=-=-= 'Second' File List =-=-=-=-=-=));
+foreach ( $diff->second->filelist->get_keys() ) { $logger->info($_); }
+
+if ( $write_diffs ) {
+    my $date = qx/date +%Y.%j/;
+    chomp($date);
+    open(DIFF_FH, q(>diffs.) . $date . q(.txt));
+    print DIFF_FH qq(=-=-=-=-=-= Common File List =-=-=-=-=-=\n);
+    foreach ( $diff->common->get_keys() ) { print DIFF_FH $_ . qq(\n); }
+    print DIFF_FH qq(=-=-=-=-=-= 'First' File List =-=-=-=-=-=\n);
+    foreach ( $diff->first->filelist->get_keys() ) { 
+        print DIFF_FH $_ . qq(\n); 
+    } # foreach ( $diff->first->filelist->get_keys() )
+    print DIFF_FH qq(=-=-=-=-=-= 'Second' File List =-=-=-=-=-=\n);
+    foreach ( $diff->second->filelist->get_keys() ) { 
+        print DIFF_FH $_ . qq(\n); 
+    } # foreach ( $diff->second->filelist->get_keys() )
+} # if ( $write_diffs )
 
 exit 0;
 
