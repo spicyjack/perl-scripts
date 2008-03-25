@@ -402,9 +402,9 @@ sub add {
     if ( $fileobj_type eq q(Archive::File) ) {
         # now see if that filename is already in the file list
         if ( exists($filelist{$filename}) ) {
-            # yes, it exists; throw an error
-            $logger->error(q(File: ) . $fileobj->name());
-            $logger->error(q( already exists in filelist));
+            # yes, it exists; throw a warning
+            $logger->warn(q(File: ) . $fileobj->name());
+            $logger->warn(q( already exists in filelist));
         } else {
             # no, it doesn't exist; add it
             $filelist{$filename} = $fileobj;
