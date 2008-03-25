@@ -38,6 +38,15 @@ the author's version number.
 
  perl archive_diff.pl -1 first_filelist.txt -2 second_filelist.txt 
 
+=head2 Script Options
+
+ --verbose|-v           Verbose script output
+ --help|-h              Show this help message
+ --first-file|-1st      Filename of the First filelist
+ --second-file|-2nd     Filename of the second filelist
+ --nocolorlog           Disable colorized log output
+ --write|-w             Write diff output to file (diff.YYYY.JJJ.XX.txt)
+
 =head1 DESCRIPTION
 
 B<archive_diff.pl> compares the files listed in two archives, checking for
@@ -249,8 +258,10 @@ sub simple_stats {
 	my $self = shift;
     my $logger = get_logger();
 
-	$logger->info(q(The first filename is ) . $self->first->archfilename);
-    $logger->info(q(The second filename is ) . $self->second->archfilename);
+	$logger->info(q(The first filename is:));
+    $logger->info($self->first->archfilename);
+    $logger->info(q(The second filename is:));
+    $logger->info($self->second->archfilename);
     $logger->info(q(There are ) . $self->first->filelist->get_count()
         . qq( files in the first Archive object));
     $logger->info(q(There are ) . $self->second->filelist->get_count()
@@ -263,19 +274,9 @@ sub simple_stats {
 
 =head3 simple_diff()
 
-Shows the files in both archives, with notation to the left of the file that
-shows which archive the file is in.  For example:
-
- my $archive_diff = Archive::Diff( first => $first, second => $second);
- $archive_diff->simple_diff();
-
- 1 2 /path/to/some/firstfile
- 1   /path/to/some/secondfile
-   2 /path/to/some/thirdfile
-
-Given the three files listed above, 'firstfile' is in both archives,
-'secondfile' is only in the first archive, and 'thirdfile' is only in the
-second archive.
+Compares the lists of files in the first and second archive objects, prints
+three lists; the list of common files, the list of files in the first object
+only, and the list of files in the second object only.
 
 =cut
 
@@ -284,39 +285,11 @@ sub simple_diff {
     my $logger = get_logger();
 
     $logger->info(q(Running a diff on the first and second files...));
-    $self->do_diff();
-} # sub simple_diff
-
-=pod
-
-=head3 full_diff()
-
-Shows not only if files are in one archive but not another, but if the same
-file in both archives differs in timestamp or uncompressed size.
-
-=cut
-
-# FIXME
-# here's how this diff will be obtained
-# - create a filelist for files that both archives have in common
-# - go through the first list; for each file in the first list, compare it
-# with the files in the second list; if the file exists in both lists, add it
-# to the common list and then delete it from both lists
-# - what's left over in the first and second lists are the files that unique
-# to that list, and a list of common files
-# - get the keys to all three lists, add them to a DiffList object, then tell
-# that DiffList object to sort and display the list
-
-sub do_diff {
-    my $self = shift;
-    my $logger = get_logger();
-
-
     # get a list of files from the first filelist
     foreach my $firstkey ( $self->first->filelist->get_keys() ) {
         # for each file in that list, see if the same file exists in the
         # second filelist
-        $logger->debug(qq(do_diff: Checking $firstkey));
+        $logger->debug(qq(simple_diff: Checking $firstkey));
         if ( $self->second->filelist->exists(key => $firstkey) ) { 
             $logger->debug(qq(do_diff: matched $firstkey));
             $self->common->add( 
@@ -716,9 +689,11 @@ use Log::Log4perl::Level;
 use Pod::Usage;
 
 my ($VERBOSE, $first_file, $second_file, $first_obj, $second_obj, 
-        $write_diffs, $colorlog);
+        $write_diffs, $colorlog, $diff_list);
 # colorize Log4perl output by default 
 $colorlog = 1;
+# show the diff report output by default
+$diff_list = 1;
 
 my $goparse = Getopt::Long::Parser->new();
 $goparse->getoptions(   q(verbose|v)                    => \$VERBOSE,
@@ -727,6 +702,7 @@ $goparse->getoptions(   q(verbose|v)                    => \$VERBOSE,
                         q(second-file|second|2nd|2=s)   => \$second_file,
                         q(colorlog!)                    => \$colorlog,
                         q(write|w)                      => \$write_diffs,
+                        q(difflist|dl!)                 => \$diff_list,
                     ); # $goparse->getoptions
 
 # always turn off color logs under Windows, the terms don't do ANSI
@@ -788,27 +764,50 @@ $logger->info(qq(=-=-=-=-=-= 'After' Report =-=-=-=-=-=));
 $diff->simple_stats();
 
 # print to the screen first
-$logger->info(qq(=-=-=-=-=-= Common File List =-=-=-=-=-=));
-foreach ( $diff->common->get_keys() ) { $logger->info($_); }
-$logger->info(qq(=-=-=-=-=-= 'First' File List =-=-=-=-=-=));
-foreach ( $diff->first->filelist->get_keys() ) { $logger->info($_); }
-$logger->info(qq(=-=-=-=-=-= 'Second' File List =-=-=-=-=-=));
-foreach ( $diff->second->filelist->get_keys() ) { $logger->info($_); }
+if ( $diff_list ) {
+    $logger->info(qq(=-=-=-=-=-= Common File List =-=-=-=-=-=));
+    foreach ( $diff->common->get_keys() ) { $logger->info($_); }
+    $logger->info(qq(=-=-=-=-=-= 'First' File List =-=-=-=-=-=));
+    foreach ( $diff->first->filelist->get_keys() ) { $logger->info($_); }
+    $logger->info(qq(=-=-=-=-=-= 'Second' File List =-=-=-=-=-=));
+    foreach ( $diff->second->filelist->get_keys() ) { $logger->info($_); }
+} # if ( $diff_list )
 
 if ( $write_diffs ) {
+    # get the date for creating an output file 
     my $date = qx/date +%Y.%j/;
     chomp($date);
-    open(DIFF_FH, q(>diffs.) . $date . q(.txt));
+    my $outfile;
+    # loop across these numbers in order to find a free filename
+    foreach ( 1..99 ) {
+        $outfile = q(diffs.) . $date . sprintf(q(.%02d), $_) . q(.txt);
+        if ( ! -e $outfile ) { last; }
+    } # foreach ( 1..99 )
+    # found a free filename, open the filehandle and write the diff file 
+    $logger->info(qq(Writing diff list output to $outfile));
+    open(DIFF_FH, q(>) . $outfile);
+
+    # files common between both objects
     print DIFF_FH qq(=-=-=-=-=-= Common File List =-=-=-=-=-=\n);
     foreach ( $diff->common->get_keys() ) { print DIFF_FH $_ . qq(\n); }
+    
+    # files that are only in the first object
     print DIFF_FH qq(=-=-=-=-=-= 'First' File List =-=-=-=-=-=\n);
+    print DIFF_FH qq(First file name:\n);
+    print DIFF_FH $diff->first->archfilename() . qq(\n);
     foreach ( $diff->first->filelist->get_keys() ) { 
         print DIFF_FH $_ . qq(\n); 
     } # foreach ( $diff->first->filelist->get_keys() )
+
+    # files that are only in the second object
     print DIFF_FH qq(=-=-=-=-=-= 'Second' File List =-=-=-=-=-=\n);
+    print DIFF_FH qq(Second file name:\n);
+    print DIFF_FH $diff->second->archfilename() . qq(\n);
     foreach ( $diff->second->filelist->get_keys() ) { 
         print DIFF_FH $_ . qq(\n); 
     } # foreach ( $diff->second->filelist->get_keys() )
+    # we're done, close the filehandle
+    close(DIFF_FH);
 } # if ( $write_diffs )
 
 exit 0;
