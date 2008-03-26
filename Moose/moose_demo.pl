@@ -15,3 +15,7 @@ my $demo = FilenameDemo->new( filename => $0 );
 
 print qq(My name is ) . $demo->filename . qq(\n);
 print qq(I am a ) . blessed $demo . qq( type of object\n);
+
+foreach my $key (keys($demo)) {
+    print qq(This key '$key' has a value of ) . $demo{$key} . qq(\n);
+} # foreach my $key (keys($demo))
