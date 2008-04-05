@@ -12,10 +12,9 @@ use SNMP::Translate;
 # create an SNMP session
 #my $rosetta = SNMP::Translate->new( oid => q(.1.3.6.1.2.1.1.3),
 my $rosetta = SNMP::Translate->new( 
-                                    binpaths => [ q(/usr/bin) ],
-                                    debug => 1 );
-
-$rosetta->init();
+    binpaths => [ q(/usr/bin) ],
+    debug => 1 
+);
 $rosetta->translate();
 
 exit 0;
