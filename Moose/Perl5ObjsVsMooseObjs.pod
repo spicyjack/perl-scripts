@@ -1,0 +1,117 @@
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Snack::Perl5ObjsVsMooseObjs - Short comparison between Perl 5
+objects and Moose objects
+
+=head1 SYNOPSIS
+
+    package MooseProgramNameDemo;
+    use Moose; # automagically sets 'strict' and 'warnings'
+
+    has 'program_name' => ( is => 'rw', required => 1);
+
+    package main;
+    use Moose; # needed for the call to 'blessed' below
+    
+    # '$0' is the name of this script, set automatically by Perl
+    my $demo = MooseProgramNameDemo->new( program_name => $0 );
+
+    print qq(My name is ) . $demo->program_name . qq(\n);
+    print qq(I am a ) . blessed $demo . qq( type of object\n);
+
+=head1 DESCRIPTION
+
+So what's the big stink about Moose?  Perl 5 comes with objects and object
+oriented programming already.  Given the above Moose code, what would the code
+look like in the existing Perl 5 object-оriented style of programming?  Let's
+take a look and find out...
+
+=head2 Perl 5 OO Example #1
+
+    package Perl5ProgramNameDemo1;
+    use strict;
+    use warnings;
+
+    my $program_name;
+    
+    sub new {
+        my $class = shift;
+        # assign the rest of the method arguments to a temp hash
+        my %args = @_;
+
+        my $self = bless ( {}, ref($class) || $class );
+
+        if ( exists $args{program_name} ) {
+            $program_name = $args{program_name};
+        } else {
+            die q(ERROR: object was created without passing 'program_name');
+        } # if ( exists $args{program_name} )
+        return $self;
+    } # sub new
+    
+    package main;
+    use strict;
+    use warnings;
+
+    my $demo = Perl5ProgramNameDemo1->new( program_name => $0 );
+
+    print qq(My name is ) . $demo->program_name . qq(\n);
+    print qq(I am a ) . ref($demo) . qq( type of object\n);
+
+Looks more complex, right?  Moose does a lot of the background work for you, so
+you don't have to.  
+
+=head3 Difference #1 - strict and warning pragmas
+
+Moose sets the 'strict' and 'warnings' pragmas for you automatically.  We have
+to do this for ourselves in the Perl 5 example.
+
+=head3 Difference #2 - declaration of object attributes
+
+The Perl 5 object has one variable, $program_name.  The Perl 5 object has to
+manually check to make sure that the user passes in the object.  
+
+In more advanced Moose usage, you can use something called 'type constraints'
+when creating your Moose objects; type constraints are used to validate what
+the user passes in when setting Moose object attributes.  If the user passes
+in a type of data that Moose is not expecting, then Moose will let the user
+know this in no uncertain terms.
+
+=head3 Difference #3 - Perl 5 object attributes can be fiddled with
+
+With Perl 5 objects, the object is only as safe as end users will allow it to
+be.
+
+=head3 Difference #4 - Determining object type
+
+If you are familiar with the C<ref()> function in Perl 5, this is how you
+determine what type of object you are dealing with.  This does not work with
+Moose, so a function was exported for this purpose.  This function is called
+C<blessed>, and can otherwise be used in the same ways and in the same places
+as you woud use C<ref()>.
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<Moose::Cookbook::Recipe1> - The 'Point' object example
+
+=item L<Moose::Util::TypeConstraints> - Type constraints that Moose can use
+
+=back
+
+=head1 AUTHOR
+
+Brian Manning <elspicyjack at gmail dot com>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (c)2008 by Brian Manning
+
+This documentation is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
