@@ -25,9 +25,9 @@ objects and Moose objects
 =head1 DESCRIPTION
 
 So what's the big stink about Moose?  Perl 5 comes with objects and object
-oriented programming already.  Given the above Moose code, what would the code
-look like in the existing Perl 5 object-оriented style of programming?  Let's
-take a look and find out...
+oriented programming already.  Given the above Moose code, what would similar
+code look like in the existing Perl 5 object-oriented style of programming?
+Let's take a look and find out...
 
 =head2 Perl 5 OO Example #1
 
@@ -42,13 +42,17 @@ take a look and find out...
         # assign the rest of the method arguments to a temp hash
         my %args = @_;
 
+        # create the object out of a blessed hash reference
         my $self = bless ( {}, ref($class) || $class );
 
+        # verify that the user passed in the 'program_name' attribute
         if ( exists $args{program_name} ) {
             $program_name = $args{program_name};
         } else {
-            die q(ERROR: object was created without passing 'program_name');
+            die q(ERROR: can't create object without 'program_name' );
         } # if ( exists $args{program_name} )
+
+        # return the object reference back to the caller
         return $self;
     } # sub new
     
@@ -61,29 +65,46 @@ take a look and find out...
     print qq(My name is ) . $demo->program_name . qq(\n);
     print qq(I am a ) . ref($demo) . qq( type of object\n);
 
-Looks more complex, right?  Moose does a lot of the background work for you, so
-you don't have to.  
+Looks more complex, right?  Moose does a lot of the background work, so you
+don't have to.  What are some of the specific differences between Moose and
+Perl 5 Objects?
 
-=head3 Difference #1 - strict and warning pragmas
+=cut
 
-Moose sets the 'strict' and 'warnings' pragmas for you automatically.  We have
-to do this for ourselves in the Perl 5 example.
+# FIXME 
+# - add markup to all of the quoted strings so they format properly and have
+# context inside the document as a whole
 
-=head3 Difference #2 - declaration of object attributes
+=pod
 
-The Perl 5 object has one variable, $program_name.  The Perl 5 object has to
-manually check to make sure that the user passes in the object.  
+=head3 Difference #1 - declaration of object attributes
+
+The Perl 5 object has one variable, $program_name.  It's a good programming
+practice to always validate your inputs.  The Perl 5 object checks to make
+sure that the user passes in the 'program_name' attribute to the Perl 5 object
+when it is created.  The Moose object automatically checks this for us when we
+set I<required => 1> in the 'has' function for the Moose object.
 
 In more advanced Moose usage, you can use something called 'type constraints'
 when creating your Moose objects; type constraints are used to validate what
 the user passes in when setting Moose object attributes.  If the user passes
-in a type of data that Moose is not expecting, then Moose will let the user
-know this in no uncertain terms.
+in a type of data that Moose is not expecting, then the type constraints in
+Moose (specifically, the L<Moose::Util::TypeConstraint> module) will let the
+user know this in no uncertain terms.  Type constraints in Moose can be as
+simple as strings or numbers, or as complex as other Moose objects.
 
-=head3 Difference #3 - Perl 5 object attributes can be fiddled with
+=head3 Difference #2 - Perl 5 object attributes can be fiddled with
 
 With Perl 5 objects, the object is only as safe as end users will allow it to
-be.
+be.  Perl 5 objects are not 'encapsulated' at all, meaning that anybody could
+come along and get into the guts of your Perl 5 object and make any changes
+they wish.  Moose forces object encapsulation, so that end-users are only
+allowed to interact with the object using the interfaces that you provide.
+
+=head3 Difference #3 - strict and warning pragmas
+
+Moose sets the 'strict' and 'warnings' pragmas for you automatically.  We have
+to do this for ourselves in the Perl 5 example.
 
 =head3 Difference #4 - Determining object type
 
@@ -92,6 +113,9 @@ determine what type of object you are dealing with.  This does not work with
 Moose, so a function was exported for this purpose.  This function is called
 C<blessed>, and can otherwise be used in the same ways and in the same places
 as you woud use C<ref()>.
+
+=head3 Difference #⅘ - Referring to Moose object attributes
+
 
 =head1 SEE ALSO
 
