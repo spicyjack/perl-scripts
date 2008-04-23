@@ -3,23 +3,26 @@
 
 =head1 NAME
 
-Moose::Cookbook::Snack::Perl5ObjsVsMooseObjs - Short comparison between Perl 5
-objects and Moose objects
+Moose::Cookbook::Snack::BUILD - Overriding the I<new()> method to customize
+the behaivor of Moose object creation
+
+See also the L<Moose::Cookbook::WTF> section entitled B<Roles> for more info
+about how the BUILD/BUILDALL methods work.
 
 =head1 SYNOPSIS
 
-    package Moose::Demo;
+    package MooseProgramNameDemo;
     use Moose; # automagically sets 'strict' and 'warnings'
 
-    has 'script_name' => ( is => 'rw', required => 1);
+    has 'program_name' => ( is => 'rw', required => 1);
 
     package main;
     use Moose; # needed for the call to 'blessed' below
     
     # '$0' is the name of this script, set automatically by Perl
-    my $demo = Moose::Demo->new( script_name => $0 );
+    my $demo = MooseProgramNameDemo->new( program_name => $0 );
 
-    print qq(My name is ) . $demo->script_name . qq(\n);
+    print qq(My name is ) . $demo->program_name . qq(\n);
     print qq(I am a ) . blessed $demo . qq( type of object\n);
 
 =head1 DESCRIPTION
@@ -31,11 +34,11 @@ Let's take a look and find out...
 
 =head2 Perl 5 OO Example #1
 
-    package Perl5::Demo;
+    package Perl5ProgramNameDemo1;
     use strict;
     use warnings;
 
-    my $script_name;
+    my $program_name;
     
     sub new {
         my $class = shift;
@@ -45,12 +48,12 @@ Let's take a look and find out...
         # create the object out of a blessed hash reference
         my $self = bless ( {}, ref($class) || $class );
 
-        # verify that the user passed in the 'script_name' attribute
-        if ( exists $args{script_name} ) {
-            $script_name = $args{script_name};
+        # verify that the user passed in the 'program_name' attribute
+        if ( exists $args{program_name} ) {
+            $program_name = $args{program_name};
         } else {
-            die q(ERROR: can't create object without 'script_name' );
-        } # if ( exists $args{script_name} )
+            die q(ERROR: can't create object without 'program_name' );
+        } # if ( exists $args{program_name} )
 
         # return the object reference back to the caller
         return $self;
@@ -60,33 +63,30 @@ Let's take a look and find out...
     use strict;
     use warnings;
 
-    my $demo = Perl5::Demo->new( script_name => $0 );
+    my $demo = Perl5ProgramNameDemo1->new( program_name => $0 );
 
-    print qq(My name is ) . $demo->script_name . qq(\n);
+    print qq(My name is ) . $demo->program_name . qq(\n);
     print qq(I am a ) . ref($demo) . qq( type of object\n);
 
-Looks more complex, right?  Moose does a lot of the labor when working with
-Perl objects, so that you don't have to.  What are some of the specific
-differences between Moose and Perl 5 Objects?
+Looks more complex, right?  Moose does a lot of the background work, so you
+don't have to.  What are some of the specific differences between Moose and
+Perl 5 Objects?
 
-=head1 FIXME 
+=cut
 
-=over 4
-
-=item add markup to all of the quoted strings so they format properly and have
-context inside the document as a whole
-
-=back
+# FIXME 
+# - add markup to all of the quoted strings so they format properly and have
+# context inside the document as a whole
 
 =pod
 
 =head3 Difference #1 - declaration of object attributes
 
-The Perl 5 object has one variable, I<script_name>.  It's a good programming
-practice to always validate your inputs, so Perl 5 object checks to make
-sure that the user passes in the 'script_name' attribute to it when the object
-is created.  The Moose object automatically checks this for us when we set
-I<required =E<gt> 1> in the 'has' function for the Moose object.
+The Perl 5 object has one variable, $program_name.  It's a good programming
+practice to always validate your inputs.  The Perl 5 object checks to make
+sure that the user passes in the 'program_name' attribute to the Perl 5 object
+when it is created.  The Moose object automatically checks this for us when we
+set I<required => 1> in the 'has' function for the Moose object.
 
 In more advanced Moose usage, you can use something called 'type constraints'
 when creating your Moose objects; type constraints are used to validate what
@@ -102,16 +102,7 @@ With Perl 5 objects, the object is only as safe as end users will allow it to
 be.  Perl 5 objects are not 'encapsulated' at all, meaning that anybody could
 come along and get into the guts of your Perl 5 object and make any changes
 they wish.  Moose forces object encapsulation, so that end-users are only
-allowed to interact with the object using the interfaces that the object
-provides.  One gotcha with Moose is that you must use the I<is> keyword to
-have Moose create object accessors.  This is mentioned in
-L<Moose::Cookbook::WTF>, in the section labeld B<Accessors>, but briefly:
-
-    # no accessor; $object->foo won't work here
-    has 'foo' => (isa => 'Bar');
-
-    # accessor, so $object->foo will return something
-    has 'foo' => (isa => 'Bar', is => 'rw');
+allowed to interact with the object using the interfaces that you provide.
 
 =head3 Difference #3 - strict and warning pragmas
 
@@ -126,7 +117,7 @@ Moose, so a function was exported for this purpose.  This function is called
 C<blessed>, and can otherwise be used in the same ways and in the same places
 as you woud use C<ref()>.
 
-=head3 Difference #5 - Referring to Moose object attributes
+=head3 Difference #⅘ - Referring to Moose object attributes
 
 
 =head1 SEE ALSO

@@ -1,0 +1,63 @@
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Snack::ArrayRef - (Ab)using the ArrayRef type constraint
+provided by the L<Moose::Util::TypeConstraint> and/or
+L<Moose::Util::TypeConstraints::OptimizedConstraints> classes.
+
+=head1 SYNOPSIS
+
+    package HashDemo;
+    use Moose;
+    use Moose::Util::TypeConstraints;
+
+    has 'file' => ( is => 'rw', isa => q(HashRef) );
+
+    package main;
+    use Moose;
+
+    my $demo = HashDemo->new( file => { 1 => q(/path/to/some/file) } );
+
+    # the below will work if it is uncommented and the rest of the file is
+    # commented
+    # print qq(My hash is ) . join(q(:), %{$demo->file}) . qq(\n);
+    # should output:
+    # [devilduck][bmanning Moose]$ perl hashref_demo.pl
+    # My hash is 1:/path/to/some/file
+
+    # this overwrites the existing hash contents in $demo->file
+    $demo->file( { 2 => q(/path/to/file2), 3 => q(/path/to/file3) } );
+
+    my %hash = %{$demo->file};
+    foreach my $key ( keys(%hash) ) {
+        print qq(this hash key/value pair is $key : ) . $hash{$key} . qq(\n);
+    } # foreach my $key ( keys(%{$demo->file}) )
+
+=head1 DESCRIPTION
+
+The HashRef type constraint.
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<Moose::Cookbook::Recipe1> - The 'Point' object example
+
+=item L<Moose::Util::TypeConstraints> - Type constraints that Moose can use
+
+=back
+
+=head1 AUTHOR
+
+Brian Manning <elspicyjack at gmail dot com>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (c)2008 by Brian Manning
+
+This documentation is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
