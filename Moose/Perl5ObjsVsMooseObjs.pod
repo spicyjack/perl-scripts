@@ -29,7 +29,7 @@ oriented programming already.  Given the above Moose code, what would similar
 code look like in the existing Perl 5 object-oriented style of programming?
 Let's take a look and find out...
 
-=head2 Perl 5 OO Example #1
+=head2 Perl 5 OO Example
 
     package Perl5::Demo;
     use strict;
@@ -69,24 +69,15 @@ Looks more complex, right?  Moose does a lot of the labor when working with
 Perl objects, so that you don't have to.  What are some of the specific
 differences between Moose and Perl 5 Objects?
 
-=head1 FIXME 
-
-=over 4
-
-=item add markup to all of the quoted strings so they format properly and have
-context inside the document as a whole
-
-=back
-
-=pod
-
 =head3 Difference #1 - declaration of object attributes
 
 The Perl 5 object has one variable, I<script_name>.  It's a good programming
-practice to always validate your inputs, so Perl 5 object checks to make
-sure that the user passes in the 'script_name' attribute to it when the object
-is created.  The Moose object automatically checks this for us when we set
-I<required =E<gt> 1> in the 'has' function for the Moose object.
+practice to always validate your inputs, so we have the Perl 5 object check to
+make sure that the user passes in the I<script_name> attribute to it when the
+object is created.  The Moose object automatically checks this for us when we
+set I<required =E<gt> 1> in the 'has' function for the Moose object.
+
+=head3 FIXME - Verify this is how things behave
 
 In more advanced Moose usage, you can use something called 'type constraints'
 when creating your Moose objects; type constraints are used to validate what
