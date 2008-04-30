@@ -11,7 +11,7 @@ objects and Moose objects
     package Moose::Demo;
     use Moose; # automagically sets 'strict' and 'warnings'
 
-    has 'script_name' => ( is => 'rw', required => 1);
+    has q(script_name) => ( is => q(rw), required => 1);
 
     package main;
     use Moose; # needed for the call to 'blessed' below
@@ -49,7 +49,7 @@ Let's take a look and find out...
 
         # verify that the user passed in the 'script_name' attribute
         if ( exists $args{script_name} ) {
-            $script_name = $args{script_name};
+            $self->script_name($args{script_name});
         } else {
             die q(ERROR: can't create object without 'script_name' );
         } # if ( exists $args{script_name} )
@@ -89,7 +89,7 @@ for us when we set C<required =E<gt> 1> in the C<has> function for the Moose
 object.
 
 In more advanced Moose usage, you can use something called 'type constraints'
-when creating your Moose objects; type constraints are used to validate what
+when creating your Moose objects.  Type constraints are used to validate what
 the user passes in when setting Moose object attributes.  If the user passes
 in a type of data that Moose is not expecting, then the type constraints in
 Moose (specifically, the L<Moose::Util::TypeConstraint> module) will let the
@@ -129,30 +129,21 @@ or you can assign the value directly to the Perl 5 object attribute like this:
 
     $self->{x} = 0; 
 
-Moose creates object methods for handling attributes for you, if the Moose
-object attribute is set to C<is =E<gt> rw>:
+Moose creates object methods for handling attributes for you, as long as you
+specified C<is =E<gt> rw> for each C<has> statement inside the object
+declaration.  This is mentioned in L<Moose::Cookbook::WTF>, in the section
+labeld B<Accessors>, but briefly:
 
     package MooseObject;
-    has 'x' => (isa => 'Int', is => 'rw');
+    has 'x' => (is => 'rw');
     package main; 
     # later on...
     $self->x(0);    
 
 The syntax shown for the Perl 5 object (C<$self-E<gt>{x} = 0>) will also work
-on the Moose object, however, if you use it, Moose will no longer be able to
-enforce the read-only setting of the accessor (C<is =E<gt> ro>).
-
-=head3 Moose Gotchas
-
-With Moose, you must use the I<is> keyword to have Moose create object
-accessors.  This is mentioned in L<Moose::Cookbook::WTF>, in the section labeld
-B<Accessors>, but briefly:
-
-    # no accessor; $object->foo won't work here
-    has 'foo' => (isa => 'Bar');
-
-    # accessor, so $object->foo will return something
-    has 'foo' => (isa => 'Bar', is => 'rw');
+on the Moose object, however, if you use it, Moose will no longer be to
+enforce having that attribute be read-only if you used (C<is =E<gt> ro>) in
+the object's declaration.
 
 =head1 SEE ALSO
 
@@ -161,6 +152,8 @@ B<Accessors>, but briefly:
 =item L<Moose::Cookbook::Recipe1> - The 'Point' object example
 
 =item L<Moose::Util::TypeConstraints> - Type constraints that Moose can use
+
+=item L<Moose::Cookbook::WTF> - For when things go wrong with Moose
 
 =back
 

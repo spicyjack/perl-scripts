@@ -17,7 +17,7 @@
 
         # verify that the user passed in the 'script_name' attribute
         if ( exists $args{script_name} ) {
-            $self->{script_name} = $args{script_name};
+            $self->script_name($args{script_name});
         } else {
             die q(ERROR: can't create object without 'script_name' );
         } # if ( exists $args{script_name} )
@@ -41,6 +41,7 @@
     print qq(My name is ) . $demo->script_name . qq(\n);
     print qq(I am a ) . ref($demo) . qq( type of object\n);
 
+    # this could also be $demo->script_name(q(I changed this!))
     $demo->{script_name} = "I changed this!";
     print qq(My name is now ) . $demo->script_name . qq(\n);
 
