@@ -25,5 +25,18 @@
 package main;
 use Moose;
 
-my $point = Point->new(x => 3, y => 5);
-print qq(X is ) . $point->x . qq(\n);
+# non-type constraint usage
+#my $point = Point->new(x => 3, y => 5);
+#print qq(X is ) . $point->x . qq(\n);
+
+# usage with type constraints
+my $point;
+#my $xval = 'fourty-two';
+my $xval = 42;
+my $xattribute = Point->meta->find_attribute_by_name('x');
+my $xtype_constraint = $xattribute->type_constraint;
+if($xtype_constraint->check($xval)) {
+    $point = Point->new(x => $xval, y => 0);
+} else {
+    print "Value: $xval is not an " . $xtype_constraint->name . "\n";
+}
