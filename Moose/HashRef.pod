@@ -14,32 +14,56 @@ L<Moose::Util::TypeConstraints::OptimizedConstraints> classes.
     use Moose::Util::TypeConstraints;
 
     # this attribute is a HashRef
-    has 'file' => ( is => 'rw', isa => q(HashRef) );
+    has 'files' => ( is => 'rw', isa => q(HashRef) );
 
+    sub dump {
+        my $self = shift; 
+        foreach my $key ( keys(%{$self->files}) ) {
+            print qq(this hash key/value pair is $key : )
+                . $self->{file}{$key} . qq(\n);
+        } # foreach my $key
+    } # sub dump_hash
+	
     package main;
     use Moose;
 
-    my $demo = HashDemo->new( file => { 1 => q(/path/to/some/file) } );
-    &dump_hash($demo);
+    my $demo = HashDemo->new( files => { 1 => q(/path/to/some/file) } );
+	print qq(First dump:\n);
+    $demo->dump;
     # prints "My hash is 1:/path/to/some/file"
 
-    # this overwrites the existing hash contents in $demo->file
-    $demo->file( { 2 => q(/path/to/file2), 3 => q(/path/to/file3) } );
-    &dump_hash($demo);
 
     exit 0;
 
-    sub dump_hash {
-        my $demo = shift; # pop the object reference off of the call stack
-        foreach my $key ( keys(%{$demo->file}) ) {
-            print qq(this hash key/value pair is $key : ) i
-                . $demo->file{$key} . qq(\n);
-        } # foreach my $key
-    } # sub dump_hash
 
 =head1 DESCRIPTION
 
 The HashRef type constraint.
+
+=head2 Assigning hashes to a HashRef attribute
+
+=head2 Assigning subsequent HashRefs will overwrite existing ones
+    # this replaces the existing HashRef contents
+    $demo->files( { 2 => q(/path/to/file2), 3 => q(/path/to/file3) } );
+	print qq(Second dump:\n);
+    $demo->dump;
+
+=head2 Clearing the HashRef
+
+    # this clears the HashRef
+    $demo->files( { } );
+	print qq(Third dump:\n);
+    $demo->dump;
+
+C<undef> can't be used because of the type constraint set for that attribute.
+
+=head2 Dumping the contents of the HashRef
+
+de-reference the HashRef stored in $self->files and enumerate over it's keys
+note that this HashRef contains another hash hence the $object->{hash1}{hash2}
+syntax below
+
+=head2 Appending key/value pairs to a HashRef
 
 =head1 SEE ALSO
 
