@@ -9,41 +9,43 @@ L<Moose::Util::TypeConstraints::OptimizedConstraints> classes.
 
 =head1 SYNOPSIS
 
-    package HashDemo;
+    package Fruit;
+    use Moose;
+
+    has q(name) => ( is => q(rw), required => 1 );
+    has q(species) => ( is => q(rw), required => 1 );
+
+    package ProduceStore;
     use Moose;
     use Moose::Util::TypeConstraints;
 
-    has 'file' => ( is => 'rw', isa => q(HashRef) );
+    has q(fruit_aisle) => ( is => q(rw), isa => q(ArrayRef[Fruit]) );
 
     package main;
-    use Moose;
+    use Moose; # gains 'blessed' function
 
-    my $demo = HashDemo->new( file => { 1 => q(/path/to/some/file) } );
+    # we need something to put in the fruit aisle
+    my $orange = Fruit->new( name => q(orange), species => q(C. sinensis) );
+    my $apple = Fruit->new( name => q(apple), species => q(M. domestica) );
+    my $store = ProduceStore->new( fruit_aisle => [ \$apple, \$orange ] );
 
-    # the below will work if it is uncommented and the rest of the file is
-    # commented
-    # print qq(My hash is ) . join(q(:), %{$demo->file}) . qq(\n);
-    # should output:
-    # [devilduck][bmanning Moose]$ perl hashref_demo.pl
-    # My hash is 1:/path/to/some/file
+    my @inventory = $store->fruit_aisle;
+    foreach my $item ( @inventory ) {
+        print qq(Item: ) . blessed $item . qq(\n);
+    }
 
-    # this overwrites the existing hash contents in $demo->file
-    $demo->file( { 2 => q(/path/to/file2), 3 => q(/path/to/file3) } );
-
-    my %hash = %{$demo->file};
-    foreach my $key ( keys(%hash) ) {
-        print qq(this hash key/value pair is $key : ) . $hash{$key} . qq(\n);
-    } # foreach my $key ( keys(%{$demo->file}) )
+    exit 0;
 
 =head1 DESCRIPTION
 
-The HashRef type constraint.
+The ArrayRef type constraint.
 
 =head1 SEE ALSO
 
 =over 4
 
-=item L<Moose::Cookbook::Recipe1> - The 'Point' object example
+=item L<Moose::Cookbook::Recipe4> - Subtypes, and modeling a simple Company
+class hierarchy
 
 =item L<Moose::Util::TypeConstraints> - Type constraints that Moose can use
 

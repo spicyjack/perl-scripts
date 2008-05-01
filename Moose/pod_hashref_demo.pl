@@ -1,6 +1,5 @@
 #!/usr/bin/env perl
 
-
     package HashDemo;
     use Moose;
     use Moose::Util::TypeConstraints;
@@ -29,7 +28,8 @@
     # prints "My hash is 1:/path/to/some/file"
 
     # this replaces the existing HashRef contents
-    $demo->files( { 2 => q(/path/to/file2), 3 => q(/path/to/file3) } );
+    my %second_hash = ( 2 => q(/path/to/file2), 3 => q(/path/to/file3) );
+    $demo->files( \%second_hash );
 	print qq(Second dump:\n);
     $demo->dump;
 

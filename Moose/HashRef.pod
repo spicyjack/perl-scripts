@@ -25,45 +25,111 @@ L<Moose::Util::TypeConstraints::OptimizedConstraints> classes.
     } # sub dump_hash
 	
     package main;
-    use Moose;
 
     my $demo = HashDemo->new( files => { 1 => q(/path/to/some/file) } );
-	print qq(First dump:\n);
+    print qq(First dump:\n);
     $demo->dump;
-    # prints "My hash is 1:/path/to/some/file"
+    # prints "this hash key/value pair is 1 : /path/to/some/file"
 
+    # this replaces the existing HashRef contents
+    my %second_hash = ( 2 => q(/path/to/file2), 3 => q(/path/to/file3) );
+    $demo->files( \%second_hash );
+    print qq(Second dump:\n);
+    $demo->dump;
+    # prints:
+    # "this hash key/value pair is 3 : /path/to/file3"
+    # "this hash key/value pair is 2 : /path/to/file2"
+
+    # clear the HashRef; Note, you can't use 'undef' here; see below
+    $demo->files( { } );
+    print qq(Third dump:\n);
+    $demo->dump;
+    # prints nothing, the HashRef was cleared
 
     exit 0;
 
-
 =head1 DESCRIPTION
 
-The HashRef type constraint.
+The HashRef type constraint is used to store a reference to a hash variable
+as an attribute of a Moose object.
 
 =head2 Assigning hashes to a HashRef attribute
 
-=head2 Assigning subsequent HashRefs will overwrite existing ones
+Once the object has been created, you can pass a hash (by reference) to that
+object's C<HashRef> attribute using that attribute's accessor:
+
+    my %hash = ( 2 => q(/path/to/file2), 3 => q(/path/to/file3) );
+    $demo->files( \%hash );
+
+Or you can pass an anonymous hash as well:
+
+    $demo->files( { 2 => q(/path/to/file2), 3 => q(/path/to/file3) } );
+
+You can assign either an anonymous hash or a reference to a hash to a
+C<HashRef> object attribute at the time of object creation:
+
+    $demo = HashDemo->new( files => { 1 => q(/path/to/some/file) } );
+    # or...
+    %hash = ( 1 => q(/path/to/some/file) );
+    $demo = HashDemo->new( \%hash );
+
+=head2 Assigning to a HashRef attribute will overwrite
+
+Once you create an object containing a C<HashRef> attribute, if you assign a
+new hash reference to that attribute, it will replace any existing hash
+reference:
+
     # this replaces the existing HashRef contents
     $demo->files( { 2 => q(/path/to/file2), 3 => q(/path/to/file3) } );
-	print qq(Second dump:\n);
-    $demo->dump;
-
-=head2 Clearing the HashRef
-
-    # this clears the HashRef
-    $demo->files( { } );
-	print qq(Third dump:\n);
-    $demo->dump;
-
-C<undef> can't be used because of the type constraint set for that attribute.
 
 =head2 Dumping the contents of the HashRef
 
-de-reference the HashRef stored in $self->files and enumerate over it's keys
-note that this HashRef contains another hash hence the $object->{hash1}{hash2}
-syntax below
+In order to dump the contents of a C<HashRef> object attribute, you must first
+de-reference the C<HashRef>, and then enumerate over it's keys.  
+
+    # the notation '%{$object->hashref_attrib}' allows a 
+    # hash reference to be used where a hash is required
+    foreach ( keys( %{$object->hashref_attrib} ) ) {
+        $scalar = $object->{hashref_attrib}{$_};
+        print qq(The value of $_ is $scalar\n);
+    }
+
+If that's a little too noisy, you could create a copy of the C<HashRef>, and
+then enumerate over that copy:
+
+    my %hash_copy = %{$object->hashref_attrib};
+    foreach ( keys(%hash_copy) ) {
+       $scalar = $hash_copy{$_};
+       print qq(The value of $_ is $scalar\n);
+    }
 
 =head2 Appending key/value pairs to a HashRef
+
+In order to append new key/value pairs to the hash referred to by the
+C<HashRef>, you will need to make a copy of the hash first, add the new
+key/value pairs, then assign the modified copy of the original hash back to
+the C<HashRef>:
+
+    my %hash_copy = %{$object->hashref_attrib};
+    $hash_copy{$new_key1} = $new_value1;
+    $hash_copy{$new_key2} = $new_value2;
+    $object->hashref_attrib( \%hash_copy );
+
+Putting the above code into it's own object method would make appending to a
+C<HashRef> a trivial operation.
+
+=head2 Clearing the HashRef
+
+Assigning C<undef> to clear a C<HashRef> will not work because the attribute
+was defined with a type constraint, meaning that attribute must have 0 or more
+of that type of value to be valid.  B<undef> in Perl is not a value, so it
+won't work for clearing the C<HashRef>.
+
+If you assign an empty anonymous hash to a C<HashRef> attribute, this will
+clear out that attribute yet still satisfy the type constraint.
+
+    # this clears the HashRef
+    $demo->files( { } );
 
 =head1 SEE ALSO
 
