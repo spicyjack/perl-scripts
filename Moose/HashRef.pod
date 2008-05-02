@@ -9,6 +9,11 @@ L<Moose::Util::TypeConstraints::OptimizedConstraints> classes.
 
 =head1 SYNOPSIS
 
+    package Fruit;
+    use Moose;
+
+    has q(species) => ( is => q(rw), required => 1 );
+
     package HashDemo;
     use Moose;
     use Moose::Util::TypeConstraints;
