@@ -17,8 +17,9 @@
         foreach my $item ( keys(%{$self->fruit_aisle}) ) {
 			# note that the HashRef contains another hash
 			# hence the $object->{hash1}{hash2} syntax below
-            print qq(Item: $item, type: ) . blessed $self->{$item} 
-             . q( species: ) . $self->{$item}{species} . qq(\n);
+            my $fruit = $self->{fruit_aisle}{$item};
+            print qq(Item: $item, type: ) . blessed($fruit) 
+            . qq(\n);#    . q( species: ) . $fruit->species . qq(\n);
         } # foreach my $key    } # sub show_inventory
     } # sub show_inventory
 
@@ -26,22 +27,18 @@
     use Moose;
 
     # we need something to put in the fruit aisle
-    #my $orange = Fruit->new( species => q(C. sinensis) );
-    #my $apple = Fruit->new( species => q(M. domestica) );
-    #my $store = ProduceStoreHash->
-    #    new( fruit_aisle => { apple => \$apple, orange => \$orange } );
-    #my $store = ProduceStoreHash->new( fruit_aisle => { apple => \$apple, orange => \$orange } );
-
-    #$store->show_inventory;
-	#print qq(First inventory:\n);
-    # prints ""
+    my $orange = Fruit->new( species => q(C. sinensis) );
+    my $apple = Fruit->new( species => q(M. domestica) );
+    my $store = ProduceStoreHash->
+        new( fruit_aisle => { apple => $apple, orange => $orange } );
+    print qq(First inventory:\n);
+    $store->show_inventory;
 
     # this replaces the existing HashRef contents
     my $grape = Fruit->new( species => q(V. vinifera) );
-    my %new_fruit = ( grape => $grape );
-    #my $store = ProduceStoreHash->new( fruit_aisle => { grape => $grape } );
-    my $store = ProduceStoreHash->new( fruit_aisle => \%new_fruit );
-    #$store->fruit_aisle( \%new_fruit );
+    my $tomato = Fruit->new( species => q(S. lycopersicum));
+    my %new_fruit = ( grape => $grape, tomato => $tomato );
+    $store->fruit_aisle( \%new_fruit );
 	print qq(Second inventory:\n);
     $store->show_inventory;
 

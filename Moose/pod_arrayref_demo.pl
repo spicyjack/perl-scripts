@@ -13,8 +13,9 @@
     has q(fruit_aisle) => ( is => q(rw), isa => q(ArrayRef[Fruit]) );
 
     sub show_inventory { 
-        foreach my $item ( @{$store->fruit_aisle} ) {
-            print qq(Item: ) . blessed $item . q(; name: ) . $item->name
+        my $self = shift;
+        foreach my $item ( @{$self->fruit_aisle} ) {
+            print qq(Item: ) . blessed($item) . q(; name: ) . $item->name
                 . q(; species: ) . $item->species . qq(\n);
         } # foreach my $item ( @{$inventory} )
     } # sub show_inventory
@@ -26,9 +27,14 @@
     my $apple = Fruit->new( name => q(apple), species => q(M. domestica) );
     my @fruits = ( $apple, $orange );
     my $store = ProduceStore->new( fruit_aisle => \@fruits );
-
+    print qq(First inventory...\n);
     $store->show_inventory;
-    # FIXME add another array here; does it append to or replace the existng
-    # array?
+
+    # replace existing inventory
+    my $grape = Fruit->new( name => q(grape), species => q(V. vinifera) );
+    my $tomato = Fruit->new( name => q(tomato), species => q(S. lycopersicum));
+    $store->fruit_aisle( [ $grape, $tomato ] );
+    print qq(Second inventory...\n);
+    $store->show_inventory;
 
     exit 0;
