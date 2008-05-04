@@ -1,42 +1,53 @@
 #!/usr/bin/env perl
 
-    package HashDemo;
+    package Fruit;
+    use Moose;
+
+    has q(species) => ( is => q(rw), required => 1 );
+
+    package ProduceStoreHash;
     use Moose;
     use Moose::Util::TypeConstraints;
+    has q(fruit_aisle) => ( is => q(rw), isa => q(HashRef) );
 
-    # this attribute is a HashRef
-    has 'files' => ( is => 'rw', isa => q(HashRef) );
-
-    sub dump {
-        my $self = shift; 
-		# de-reference the HashRef stored in $self->files
+    sub show_inventory {
+        my $self = shift;
+		# de-reference the HashRef stored in $self->fruit_aisle
 		# and enumerate over it's keys
-        foreach my $key ( keys(%{$self->files}) ) {
+        foreach my $item ( keys(%{$self->fruit_aisle}) ) {
 			# note that the HashRef contains another hash
 			# hence the $object->{hash1}{hash2} syntax below
-            print qq(this hash key/value pair is $key : )
-                . $self->{files}{$key} . qq(\n);
-        } # foreach my $key
-    } # sub dump
-	
+            print qq(Item: $item, type: ) . blessed $self->{$item} 
+             . q( species: ) . $self->{$item}{species} . qq(\n);
+        } # foreach my $key    } # sub show_inventory
+    } # sub show_inventory
+
     package main;
     use Moose;
 
-    my $demo = HashDemo->new( files => { 1 => q(/path/to/some/file) } );
-	print qq(First dump:\n);
-    $demo->dump;
-    # prints "My hash is 1:/path/to/some/file"
+    # we need something to put in the fruit aisle
+    #my $orange = Fruit->new( species => q(C. sinensis) );
+    #my $apple = Fruit->new( species => q(M. domestica) );
+    #my $store = ProduceStoreHash->
+    #    new( fruit_aisle => { apple => \$apple, orange => \$orange } );
+    #my $store = ProduceStoreHash->new( fruit_aisle => { apple => \$apple, orange => \$orange } );
+
+    #$store->show_inventory;
+	#print qq(First inventory:\n);
+    # prints ""
 
     # this replaces the existing HashRef contents
-    my %second_hash = ( 2 => q(/path/to/file2), 3 => q(/path/to/file3) );
-    $demo->files( \%second_hash );
-	print qq(Second dump:\n);
-    $demo->dump;
+    my $grape = Fruit->new( species => q(V. vinifera) );
+    my %new_fruit = ( grape => $grape );
+    #my $store = ProduceStoreHash->new( fruit_aisle => { grape => $grape } );
+    my $store = ProduceStoreHash->new( fruit_aisle => \%new_fruit );
+    #$store->fruit_aisle( \%new_fruit );
+	print qq(Second inventory:\n);
+    $store->show_inventory;
 
     # this clears the HashRef
-    $demo->files( { } );
-	print qq(Third dump:\n);
-    $demo->dump;
+    $store->fruit_aisle( { } );
+	print qq(Third inventory:\n);
+    $store->show_inventory;
 
     exit 0;
-

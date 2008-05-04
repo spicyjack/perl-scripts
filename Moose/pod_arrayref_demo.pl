@@ -12,19 +12,23 @@
 
     has q(fruit_aisle) => ( is => q(rw), isa => q(ArrayRef[Fruit]) );
 
-    package main;
-    use Moose; # gains 'blessed' function
+    sub show_inventory { 
+        foreach my $item ( @{$store->fruit_aisle} ) {
+            print qq(Item: ) . blessed $item . q(; name: ) . $item->name
+                . q(; species: ) . $item->species . qq(\n);
+        } # foreach my $item ( @{$inventory} )
+    } # sub show_inventory
 
+    package main;
+    use Moose; # gains 'blessed' function 
     # we need something to put in the fruit aisle
     my $orange = Fruit->new( name => q(orange), species => q(C. sinensis) );
     my $apple = Fruit->new( name => q(apple), species => q(M. domestica) );
     my @fruits = ( $apple, $orange );
     my $store = ProduceStore->new( fruit_aisle => \@fruits );
 
-    my $inventory = $store->fruit_aisle;
-    foreach my $item ( @{$inventory} ) {
-        print qq(Item: ) . blessed $item . q(; name: ) . $item->name
-            . q(; species: ) . $item->species . qq(\n);
-    }
+    $store->show_inventory;
+    # FIXME add another array here; does it append to or replace the existng
+    # array?
 
     exit 0;

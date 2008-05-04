@@ -41,6 +41,9 @@ L<Moose::Util::TypeConstraints::OptimizedConstraints> classes.
 
     $store->show_inventory; 
 
+    # FIXME add another array here; does it append to or replace the existng
+    # array?
+    
     exit 0;
 
 =head1 DESCRIPTION
