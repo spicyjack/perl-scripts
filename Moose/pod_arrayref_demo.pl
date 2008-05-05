@@ -6,7 +6,7 @@
     has q(name) => ( is => q(rw), required => 1 );
     has q(species) => ( is => q(rw), required => 1 );
 
-    package ProduceStore;
+    package ProduceStoreArray;
     use Moose;
     use Moose::Util::TypeConstraints;
 
@@ -26,7 +26,7 @@
     my $orange = Fruit->new( name => q(orange), species => q(C. sinensis) );
     my $apple = Fruit->new( name => q(apple), species => q(M. domestica) );
     my @fruit = ( $apple, $orange );
-    my $store = ProduceStore->new( fruit_aisle => \@fruit );
+    my $store = ProduceStoreArray->new( fruit_aisle => \@fruit );
     print qq(First inventory...\n);
     $store->show_inventory;
 
