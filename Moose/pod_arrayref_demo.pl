@@ -10,7 +10,7 @@
     use Moose;
     use Moose::Util::TypeConstraints;
 
-    has q(fruit_aisle) => ( is => q(rw), isa => q(ArrayRef[Int]) );
+    has q(fruit_aisle) => ( is => q(rw), isa => q(ArrayRef[Fruit]) );
 
     sub show_inventory { 
         my $self = shift;
