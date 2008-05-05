@@ -14,69 +14,72 @@ L<Moose::Util::TypeConstraints::OptimizedConstraints> classes.
 
     has q(species) => ( is => q(rw), required => 1 );
 
-    package HashDemo;
+    package ProduceStoreHash;
     use Moose;
     use Moose::Util::TypeConstraints;
 
-    # this attribute is a HashRef
-    has 'files' => ( is => 'rw', isa => q(HashRef) );
+    has q(fruit_aisle) => ( is => q(rw), isa => q(HashRef[Fruit]) );
 
-    sub dump {
-        my $self = shift; 
-        foreach my $key ( keys(%{$self->files}) ) {
-            print qq(this hash key/value pair is $key : )
-                . $self->{file}{$key} . qq(\n);
-        } # foreach my $key
-    } # sub dump_hash
-	
+    sub show_inventory {
+        my $self = shift;
+        foreach my $item ( keys(%{$self->fruit_aisle}) ) {
+            my $fruit = $self->{fruit_aisle}{$item};
+            print qq(Item: $item, type: ) . blessed($fruit)
+                . q( species: ) . $fruit->species . qq(\n);
+        } # foreach my $item
+    } # sub show_inventory
+
     package main;
+    use Moose;
 
-    my $demo = HashDemo->new( files => { 1 => q(/path/to/some/file) } );
-    print qq(First dump:\n);
-    $demo->dump;
-    # prints "this hash key/value pair is 1 : /path/to/some/file"
+    # we need something to put in the fruit aisle
+    my $orange = Fruit->new( species => q(C. sinensis) );
+    my $apple = Fruit->new( species => q(M. domestica) );
+    my %fruit = ( orange => $orange, apple => $apple );
+    my $store = ProduceStoreHash->new( fruit_aisle => \%fruit );
+    print qq(First inventory:\n);
+    $store->show_inventory;
 
     # this replaces the existing HashRef contents
-    my %second_hash = ( 2 => q(/path/to/file2), 3 => q(/path/to/file3) );
-    $demo->files( \%second_hash );
-    print qq(Second dump:\n);
-    $demo->dump;
-    # prints:
-    # "this hash key/value pair is 3 : /path/to/file3"
-    # "this hash key/value pair is 2 : /path/to/file2"
+    my $grape = Fruit->new( species => q(V. vinifera) );
+    my $tomato = Fruit->new( species => q(S. lycopersicum));
+    $store->fruit_aisle( { grape => $grape, tomato => $tomato } );
+    print qq(Second inventory:\n);
+    $store->show_inventory;
 
-    # clear the HashRef; Note, you can't use 'undef' here; see below
-    $demo->files( { } );
-    print qq(Third dump:\n);
-    $demo->dump;
-    # prints nothing, the HashRef was cleared
-
-    exit 0;
+    # this clears the HashRef
+    $store->fruit_aisle( { } );
+    print qq(Third inventory:\n);
+    $store->show_inventory;
 
 =head1 DESCRIPTION
 
-The HashRef type constraint is used to store a reference to a hash variable
-as an attribute of a Moose object.
+The HashRef type constraint is used to store a reference to a Perl hash
+variable as an attribute of a Moose object.
 
 =head2 Assigning hashes to a HashRef attribute
 
 Once the object has been created, you can pass a hash (by reference) to that
-object's C<HashRef> attribute using that attribute's accessor:
+object's C<HashRef> attribute using that attribute's accessor.  This is how we
+assign the apple and orange to the store's C<fruit_aisle> C<HashRef> attribute,
+we pass a hash containing both objects by reference to the C<fruit_aisle>
+attribute:
 
-    my %hash = ( 2 => q(/path/to/file2), 3 => q(/path/to/file3) );
-    $demo->files( \%hash );
+    my %fruit = ( orange => $orange, apple => $apple );
+    my $store = ProduceStoreHash->new( fruit_aisle => \%fruit );;
 
-Or you can pass an anonymous hash as well:
+Or you can pass an anonymous hash to the C<HashRef> attribute as well.
+This is shown in the example when the grape and tomato replace the apple
+and the orange in the store's fruit aisle.
 
-    $demo->files( { 2 => q(/path/to/file2), 3 => q(/path/to/file3) } );
+    $store->fruit_aisle( { grape => $grape, tomato => $tomato } );
 
-You can assign either an anonymous hash or a reference to a hash to a
-C<HashRef> object attribute at the time of object creation:
+Our C<fruit_aisle> C<HashRef> is parameterized, meaning, that the
+C<fruit_aisle> C<HashRef> can contain nothing but C<Fruit> objects as hash
+values.  If you try to pass in a reference to a hash using C<Int> objects as
+hash values for example, Moose will complain:
 
-    $demo = HashDemo->new( files => { 1 => q(/path/to/some/file) } );
-    # or...
-    %hash = ( 1 => q(/path/to/some/file) );
-    $demo = HashDemo->new( \%hash );
+    Attribute (fruit_aisle) does not pass the type constraint (HashRef[Int])
 
 =head2 Assigning to a HashRef attribute will overwrite
 
@@ -85,40 +88,41 @@ new hash reference to that attribute, it will replace any existing hash
 reference:
 
     # this replaces the existing HashRef contents
-    $demo->files( { 2 => q(/path/to/file2), 3 => q(/path/to/file3) } );
+    my $grape = Fruit->new( species => q(V. vinifera) );
+    my $tomato = Fruit->new( species => q(S. lycopersicum));
+    $store->fruit_aisle( { grape => $grape, tomato => $tomato } );
 
 =head2 Dumping the contents of the HashRef
 
 In order to dump the contents of a C<HashRef> object attribute, you must first
 de-reference the C<HashRef>, and then enumerate over it's keys.  
 
-    # the notation '%{$object->hashref_attrib}' allows a 
-    # hash reference to be used where a hash is required
-    foreach ( keys( %{$object->hashref_attrib} ) ) {
-        $scalar = $object->{hashref_attrib}{$_};
-        print qq(The value of $_ is $scalar\n);
-    }
+    foreach my $item ( keys(%{$self->fruit_aisle}) ) {
+        my $fruit = $self->{fruit_aisle}{$item};
+        print qq(Item: $item, type: ) . blessed($fruit)
+            . q( species: ) . $fruit->species . qq(\n);
+    } # foreach my $item
 
-If that's a little too noisy, you could create a copy of the C<HashRef>, and
-then enumerate over that copy:
+If the above de-referencing of the C<fruit_aisle> C<HashRef> is a little too
+noisy, you could create a copy of it, and then enumerate over that copy:
 
-    my %hash_copy = %{$object->hashref_attrib};
-    foreach ( keys(%hash_copy) ) {
-       $scalar = $hash_copy{$_};
-       print qq(The value of $_ is $scalar\n);
-    }
+    my %fruit_aisle_copy = %{$self->fruit_aisle};
+    foreach my $item ( keys(%fruit_aisle_copy) ) {
+        my $fruit = $fruit_aisle_copy{$item};
+        # 'print' statement from above example goes here
+    } 
 
 =head2 Appending key/value pairs to a HashRef
 
 In order to append new key/value pairs to the hash referred to by the
-C<HashRef>, you will need to make a copy of the hash first, add the new
-key/value pairs, then assign the modified copy of the original hash back to
-the C<HashRef>:
+C<HashRef> attribute, you will need to make a copy of the hash first, add your
+new key/value pairs, then assign your modified copy back to the C<HashRef>
+attribute:
 
-    my %hash_copy = %{$object->hashref_attrib};
-    $hash_copy{$new_key1} = $new_value1;
-    $hash_copy{$new_key2} = $new_value2;
-    $object->hashref_attrib( \%hash_copy );
+    my %fruit_aisle_copy = %{$store->fruit_aisle};
+    my $avocado = Fruit->new( species => q(P. americana) );
+    $fruit_aisle_copy{avocado} = $avocado;
+    $store->fruit_aisle( \%fruit_aisle_copy );
 
 Putting the above code into it's own object method would make appending to a
 C<HashRef> a trivial operation.
@@ -126,15 +130,15 @@ C<HashRef> a trivial operation.
 =head2 Clearing the HashRef
 
 Assigning C<undef> to clear a C<HashRef> will not work because the attribute
-was defined with a type constraint, meaning that attribute must have 0 or more
-of that type of value to be valid.  B<undef> in Perl is not a value, so it
-won't work for clearing the C<HashRef>.
+was originally defined with a type constraint, meaning that attribute must have
+0 or more of that type of value to be valid.  B<undef> in Perl is not a value,
+so it won't work for clearing the C<HashRef>.
 
 If you assign an empty anonymous hash to a C<HashRef> attribute, this will
 clear out that attribute yet still satisfy the type constraint.
 
     # this clears the HashRef
-    $demo->files( { } );
+    $store->fruit_aisle( { } );
 
 =head1 SEE ALSO
 

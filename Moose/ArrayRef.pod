@@ -35,8 +35,8 @@ L<Moose::Util::TypeConstraints::OptimizedConstraints> classes.
     # we need something to put in the fruit aisle
     my $orange = Fruit->new( name => q(orange), species => q(C. sinensis) );
     my $apple = Fruit->new( name => q(apple), species => q(M. domestica) );
-    my @fruits = ( $apple, $orange );
-    my $store = ProduceStore->new( fruit_aisle => \@fruits );
+    my @fruit = ( $apple, $orange );
+    my $store = ProduceStore->new( fruit_aisle => \@fruit );
     print qq(First inventory...\n);
     $store->show_inventory;
     
@@ -47,23 +47,82 @@ L<Moose::Util::TypeConstraints::OptimizedConstraints> classes.
     print qq(Second inventory...\n);
     $store->show_inventory;
 
+    # this clears the ArrayRef 
+    $store->fruit_aisle( [ ] );
+    print qq(Third inventory:\n);
+    $store->show_inventory;
+
 =head1 DESCRIPTION
 
-The ArrayRef type constraint.
+The ArrayRef type constraint is used to store a reference to a Perl list or
+array variable as an attribute of a Moose object.
 
 =head2 Assigning arrays to an ArrayRef attribute
 
+Once the object has been created, you can pass an array (by reference) to that
+object's C<ArrayRef> attribute using that attribute's accessor.  This is how we
+assign the apple and orange to the store's C<fruit_aisle> C<ArrayRef>
+attribute, we pass a array containing both objects by reference to the
+C<fruit_aisle> attribute:
+
+    my @fruit = ( $apple, $orange );
+    my $store = ProduceStore->new( fruit_aisle => \@fruit );
+
+Or you can pass an anonymous array to the C<ArrayRef> attribute as well.
+This is shown in the example when the grape and tomato replace the apple
+and the orange in the store's fruit aisle.
+
+    $store->fruit_aisle( [ $grape, $tomato ] );
+
+Our C<fruit_aisle> C<ArrayRef> is parameterized, meaning, that the
+C<fruit_aisle> C<ArrayRef> can contain nothing but C<Fruit> objects as array
+values.  If you try to pass in a reference to a array using C<Int> objects as
+array values for example, Moose will complain: 
+
+    Attribute (fruit_aisle) does not pass the type constraint (ArrayRef[Int])
+
 =head2 Assigning arrays to an ArrayRef will overwrite existing arrays
+
+Once you create an object containing a C<ArrayRef> attribute, if you assign a
+new array reference to that attribute, it will replace any existing array
+reference:
+
+    # replace existing inventory
+    my $grape = Fruit->new( name => q(grape), species => q(V. vinifera) );
+    my $tomato = Fruit->new( name => q(tomato), species => q(S. lycopersicum));
+    $store->fruit_aisle( [ $grape, $tomato ] ); 
 
 =head2 Dumping the contents of an ArrayRef
 
+In order to dump the contents of a C<ArrayRef> object attribute, you must first
+de-reference the C<ArrayRef>, and then enumerate over it's keys.
+
+    foreach my $item ( @{$store->fruit_aisle} ) {
+        print qq(Item: ) . blessed($item) . q(; name: ) . $item->name
+            . q(; species: ) . $item->species . qq(\n);
+    } # foreach my $item ( @{$store->fruit_aisle} ) 
+
 =head2 Appending values to an ArrayRef
+
+In order to append new elements to an array referred to by the C<ArrayRef>
+attribute, you will need to make a copy of the array first, add your new array
+elements, then assign your modified copy back to the C<ArrayRef> attribute:
+
+    my @fruit_aisle_copy = @{$store->fruit_aisle};
+    my $avocado = Fruit->new( name => q(avocado), species => q(P. americana) );
+    push(@fruit_aisle_copy, $avocado);
+    $store->fruit_aisle( \@fruit_aisle_copy );
+
+Putting the above code into it's own object method would make appending to a
+C<ArrayRef> a trivial operation.
 
 =head2 Clearing an ArrayRef
 
-    # this can also be...
-    # has q(fruit_aisle) => ( is => q(rw), isa => q(ArrayRef[Fruit]) );
-    # for increased type checking of the contents of the ArrayRef
+    # this clears the ArrayRef 
+    $store->fruit_aisle( [ ] );
+    print qq(Third inventory:\n);
+    $store->show_inventory;
+
 =head1 SEE ALSO
 
 =over 4

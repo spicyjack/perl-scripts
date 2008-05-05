@@ -10,7 +10,7 @@
     use Moose;
     use Moose::Util::TypeConstraints;
 
-    has q(fruit_aisle) => ( is => q(rw), isa => q(ArrayRef[Fruit]) );
+    has q(fruit_aisle) => ( is => q(rw), isa => q(ArrayRef[Int]) );
 
     sub show_inventory { 
         my $self = shift;
@@ -25,8 +25,8 @@
     # we need something to put in the fruit aisle
     my $orange = Fruit->new( name => q(orange), species => q(C. sinensis) );
     my $apple = Fruit->new( name => q(apple), species => q(M. domestica) );
-    my @fruits = ( $apple, $orange );
-    my $store = ProduceStore->new( fruit_aisle => \@fruits );
+    my @fruit = ( $apple, $orange );
+    my $store = ProduceStore->new( fruit_aisle => \@fruit );
     print qq(First inventory...\n);
     $store->show_inventory;
 
@@ -35,6 +35,11 @@
     my $tomato = Fruit->new( name => q(tomato), species => q(S. lycopersicum));
     $store->fruit_aisle( [ $grape, $tomato ] );
     print qq(Second inventory...\n);
+    $store->show_inventory;
+
+    # this clears the ArrayRef 
+    $store->fruit_aisle( [ ] );
+    print qq(Third inventory:\n);
     $store->show_inventory;
 
     exit 0;
