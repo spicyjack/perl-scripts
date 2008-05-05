@@ -1,4 +1,4 @@
-
+#!/usr/bin/env perl
 =pod
 
 =head1 NAME
@@ -59,14 +59,14 @@ variable as an attribute of a Moose object.
 
 =head2 Assigning hashes to a HashRef attribute
 
-Once the object has been created, you can pass a hash (by reference) to that
-object's C<HashRef> attribute using that attribute's accessor.  This is how we
-assign the apple and orange to the store's C<fruit_aisle> C<HashRef> attribute,
-we pass a hash containing both objects by reference to the C<fruit_aisle>
-attribute:
+Once a Moose-based object with a C<HashRef> attribute has been created, you
+can pass a hash (by reference) to that attribute using that attribute's
+accessor.  This is how we assign the apple and orange to the store's
+C<fruit_aisle> C<HashRef> attribute, we pass a hash containing both objects by
+reference to the C<fruit_aisle> attribute:
 
     my %fruit = ( orange => $orange, apple => $apple );
-    my $store = ProduceStoreHash->new( fruit_aisle => \%fruit );;
+    my $store = ProduceStoreHash->new( fruit_aisle => \%fruit );
 
 Or you can pass an anonymous hash to the C<HashRef> attribute as well.
 This is shown in the example when the grape and tomato replace the apple
@@ -74,7 +74,7 @@ and the orange in the store's fruit aisle.
 
     $store->fruit_aisle( { grape => $grape, tomato => $tomato } );
 
-Our C<fruit_aisle> C<HashRef> is parameterized, meaning, that the
+Our C<fruit_aisle> C<HashRef> example is parameterized, meaning, that the
 C<fruit_aisle> C<HashRef> can contain nothing but C<Fruit> objects as hash
 values.  If you try to pass in a reference to a hash using C<Int> objects as
 hash values for example, Moose will complain:
@@ -87,10 +87,23 @@ Once you create an object containing a C<HashRef> attribute, if you assign a
 new hash reference to that attribute, it will replace any existing hash
 reference:
 
+    print qq(First inventory:\n);
+    $store->show_inventory;
+    # First inventory:
+    # Item: apple, type: Fruit species: M. domestica
+    # Item: orange, type: Fruit species: C. sinensis
+
+
     # this replaces the existing HashRef contents
     my $grape = Fruit->new( species => q(V. vinifera) );
     my $tomato = Fruit->new( species => q(S. lycopersicum));
     $store->fruit_aisle( { grape => $grape, tomato => $tomato } );
+
+    print qq(Second inventory:\n);
+    $store->show_inventory;
+    # Second inventory:
+    # Item: tomato, type: Fruit species: S. lycopersicum
+    # Item: grape, type: Fruit species: V. vinifera
 
 =head2 Dumping the contents of the HashRef
 
@@ -112,20 +125,27 @@ noisy, you could create a copy of it, and then enumerate over that copy:
         # 'print' statement from above example goes here
     } 
 
-=head2 Appending key/value pairs to a HashRef
+=head2 Appending/Deleting key/value pairs to a HashRef
 
-In order to append new key/value pairs to the hash referred to by the
-C<HashRef> attribute, you will need to make a copy of the hash first, add your
-new key/value pairs, then assign your modified copy back to the C<HashRef>
-attribute:
+In order to append or delete key/value pairs to the hash referred to by the
+C<HashRef> attribute, you will need to make a copy of the hash first, add or
+delete the desired key/value pairs, then assign your modified copy back to the
+C<HashRef> attribute.  Here's an example of appending new key/value pars:
 
     my %fruit_aisle_copy = %{$store->fruit_aisle};
     my $avocado = Fruit->new( species => q(P. americana) );
     $fruit_aisle_copy{avocado} = $avocado;
     $store->fruit_aisle( \%fruit_aisle_copy );
 
-Putting the above code into it's own object method would make appending to a
-C<HashRef> a trivial operation.
+And here's an example of deleting existing key/value pairs:
+
+    # delete an attribute from the HashRef
+    %fruit_aisle_copy = %{$store->fruit_aisle};
+    delete($fruit_aisle_copy{tomato});
+    $store->fruit_aisle( \%fruit_aisle_copy );
+
+Putting the above code into their own object methods would make appending to
+and deleting from a C<HashRef> a trivial operation.
 
 =head2 Clearing the HashRef
 

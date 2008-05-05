@@ -1,4 +1,4 @@
-
+#!/usr/bin/env perl
 =pod
 
 =head1 NAME
@@ -24,25 +24,29 @@ L<Moose::Util::TypeConstraints::OptimizedConstraints> classes.
     sub show_inventory {
         my $self = shift;
         foreach my $item ( @{$self->fruit_aisle} ) {
-            print qq(Item: ) . blessed($item) . q(; name: ) . $item->name
-                . q(; species: ) . $item->species . qq(\n);
+            print qq(Item: ) . blessed($item) . q(; name: ) 
+                . $item->name . q(; species: ) . $item->species 
+                . qq(\n);
         } # foreach my $item ( @{$inventory} )
     } # sub show_inventory
 
     package main;
-    use Moose; # gains 'blessed' function 
 
     # we need something to put in the fruit aisle
-    my $orange = Fruit->new( name => q(orange), species => q(C. sinensis) );
-    my $apple = Fruit->new( name => q(apple), species => q(M. domestica) );
+    my $orange = Fruit->new( 
+        name => q(orange), species => q(C. sinensis) );
+    my $apple = Fruit->new( 
+        name => q(apple), species => q(M. domestica) );
     my @fruit = ( $apple, $orange );
     my $store = ProduceStore->new( fruit_aisle => \@fruit );
     print qq(First inventory...\n);
     $store->show_inventory;
     
     # replace existing inventory
-    my $grape = Fruit->new( name => q(grape), species => q(V. vinifera) );
-    my $tomato = Fruit->new( name => q(tomato), species => q(S. lycopersicum));
+    my $grape = Fruit->new( 
+        name => q(grape), species => q(V. vinifera) );
+    my $tomato = Fruit->new( 
+        name => q(tomato), species => q(S. lycopersicum));
     $store->fruit_aisle( [ $grape, $tomato ] ); 
     print qq(Second inventory...\n);
     $store->show_inventory;
@@ -59,11 +63,11 @@ array variable as an attribute of a Moose object.
 
 =head2 Assigning arrays to an ArrayRef attribute
 
-Once the object has been created, you can pass an array (by reference) to that
-object's C<ArrayRef> attribute using that attribute's accessor.  This is how we
-assign the apple and orange to the store's C<fruit_aisle> C<ArrayRef>
-attribute, we pass a array containing both objects by reference to the
-C<fruit_aisle> attribute:
+Once a Moose-based object with an C<ArrayRef> attribute has been created, you
+can pass an array (by reference) to that object attribute using that
+attribute's accessor.  This is how we assign the apple and orange to the
+store's C<fruit_aisle> C<ArrayRef> attribute, we pass an array containing both
+objects by reference to the C<fruit_aisle> attribute:
 
     my @fruit = ( $apple, $orange );
     my $store = ProduceStore->new( fruit_aisle => \@fruit );
@@ -76,10 +80,10 @@ and the orange in the store's fruit aisle.
 
 Our C<fruit_aisle> C<ArrayRef> is parameterized, meaning, that the
 C<fruit_aisle> C<ArrayRef> can contain nothing but C<Fruit> objects as array
-values.  If you try to pass in a reference to a array using C<Int> objects as
+values.  If you try to pass in a reference to a array using C<Str> objects as
 array values for example, Moose will complain: 
 
-    Attribute (fruit_aisle) does not pass the type constraint (ArrayRef[Int])
+    Attribute (fruit_aisle) does not pass the type constraint (ArrayRef[Str])
 
 =head2 Assigning arrays to an ArrayRef will overwrite existing arrays
 
@@ -87,10 +91,24 @@ Once you create an object containing a C<ArrayRef> attribute, if you assign a
 new array reference to that attribute, it will replace any existing array
 reference:
 
+    print qq(First inventory:\n);
+    $store->show_inventory;
+    # First inventory:
+    # Item: Fruit; name: apple; species: M. domestica
+    # Item: Fruit; name: orange; species: C. sinensis
+
     # replace existing inventory
-    my $grape = Fruit->new( name => q(grape), species => q(V. vinifera) );
-    my $tomato = Fruit->new( name => q(tomato), species => q(S. lycopersicum));
+    my $grape = Fruit->new( 
+        name => q(grape), species => q(V. vinifera) );
+    my $tomato = Fruit->new( 
+        name => q(tomato), species => q(S. lycopersicum));
     $store->fruit_aisle( [ $grape, $tomato ] ); 
+
+    print qq(Second inventory:\n);
+    $store->show_inventory;
+    # Second inventory:
+    # Item: Fruit; name: grape; species: V. vinifera
+    # Item: Fruit; name: tomato; species: S. lycopersicum
 
 =head2 Dumping the contents of an ArrayRef
 
@@ -102,26 +120,44 @@ de-reference the C<ArrayRef>, and then enumerate over it's keys.
             . q(; species: ) . $item->species . qq(\n);
     } # foreach my $item ( @{$store->fruit_aisle} ) 
 
-=head2 Appending values to an ArrayRef
+=head2 Appending/Deleting values to/from an ArrayRef
 
 In order to append new elements to an array referred to by the C<ArrayRef>
 attribute, you will need to make a copy of the array first, add your new array
 elements, then assign your modified copy back to the C<ArrayRef> attribute:
 
     my @fruit_aisle_copy = @{$store->fruit_aisle};
-    my $avocado = Fruit->new( name => q(avocado), species => q(P. americana) );
+    my $avocado = Fruit->new( 
+        name => q(avocado), species => q(P. americana) );
     push(@fruit_aisle_copy, $avocado);
     $store->fruit_aisle( \@fruit_aisle_copy );
 
-Putting the above code into it's own object method would make appending to a
-C<ArrayRef> a trivial operation.
+And here's an example of deleting an object stored in an ArrayRef:
+
+    my @fruit_aisle_copy = @{$store->fruit_aisle};
+    # new array to hold the fruit objects that won't be deleted
+    my @reworked_fruit_aisle;
+    for my $fruit_obj ( @fruit_aisle_copy ) {
+        if ( $fruit_obj->name ne q(tomato) ) {
+            push(@reworked_fruit_aisle, $fruit_obj);
+        } # if ( $fruit_obj->name ne q(tomato) )
+    } # for my $fruit_obj ( @fruit_aisle_copy )
+    $store->fruit_aisle( \@reworked_fruit_aisle );
+
+Putting the above code into their own object methods would make appending to or deleting from an C<ArrayRef> a trivial operation.
 
 =head2 Clearing an ArrayRef
 
+Assigning C<undef> to clear an C<ArrayRef> will not work because the attribute
+was originally defined with a type constraint, meaning that attribute must have
+0 or more of that type of value to be valid.  C<undef> in Perl is not a value,
+so it won't work for clearing the C<ArrayRef>.
+
+If you assign an empty anonymous hash to a C<ArrayRef> attribute, this will
+clear out that attribute yet still satisfy the type constraint.
+
     # this clears the ArrayRef 
     $store->fruit_aisle( [ ] );
-    print qq(Third inventory:\n);
-    $store->show_inventory;
 
 =head1 SEE ALSO
 
@@ -129,6 +165,9 @@ C<ArrayRef> a trivial operation.
 
 =item L<Moose::Cookbook::Recipe4> - Subtypes, and modeling a simple Company
 class hierarchy
+
+=item L<Moose::Cookbook::Snack::Types> - Snippets of code for using Types and
+Type Constraints
 
 =item L<Moose::Util::TypeConstraints> - Type constraints that Moose can use
 

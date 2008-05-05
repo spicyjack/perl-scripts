@@ -8,6 +8,8 @@
     package ProduceStoreHash;
     use Moose;
     use Moose::Util::TypeConstraints;
+
+    #has q(fruit_aisle) => ( is => q(rw), isa => q(HashRef[Int]) );
     has q(fruit_aisle) => ( is => q(rw), isa => q(HashRef[Fruit]) );
 
     sub show_inventory {
@@ -37,19 +39,34 @@
     my $apple = Fruit->new( species => q(M. domestica) );
     my %fruit = ( orange => $orange, apple => $apple );
     my $store = ProduceStoreHash->new( fruit_aisle => \%fruit );
-    print qq(First inventory:\n);
+    print qq(\nFirst inventory (initial object creation):\n);
     $store->show_inventory;
 
     # this replaces the existing HashRef contents
     my $grape = Fruit->new( species => q(V. vinifera) );
     my $tomato = Fruit->new( species => q(S. lycopersicum));
     $store->fruit_aisle( { grape => $grape, tomato => $tomato } );
-	print qq(Second inventory:\n);
+	print qq(\nSecond inventory (replacing the HashRef):\n);
+    $store->show_inventory;
+
+    # append a new attribute to the HashRef
+    my %fruit_aisle_copy = %{$store->fruit_aisle};
+    my $avocado = Fruit->new( species => q(P. americana) );
+    $fruit_aisle_copy{avocado} = $avocado;
+    $store->fruit_aisle( \%fruit_aisle_copy );
+	print qq(\nThird inventory (appending a new key/value pair):\n);
+    $store->show_inventory;
+
+    # delete an attribute from the HashRef
+    %fruit_aisle_copy = %{$store->fruit_aisle};
+    delete($fruit_aisle_copy{tomato});
+    $store->fruit_aisle( \%fruit_aisle_copy );
+	print qq(\nFourth inventory (deleting a key/value pair):\n);
     $store->show_inventory;
 
     # this clears the HashRef
     $store->fruit_aisle( { } );
-	print qq(Third inventory:\n);
+	print qq(\nFifth inventory (clearing the HashRef):\n);
     $store->show_inventory;
 
     exit 0;
