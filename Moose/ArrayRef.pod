@@ -15,20 +15,11 @@ L<Moose::Util::TypeConstraints::OptimizedConstraints> classes.
     has q(name) => ( is => q(rw), required => 1 );
     has q(species) => ( is => q(rw), required => 1 );
 
-    package ProduceStore;
+    package ProduceStoreArray;
     use Moose;
     use Moose::Util::TypeConstraints;
 
     has q(fruit_aisle) => ( is => q(rw), isa => q(ArrayRef[Fruit]) );
-
-    sub show_inventory {
-        my $self = shift;
-        foreach my $item ( @{$self->fruit_aisle} ) {
-            print qq(Item: ) . blessed($item) . q(; name: ) 
-                . $item->name . q(; species: ) . $item->species 
-                . qq(\n);
-        } # foreach my $item ( @{$inventory} )
-    } # sub show_inventory
 
     package main;
 
@@ -39,23 +30,7 @@ L<Moose::Util::TypeConstraints::OptimizedConstraints> classes.
         name => q(apple), species => q(M. domestica) );
     my @fruit = ( $apple, $orange );
     my $store = ProduceStore->new( fruit_aisle => \@fruit );
-    print qq(First inventory...\n);
-    $store->show_inventory;
     
-    # replace existing inventory
-    my $grape = Fruit->new( 
-        name => q(grape), species => q(V. vinifera) );
-    my $tomato = Fruit->new( 
-        name => q(tomato), species => q(S. lycopersicum));
-    $store->fruit_aisle( [ $grape, $tomato ] ); 
-    print qq(Second inventory...\n);
-    $store->show_inventory;
-
-    # this clears the ArrayRef 
-    $store->fruit_aisle( [ ] );
-    print qq(Third inventory:\n);
-    $store->show_inventory;
-
 =head1 DESCRIPTION
 
 The ArrayRef type constraint is used to store a reference to a Perl list or
@@ -85,17 +60,25 @@ array values for example, Moose will complain:
 
     Attribute (fruit_aisle) does not pass the type constraint (ArrayRef[Str])
 
+=head2 Dumping the contents of an ArrayRef
+
+In order to dump the contents of a C<ArrayRef> object attribute, you must first
+de-reference the C<ArrayRef>, and then enumerate over it's keys.  You can add
+this method for showing the store's inventory to the C<ProduceStoreArray>
+object shown in the SYNOPSIS:
+
+    sub show_inventory {
+        my $self = shift;
+        foreach my $item ( @{$self->fruit_aisle} ) {
+            # access each Fruit object
+        } # foreach my $item ( @{$self->fruit_aisle} ) 
+    }
+
 =head2 Assigning arrays to an ArrayRef will overwrite existing arrays
 
 Once you create an object containing a C<ArrayRef> attribute, if you assign a
 new array reference to that attribute, it will replace any existing array
 reference:
-
-    print qq(First inventory:\n);
-    $store->show_inventory;
-    # First inventory:
-    # Item: Fruit; name: apple; species: M. domestica
-    # Item: Fruit; name: orange; species: C. sinensis
 
     # replace existing inventory
     my $grape = Fruit->new( 
@@ -103,22 +86,6 @@ reference:
     my $tomato = Fruit->new( 
         name => q(tomato), species => q(S. lycopersicum));
     $store->fruit_aisle( [ $grape, $tomato ] ); 
-
-    print qq(Second inventory:\n);
-    $store->show_inventory;
-    # Second inventory:
-    # Item: Fruit; name: grape; species: V. vinifera
-    # Item: Fruit; name: tomato; species: S. lycopersicum
-
-=head2 Dumping the contents of an ArrayRef
-
-In order to dump the contents of a C<ArrayRef> object attribute, you must first
-de-reference the C<ArrayRef>, and then enumerate over it's keys.
-
-    foreach my $item ( @{$store->fruit_aisle} ) {
-        print qq(Item: ) . blessed($item) . q(; name: ) . $item->name
-            . q(; species: ) . $item->species . qq(\n);
-    } # foreach my $item ( @{$store->fruit_aisle} ) 
 
 =head2 Appending/Deleting values to/from an ArrayRef
 

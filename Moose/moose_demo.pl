@@ -12,7 +12,8 @@
     my $demo = Moose::Demo->new( script_name => $0 );
 
     print qq(My name is ) . $demo->script_name . qq(\n);
-    print qq(I am a ) . blessed $demo . qq( type of object\n);
+    print qq(I am a ) . $demo->meta->name . qq( type of object\n);
+    #print qq(I am a ) . ref($demo) . qq( type of object\n);
 
     # setting the object attribute directly
     $demo->{script_name} = "something else";
