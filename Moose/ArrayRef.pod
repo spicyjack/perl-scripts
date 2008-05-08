@@ -52,9 +52,10 @@ objects by reference to the C<fruit_aisle> attribute:
     my @fruit = ($apple, $orange);
     my $store = ProduceStore->new(fruit_aisle => \@fruit);
 
-Or you can pass an anonymous array to the C<ArrayRef> attribute as well.
-This is shown in the example when the grape and tomato replace the apple
-and the orange in the store's fruit aisle.
+Or you can pass an anonymous array to the C<ArrayRef> attribute as well.  If
+you created two new objects, C<$grape> and C<$tomato>, and assigned them to
+the C<ArrayRef>, they would replace the apple and the orange in the store's
+fruit aisle:
 
     $store->fruit_aisle( [$grape, $tomato] );
 
