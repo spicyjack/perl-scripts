@@ -15,8 +15,8 @@ use Net::SNMP qw(:snmp);
 my ($snmp_session, $session_error) = Net::SNMP->session(
 #-hostname   => shift || q(localhost),
 #-community  => shift || q(public),
-    -hostname       => shift || q(localhost),
-    -community      => shift || q(devilduck),
+    -hostname       => shift || q(nob),
+    -community      => shift || q(SkinnyRO),
     -port           => shift || q(161),
     -version        => shift || q(2c),
     -nonblocking    => 1,
