@@ -78,14 +78,14 @@ sub found {
             if ( $_ ne $newfile ) { $cmd = qq(cp "$_" $newfile;); }
             # FIXME test this out to make sure it works before you hose another
             # directory of shn files
-            $cmd .= q(/usr/bin/shnconv -o wav -d ) 
+            $cmd .= q(shnconv -o wav -d ) 
                 . $output_dir . q( ") . $File::Find::dir . q("/) . $newfile;
             if ( $_ ne $newfile ) {$cmd .= qq(;rm $newfile); }
             last SWITCH;
         } # if ( $_ =~ /\.shn$/ )
         if ( $_ =~ /\.flac$/ ) {
             $newfile =~ s/\.flac$/.wav/;
-            $cmd = qq(/usr/bin/flac -d -c "$_" > ) 
+            $cmd = qq(flac -d -c "$_" > ) 
                 . $output_dir . q(/) . $newfile;
             last SWITCH; 
         } # if ( $_ =~ /\.flac$/ )
