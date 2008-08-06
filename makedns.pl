@@ -67,60 +67,64 @@ my $date_serial = qx/$date_command | tr -d '\n'/;
 			);
 
 # set up @ns
-@ns = ("naranja", "observer");
+@ns = ("naranja", "lagrange");
 
 # set up @mx
-@mx = ("10 smtp"); # on hosts that use it, mail is a CNAME to observer
+@mx = ("10 smtp"); # on hosts that use it, mail is a CNAME to lagrange
 
 # a list of domains to generate zones for 
 # the 'public' key is to specify if that host gets all of the funky hostnames
 # I use, or if it gets just a basic set that covers all of the services...
 %domains = (	
 				"portaboom.com"				=> { 	internal => "n",
-													primary => "observer"},
+													primary => "lagrange"},
                 "antlinux.com"              => {    internal => 'n',
 				                                    primary => 'observer'},
                 "tennsat.com"               => {    internal => "n",
-                                                    primary => "observer"},
+                                                    primary => "lagrange"},
                 "tiedyelady.com"            => {    internal => "n",
-                                                    primary => "observer"},
+                                                    primary => "lagrange"},
                 "erolotus.com"              => {    internal => "n",
-                                                    primary => "observer"},
+                                                    primary => "lagrange"},
                 "hobartrax.com"             => {    internal => "n",
-                                                    primary => "observer"},
+                                                    primary => "lagrange"},
                 "blkmtnpub.com"             => {    internal => "n",
-                                                    primary => "observer"},
+                                                    primary => "lagrange"},
+                "blkmtnconsult.com"         => {    internal => "n",
+                                                    primary => "lagrange"},
 			);
 
 %hosts = (	"localhost"	=> { 	ip => "127.0.0.1",
 								public => "y"},
-			"observer" 	=> {	ip => "72.14.141.184",
+			"observer" 	=> {	ip => "76.88.101.33",
+								public => "y"},
+			"lagrange" 	=> {	ip => "65.49.60.55",
+								public => "y"},
+			"smtp" 		=> {	ip => "65.49.60.55",
 								public => "y"},
 			"naranja"  	=> { 	ip => "63.198.132.114",
 								public => "y"},
-			"mail"		=> { 	alias => "observer",
+			"mail"		=> { 	alias => "lagrange",
 								public => "y"},
-            "dev"       => {    alias => "observer",
+            "dev"       => {    alias => "lagrange",
                                 public => "y"},
-			"www"		=> {	alias => "observer",
+			"www"		=> {	alias => "lagrange",
 								public => "y"},
-			"smtp" 		=> {	ip => "72.14.141.184",
-								public => "y"},
-            "wiki"      => {   alias => "observer",
+            "wiki"      => {   alias => "lagrange",
                                 public => "y"},
             "cvs" =>        {   alias => "observer",
                                 public => "y"},
-            "old"       => {    alias => "observer",
+            "cosas"       => {    alias => "lagrange",
                                 public => "y"},
-            "cosas"       => {    alias => "observer",
-                                public => "y"},
-            "files"       => {    alias => "observer",
+            #"files"       => {    alias => "lagrange",
+            #                    public => "y"},
+            "files"       => {    ip => "127.0.0.1",
                                 public => "y"},
 #            "dropbox"       => {    ip => "observer",
 #                                public => "y"},
-            "gallery"       => {    alias => "observer",
+            "gallery"       => {    alias => "lagrange",
                                 public => "y"},
-            "vend"       => {    alias => "observer",
+            "vend"       => {    alias => "lagrange",
                                 public => "y"},
 ); # %hosts		
 							
