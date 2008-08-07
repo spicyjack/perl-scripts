@@ -142,7 +142,7 @@ my $tmp; # for reading input
 chomp($date);
 
 # loop thru the domains
-foreach $domain ( keys(%domains) ) {
+foreach $domain ( sort(keys(%domains)) ) {
 	# where are we writing data to?
 	if ( defined $DEBUG ) {
 		warn "makedns: output will go to the screen instead of to files\n";
@@ -162,26 +162,27 @@ foreach $domain ( keys(%domains) ) {
         print $OUT q($GENERATE 10-80 ${0,2,x}011bac A 172.27.1.$) . qq(\n);
     } # if ( $domain eq q(antlinux.com) )
 	print $OUT '@ IN SOA naranja.' . "$domain. $soa_email.$domain. (" . qq(\n);
-	print $OUT "\t\t" . $dnsinfo{serial} . "\t; zone serial\n";
-	print $OUT "\t\t" . $dnsinfo{refresh} . "\t\t\t; refresh\n";
-	print $OUT "\t\t" . $dnsinfo{retry} . "\t\t\t; how often to retry\n";
-	print $OUT "\t\t" . $dnsinfo{expire} . "\t\t\t; max time to cache zone\n";
-	print $OUT "\t\t" . $dnsinfo{ttl} . "\t\t\t; minimum time to live\n";
+	print $OUT spaceify(4, 15, $dnsinfo{serial}) . "; zone serial\n";
+	print $OUT spaceify(4, 15, $dnsinfo{refresh}) . "; refresh\n";
+	print $OUT spaceify(4, 15, $dnsinfo{retry}) . "; how often to retry\n";
+	print $OUT spaceify(4, 15, $dnsinfo{expire}) . "; max time to cache zone\n";
+	print $OUT spaceify(4, 15, $dnsinfo{ttl}) . "; minimum time to live\n";
 	print $OUT ")\n\n";
 
 	# print the MX and NS records
 	print $OUT "; print the MX and NS records\n";
-	print $OUT "\t\tNS " . $ns[0] . "\n";	
-	print $OUT "\t\tNS " . $ns[1] . "\n";	
-	print $OUT "\t\tMX " . $mx[0] . "\n\n";	
+	print $OUT spaceify(4, 15, "NS " . $ns[0]) . "\n";	
+	print $OUT spaceify(4, 15, "NS " . $ns[1]) . "\n";	
+	print $OUT spaceify(4, 15, "MX " . $mx[0]) . "\n\n";	
 
 	# print a host record for the FQDN
 	print $OUT "; print a host record for the FQDN\n";
-	print $OUT "$domain.\t\t\t\tIN A " . $hosts{$domains{$domain}{primary}}{ip} 		. "\n\n";
+	print $OUT spaceify(0, 20, $domain) . q(IN A ) 
+        . $hosts{$domains{$domain}{primary}}{ip} . "\n\n";
 
 	print $OUT "; print the other host records for this zone\n";
 	# loop thru the hosts
-	foreach $host ( keys(%hosts) ) {
+	foreach $host ( sort(keys(%hosts)) ) {
 		# is the host record meant for the public?
 		if ( $hosts{$host}{public} eq "n" ) { 
 			# no, it's internal, is this an internal domain?
@@ -206,21 +207,38 @@ foreach $domain ( keys(%domains) ) {
 } # foreach $domain ( keys(%domains) )
 
 #############
+# spaceify  #
+#############
+sub spaceify {
+    my $leading_space = shift;
+    my $field_width = shift;
+    my $string_data = shift;
+    # take the width of the field, subtract the length of the string
+    # print that many spaces
+    return q( ) x $leading_space . $string_data 
+        . q( ) x ($field_width - length($string_data) );
+} # sub GetRecord
+
+#############
 # GetRecord #
 #############
 sub GetRecord {
 # extracts specific record info from the hashes
-	my $hosts = $_[0]; # reference to hosts hash
+	my $hosts_ref = $_[0]; # reference to hosts hash
 	my $host = $_[1]; # host value to look at
 	my $returnval; # what's going back
 
-	if ( exists $$hosts{$host}{ip} ) {
+    my %hosts = %{$hosts_ref};
+	if ( exists $hosts{$host}{ip} ) {
 		# this is an A record
-		$returnval = $host . "\t\t\t\tIN A " . $$hosts{$host}{ip} . "\n";
-	} elsif ( exists $$hosts{$host}{alias} ) {
-		$returnval = $host . "\t\t\t\tIN CNAME " . $$hosts{$host}{alias} . "\n";	} else {
+		$returnval = spaceify(0, 20, $host)
+            . "IN A " . $hosts{$host}{ip} . "\n";
+	} elsif ( exists $hosts{$host}{alias} ) {
+		$returnval = spaceify(0, 20, $host) 
+            . "IN CNAME " . $hosts{$host}{alias} . "\n";	
+    } else {
 		die "makedns: ip or alias not found";
-	} # if ( exists $$hosts{$host}{ip} )
+	} # if ( exists $hosts{$host}{ip} )
 	
 	# exit returning the return value
 	return $returnval;
