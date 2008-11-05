@@ -100,9 +100,15 @@ my $date_serial = qx/$date_command | tr -d '\n'/;
 								public => "y"},
 			"lagrange" 	=> {	ip => "65.49.60.55",
 								public => "y"},
+			"purl" 	    => {	ip => "65.49.60.56",
+								public => "y"},
 			"smtp" 		=> {	ip => "65.49.60.55",
 								public => "y"},
 			"naranja"  	=> { 	ip => "63.198.132.114",
+								public => "y"},
+			"audio"		=> { 	alias => "observer",
+								public => "y"},
+			"stream"	=> { 	alias => "lagrange",
 								public => "y"},
 			"mail"		=> { 	alias => "lagrange",
 								public => "y"},
@@ -177,7 +183,7 @@ foreach $domain ( sort(keys(%domains)) ) {
 
 	# print a host record for the FQDN
 	print $OUT "; print a host record for the FQDN\n";
-	print $OUT spaceify(0, 20, $domain) . q(IN A ) 
+	print $OUT spaceify(0, 20, $domain . q(.)) . q(IN A ) 
         . $hosts{$domains{$domain}{primary}}{ip} . "\n\n";
 
 	print $OUT "; print the other host records for this zone\n";

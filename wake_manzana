@@ -1,0 +1,4 @@
+#!/bin/sh
+
+/usr/bin/perl -MNet::Wake \
+-e "Net::Wake::by_udp(q(172.27.1.255), q(00:1b:63:92:6d:06));"

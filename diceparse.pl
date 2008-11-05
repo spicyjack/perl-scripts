@@ -141,8 +141,7 @@ for (my $num_passphrases = 0; $num_passphrases < $req_passphrases ;
             # nope, grab the numberlist from the user
         	print q(Enter in the list of numbers to translate )
                 . qq(into Diceware words:\n);
-        	$Term::ReadPassword::USE_STARS = 1;
-        	$dicein = read_password(q(diceware string: ));
+        	$dicein = read_password(q(diceware string: ), 0,0, 1);
         } # if ( defined $stdin )
     } else {
 		my @bytes; # list of bytes generated randomly
