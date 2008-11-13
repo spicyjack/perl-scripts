@@ -10,10 +10,11 @@ chomp($input);
 # $input =~ s/^([.\d+]+)$/$1/g;
 # print "substituted text is >$1<\n";
 
-if ( $input =~ /^[\.\d+]\{1,\}$/ ) {
-    print "matched pattern /^([.\d+]+)\$/: >$input<\n";
+#if ( $input =~ /^([c-zC-Z]:[a-zA-Z0-9_.-]+)$/ ) {
+if ( $input =~ m#^([c-zC-Z]:/[a-zA-Z0-9_.-]+)# ) {
+    print "matched pattern : >$input<\n";
     print "Thanks for playing!!\n";
 } else {
-    print "Does not match pattern /^([.\d+]+)\$/\n";
+    print "Does not match pattern \n";
 } # if ( $input =~
 
