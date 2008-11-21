@@ -17,27 +17,69 @@ use strict;
 use warnings;
 use Parse::RecDescent;
 
+# for debugging
+# traces parsing
+#$::RD_TRACE = 1;
+# adds more debug output if an eror occurs
+$::RD_HINT = 1;
+
 my $parser = Parse::RecDescent->new(<<'EOG' 
-    wtmp : wtmp_line(s)
+    # startup action
+    { my @returned_text; }
 
-    wtmp_line : login_name pty whitespace day_of_week month
+    wtmp : session(s) { $return = \@returned_text }
+        | logged_in(s) { $return = \@returned_text }
+        | reboot(s) { $return = \@returned_text } 
+        | down(s) { $return = \@returned_text }
 
+    session : login_name pseudoterm day_of_week month date 
+        login_time dash logout_time session_total login_host
+
+    logged_in : login_name pseudoterm day_of_week month date 
+        login_time still_logged_in_text login_host
+
+    reboot : reboot_text system_boot_text day_of_week month date 
+        login_time dash down_text session_total login_host
+
+    down : login_name pseudoterm day_of_week month date 
+        login_time dash down_text session_total login_host
+
+    # simple rules that don't need any regexes
+    dash : /-/
+    still_logged_in_text : /still logged in/
+    down_text : /down/
+    reboot_text : /reboot/
+    system_boot_text : /system boot/
+
+    # more complext rules that need regexes
     login_name : /^\w+/
-        { print 'login name was ', $item[1] . "\n"; }
+        { push(@returned_text, $item[1]); }
 
-    #pty : /^\w+\/\d/ | /system boot/
-    pty : /^\w+\/\d/ 
-        { print 'pty was ', $item[1] . "\n"; }
+    #pseudoterm : /^\w+\/\d/ | /system boot/
+    pseudoterm : /^\w+\/\d/ 
+        { push(@returned_text, $item[1]); }
 
-    day_of_week: "Sun" | "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat"
-        { print 'day of week was ', $item[1] . "\n"; }
+    day_of_week: /\w+/ 
+        { push(@returned_text, $item[1]); }
 
-    month:  "Jan" | "Feb" | "Mar" | "Apr" | "May" | "Jun" | 
-            "Jul" | "Aug" | "Sep" | "Oct" | "Nov" | "Dec" 
-        { print 'month was ', $item[1] . "\n"; }
+    month: /\w+/
+        { push(@returned_text, $item[1]); }
 
-    #whitespace: /\W+/
-    whitespace: /         /
+    date: /\d+/
+        { push(@returned_text, $item[1]); }
+
+    login_time: /\d\d:\d\d/
+        { push(@returned_text, $item[1]); }
+
+    logout_time: /\d\d:\d\d/
+        { push(@returned_text, $item[1]); }
+
+    session_total: /\(\d+?\+?\d+:\d+\)/
+        { push(@returned_text, $item[1]); }
+
+    login_host: /\d+\.\d+\.\d+\.\d+/
+        { push(@returned_text, $item[1]); }
+
 EOG
 ) or die q(ERROR: bad Parse::RecDescent grammar);
 
@@ -45,6 +87,15 @@ EOG
 
 #$parser->wtmp($text) or print qq(No wtmp records found\n);
 foreach my $line ( <STDIN> ) {
-    $parser->wtmp($text) or print qq(No wtmp records found\n);
-}
+    $line =~ s/\s+/ /g;
+    print q(=-) x 30 . qq(=\n);
+    print qq(line is: $line\n);
+    my $parser_return = $parser->wtmp($line);
+    if ( ! defined $parser_return ) {
+        print qq(line did not match\n);
+    } else {
+        my @return = @{$parser_return};
+        print qq(Parsed line: ) . join(q(|), @return) . qq(\n);
+    } # if ( ! defined $parser_return )
+} # foreach my $line ( <STDIN> )
 
