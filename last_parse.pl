@@ -17,112 +17,100 @@ use strict;
 use warnings;
 use Parse::RecDescent;
 
-# for debugging
-# traces parsing
 #$::RD_TRACE = 1;
-# adds more debug output if an eror occurs
 $::RD_HINT = 1;
-my @parsed_text; 
 
 my $parser = Parse::RecDescent->new(<<'EOG' 
     # startup action
+    { my $returned_text; }
 
-    wtmp_line : session(s)
-        | logged_in(s)
-        | reboot(s) 
-        | down(s) 
-        | wtmp_begins
+    wtmp : session(s) { $return = \$returned_text }
+        | logged_in(s) { $return = \$returned_text }
+        | reboot(s) { $return = \$returned_text } 
+        | down(s) { $return = \$returned_text }
 
-    session : login_name pseudoterm day_of_week month_name month_date 
+    session : login_name pseudoterm day_of_week month date 
         login_time dash logout_time session_total login_host
 
-    logged_in : login_name pseudoterm day_of_week month_name month_date 
+    logged_in : login_name pseudoterm day_of_week month date 
         login_time still_logged_in_text login_host
 
-    reboot : reboot_text system_boot_text day_of_week month_name month_date 
+    reboot : reboot_text system_boot_text day_of_week month date 
         login_time dash down_text session_total login_host
 
-    down : login_name pseudoterm day_of_week month_name month_date 
+    down : login_name pseudoterm day_of_week month date 
         login_time dash down_text session_total login_host
-
-    wtmp_begins : wtmp_begins_text day_of_week month_name month_date 
-        hh_mm_ss_yy
 
     # simple rules that don't need any regexes
-    wtmp_begins_text : /wtmp begins/
     dash : /-/
     still_logged_in_text : /still logged in/
     down_text : /down/
     reboot_text : /reboot/
     system_boot_text : /system boot/
 
-    # rules used by other rules
-    hh_mm : /\d\d:\d\d/ 
-
-    # more complex rules that need regexes and return things
-    hh_mm_ss_yy : /\d\d:\d\d:\d\d \d\d\d\d/
-        {   push(@::parsed_text, $item[1]); 
-            print $item[0] . " -> " .  $item[1] . "\n";}
-#        { push(@::parsed_text, $item[1]); }
-
+    # more complext rules that need regexes
     login_name : /^\w+/
-        {   push(@::parsed_text, $item[1]); 
-            print $item[0] . " -> " .  $item[1] . "\n";}
-#        { push(@::parsed_text, $item[1]); }
+        { $returned_text = $item[1];
+          print $item[0] . q( -> ) . $item[1] . "\n"}
+#        { push(@returned_text, $item[1]); }
 
     #pseudoterm : /^\w+\/\d/ | /system boot/
-    pseudoterm : /^\w+\/\d+/ 
-        {   push(@::parsed_text, $item[1]); 
-            print $item[0] . " -> " .  $item[1] . "\n";}
-#        { push(@::parsed_text, $item[1]); }
+    pseudoterm : /^\w+\/\d/ 
+        { $returned_text .= '|' . $item[1];
+          print $item[0] . q( -> ) . $item[1] . "\n"}
+#        { push(@returned_text, $item[1]); }
 
     day_of_week: /\w+/ 
-        {   push(@::parsed_text, $item[1]); 
-            print $item[0] . " -> " .  $item[1] . "\n";}
-#        { push(@::parsed_text, $item[1]); }
+        { $returned_text .= '|' . $item[1]; 
+          print $item[0] . q( -> ) . $item[1] . "\n"}
+#        { push(@returned_text, $item[1]); }
 
-    month_name: /\w+/
-        {   push(@::parsed_text, $item[1]); 
-            print $item[0] . " -> " .  $item[1] . "\n";}
-#        { push(@::parsed_text, $item[1]); }
+    month: /\w+/
+        { $returned_text .= '|' . $item[1];
+          print $item[0] . q( -> ) . $item[1] . "\n"}
+#        { push(@returned_text, $item[1]); }
 
-    month_date: /\d+/
-        {   push(@::parsed_text, $item[1]); 
-            print $item[0] . " -> " .  $item[1] . "\n";}
-#        { push(@::parsed_text, $item[1]); }
+    date: /\d+/
+        { $returned_text .= '|' . $item[1];
+          print $item[0] . q( -> ) . $item[1] . "\n"}
+#        { push(@returned_text, $item[1]); }
 
-    login_time: hh_mm
-        {   push(@::parsed_text, $item[1]); 
-            print $item[0] . " -> " .  $item[1] . "\n";}
-#        { push(@::parsed_text, $item[1]); }
+    login_time: /\d\d:\d\d/
+        { $returned_text .= '|' . $item[1];
+          print $item[0] . q( -> ) . $item[1] . "\n"}
+#        { push(@returned_text, $item[1]); }
 
-    logout_time: hh_mm
-        {   push(@::parsed_text, $item[1]); 
-            print $item[0] . " -> " .  $item[1] . "\n";}
-#        { push(@::parsed_text, $item[1]); }
+    logout_time: /\d\d:\d\d/
+        { $returned_text .= '|' . $item[1];
+          print $item[0] . q( -> ) . $item[1] . "\n"}
+#        { push(@returned_text, $item[1]); }
 
     session_total: /\(\d+?\+?\d+:\d+\)/
-        {   push(@::parsed_text, $item[1]); 
-            print $item[0] . " -> " .  $item[1] . "\n";}
-#        { push(@::parsed_text, $item[1]); }
+        { $returned_text .= '|' . $item[1];
+          print $item[0] . q( -> ) . $item[1] . "\n"}
+#        { push(@returned_text, $item[1]); }
 
     login_host: /\d+\.\d+\.\d+\.\d+/
-        {   push(@::parsed_text, $item[1]); 
-            print $item[0] . " -> " .  $item[1] . "\n";}
-#        { push(@::parsed_text, $item[1]); }
+        { $returned_text .= '|' . $item[1];
+          print $item[0] . q( -> ) . $item[1] . "\n"}
+#        { push(@returned_text, $item[1]); }
 
 EOG
 ) or die q(ERROR: bad Parse::RecDescent grammar);
 
+#my $text = do { local $/; <> };
+
+#$parser->wtmp($text) or print qq(No wtmp records found\n);
 foreach my $line ( <STDIN> ) {
     $line =~ s/\s+/ /g;
-    print q(=-) x 35 . qq(=\n);
+    print q(=-) x 30 . qq(=\n);
     print qq(line is: $line\n);
-    if ( defined $parser->wtmp_line($line) ) {
-        print qq(Parsed line: ) . join(q(|), @parsed_text) . qq(\n);
-    } else {
+    my $parser_return = $parser->wtmp($line);
+    if ( ! defined $parser_return ) {
         print qq(line did not match\n);
+    } else {
+        my $return = $$parser_return;
+        print qq(Parsed line: ) . $return . qq(\n);
     } # if ( ! defined $parser_return )
-    @parsed_text = ();
 } # foreach my $line ( <STDIN> )
 

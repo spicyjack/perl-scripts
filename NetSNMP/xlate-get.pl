@@ -14,8 +14,10 @@ use SNMP::Translate;
 
 # create an SNMP session
 my ($snmp_session, $session_error) = Net::SNMP->session(
--hostname   => shift || q(nob),
--community  => shift || q(SkinnyRO),
+#-hostname   => shift || q(nob),
+#-community  => shift || q(SkinnyRO),
+-hostname   => shift || q(localhost),
+-community  => shift || q(devilduck),
 #-hostname   => shift || q(manzana),
 #-community  => shift || q(ManzanaRO),
     -port       => shift || q(161),
