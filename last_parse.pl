@@ -1,5 +1,8 @@
 #!/usr/bin/perl
 
+# $Id$
+# $Author$
+
 =pod
 
 =head1 NAME
@@ -28,6 +31,7 @@ my $parser = Parse::RecDescent->new(<<'EOG'
         | logged_in(s) { $return = \$returned_text }
         | reboot(s) { $return = \$returned_text } 
         | down(s) { $return = \$returned_text }
+        | begins { $return = \$returned_text }
 
     session : login_name pseudoterm day_of_week month date 
         login_time dash logout_time session_total login_host
@@ -36,10 +40,12 @@ my $parser = Parse::RecDescent->new(<<'EOG'
         login_time still_logged_in_text login_host
 
     reboot : reboot_text system_boot_text day_of_week month date 
-        login_time dash down_text session_total login_host
+        login_time session_total login_host
 
     down : login_name pseudoterm day_of_week month date 
         login_time dash down_text session_total login_host
+
+    begins : wtmp_begins_text day_of_week month date wtmp_time year
 
     # simple rules that don't need any regexes
     dash : /-/
@@ -47,53 +53,45 @@ my $parser = Parse::RecDescent->new(<<'EOG'
     down_text : /down/
     reboot_text : /reboot/
     system_boot_text : /system boot/
+    wtmp_begins_text: /wtmp begins/
 
     # more complext rules that need regexes
     login_name : /^\w+/
-        { $returned_text = $item[1];
-          print $item[0] . q( -> ) . $item[1] . "\n"}
-#        { push(@returned_text, $item[1]); }
+#        { $returned_text = $item[1];
+#          print $item[0] . q( -> ) . $item[1] . "\n"}
+        { $returned_text = $item[1]; }
 
-    #pseudoterm : /^\w+\/\d/ | /system boot/
-    pseudoterm : /^\w+\/\d/ 
-        { $returned_text .= '|' . $item[1];
-          print $item[0] . q( -> ) . $item[1] . "\n"}
-#        { push(@returned_text, $item[1]); }
+    pseudoterm : /^\w+\/\d/ | /tty\d+/
+#        { $returned_text .= '|' . $item[1];
+#          print $item[0] . q( -> ) . $item[1] . "\n"}
+        { $returned_text .= '|' . $item[1]; }
 
     day_of_week: /\w+/ 
-        { $returned_text .= '|' . $item[1]; 
-          print $item[0] . q( -> ) . $item[1] . "\n"}
-#        { push(@returned_text, $item[1]); }
+        { $returned_text .= '|' . $item[1]; }
 
     month: /\w+/
-        { $returned_text .= '|' . $item[1];
-          print $item[0] . q( -> ) . $item[1] . "\n"}
-#        { push(@returned_text, $item[1]); }
+        { $returned_text .= '|' . $item[1]; }
 
     date: /\d+/
-        { $returned_text .= '|' . $item[1];
-          print $item[0] . q( -> ) . $item[1] . "\n"}
-#        { push(@returned_text, $item[1]); }
+        { $returned_text .= '|' . $item[1]; }
+
+    year: /\d\d\d\d/
+        { $returned_text .= '|' . $item[1]; }
 
     login_time: /\d\d:\d\d/
-        { $returned_text .= '|' . $item[1];
-          print $item[0] . q( -> ) . $item[1] . "\n"}
-#        { push(@returned_text, $item[1]); }
+        { $returned_text .= '|' . $item[1]; }
 
     logout_time: /\d\d:\d\d/
-        { $returned_text .= '|' . $item[1];
-          print $item[0] . q( -> ) . $item[1] . "\n"}
-#        { push(@returned_text, $item[1]); }
+        { $returned_text .= '|' . $item[1]; }
+
+    wtmp_time: /\d\d:\d\d:\d\d/
+        { $returned_text .= '|' . $item[1]; }
 
     session_total: /\(\d+?\+?\d+:\d+\)/
-        { $returned_text .= '|' . $item[1];
-          print $item[0] . q( -> ) . $item[1] . "\n"}
-#        { push(@returned_text, $item[1]); }
+        { $returned_text .= '|' . $item[1]; }
 
     login_host: /\d+\.\d+\.\d+\.\d+/
-        { $returned_text .= '|' . $item[1];
-          print $item[0] . q( -> ) . $item[1] . "\n"}
-#        { push(@returned_text, $item[1]); }
+        { $returned_text .= '|' . $item[1]; }
 
 EOG
 ) or die q(ERROR: bad Parse::RecDescent grammar);
