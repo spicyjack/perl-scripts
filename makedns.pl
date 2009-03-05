@@ -92,6 +92,10 @@ my $date_serial = qx/$date_command | tr -d '\n'/;
                                                     primary => "lagrange"},
                 "blkmtnconsult.com"         => {    internal => "n",
                                                     primary => "lagrange"},
+                "srdrive4life.com"         => {    internal => "n",
+                                                    primary => "lagrange"},
+                "srdrive4life.org"         => {    internal => "n",
+                                                    primary => "lagrange"},
 			);
 
 %hosts = (	"localhost"	=> { 	ip => "127.0.0.1",
