@@ -855,5 +855,5 @@ Brian Manning E<lt>elspicyjack at gmail dot comE<gt>
 
 =cut
 
-# vi: set sw=4 ts=4 cin:
+# vi: set sw=4 ts=4:
 # end of line
