@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 # use the Exif module
 use Image::ExifTool 'ImageInfo';
 # if no filename is in @ARGS, exit
