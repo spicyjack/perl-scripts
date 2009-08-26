@@ -5,6 +5,8 @@
 # by Brian Manning (elspicyjack {at} gmail &sdot; com)
 
 # The original script most likely appears in the Perl Cookbook from O'Reilly.
+# Hacks for the module version were taken from:
+# http://www.perlmonks.org/?node_id=37237
 
 # if the script detects that it's running as under a CGI environment (the
 # REQUEST_METHOD environment variable is set), it will wrap the plaintext
@@ -62,7 +64,9 @@ foreach $start ( @INC ) { find(\&modules, $start); }
 # reset counter
 my $i=1;
 foreach $module ( sort(@found_modules) ) {
-    printf qq(%4d %s\n), $i++, $module;
+    #eval "require $module";
+    #printf (qq(%4d %-50s: %s\n), $i++, $module, $module->VERSION) unless ($@);
+    printf (qq(%4d %-50s\n), $i++, $module);
 } # foreach $module ( sort(@found_modules) )
 
 # print the butt-end of the HTML if this is CGI
