@@ -1,0 +1,19 @@
+#!/usr/bin/perl -l
+
+use strict;
+use warnings;
+
+use Acme::Scurvy::Whoreson::BilgeRat;
+
+# This is a simple command line based translater.
+#
+# Have lolcli in your path, and feed it some text:
+#
+# $ lolcli this is some test text, isn't it neat?
+#
+# Output:
+#
+# THIZ AR TEH SUM TEST TET, ISNT IT NEAT?
+#print translate( join ' ', @ARGV );
+my $insultgen = Acme::Scurvy::Whoreson::BilgeRat->new(language => q(pirate));
+print $insultgen;
