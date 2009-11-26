@@ -1,4 +1,4 @@
-package ISE::CiscoParse::Parser;
+package CiscoParse::Parser;
 
 use warnings;
 use strict;
@@ -6,7 +6,7 @@ use Parse::RecDescent;
 
 =head1 NAME
 
-ISE::CiscoParse::Parser - A L<Parse::RecDescent> parser for Cisco
+CiscoParse::Parser - A L<Parse::RecDescent> parser for Cisco
 configuration files
 
 =head1 VERSION
@@ -20,8 +20,8 @@ our $VERSION = '0.01';
 
 =head1 SYNOPSIS
 
-    use ISE::CiscoParse::Parser;
-    my $parser = ISE::CiscoParse::Parser->new();
+    use CiscoParse::Parser;
+    my $parser = CiscoParse::Parser->new();
     ...
 
 =head1 OBJECT METHODS
@@ -339,31 +339,30 @@ sub parse {
 
 =head1 AUTHOR
 
-Brian Manning, C<< <bmanning at qualcomm.com> >>
+Brian Manning, C<< <elspicyjack at gmail dot com> >>
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<mflohelp at qualcomm.com>.  I
-will be notified, and then you'll automatically be notified of progress on
+Please report any bugs or feature requests to C<elspicyjack at gmail dot com>.
+I will be notified, and then you'll automatically be notified of progress on
 your bug as I make changes.
 
 =head1 SUPPORT
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc ISE::CiscoParse::Parser
+    perldoc CiscoParse::Parser
 
 You can also contact the ISE team at:
 
-    L<mediaflo.ise@qualcomm.com>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2009 Qualcomm Inc., all rights reserved.
+Copyright (c) 2009 Brian Manning
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
 
 =cut
 
-1; # End of ISE::CiscoParse::Parser
+1; # End of CiscoParse::Parser
