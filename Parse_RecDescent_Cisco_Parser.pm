@@ -57,14 +57,14 @@ sub new {
 #        sp_mode_trunk
 #        { chomp(%item); $return = \%item }
 
-        uplink_interface : # 3560-af155-c21b GigabitEthernet0/1
+        uplink_interface : # XXXX-XXXXX-c21b GigabitEthernet0/1
             l_interface interface_name
             l_description description
             l_sp_access_vlan sp_access_vlan
             sp_mode_access
             span_tree_pf
             { chomp(%item); $return = \%item }
-        | # 6509-af155-d5a GigabitEthernet5/1
+        | # XXXX-XXXXX-d5a GigabitEthernet5/1
             l_interface interface_name
             l_description description
             "switchport"
@@ -81,7 +81,7 @@ sub new {
             { chomp(%item); $return = \%item }
 
         trunk_interface :
-            # 3560-af155-c21a GigabitEthernet0/4 & GigabitEthernet0/5
+            # XXXX-XXXXX-c21a GigabitEthernet0/4 & GigabitEthernet0/5
             l_interface interface_name
             l_description description
             l_sp_access_vlan(?) sp_access_vlan(?)
@@ -91,7 +91,7 @@ sub new {
             sp_mode_trunk
             span_tree_pf
             { chomp(%item); $return = \%item }
-        | # 6509-af155-d5a GigabitEthernet1/10
+        | # XXXX-XXXXX-d5a GigabitEthernet1/10
             l_interface interface_name
             l_description description
             switchport
@@ -103,7 +103,7 @@ sub new {
             no_ip_address
             span_tree_pf
             { chomp(%item); $return = \%item }
-        | # 6509-af155-d5a GigabitEthernet4/5
+        | # XXXX-XXXXX-d5a GigabitEthernet4/5
             l_interface interface_name
             l_description description
             switchport
@@ -116,7 +116,7 @@ sub new {
             span_tree_pf
             "spanning-tree guard root"
             { chomp(%item); $return = \%item }
-        | # 6509-af155-d5a GigabitEthernet4/16
+        | # XXXX-XXXXX-d5a GigabitEthernet4/16
             l_interface interface_name
             l_description description
             switchport
@@ -127,7 +127,7 @@ sub new {
             { chomp(%item); $return = \%item }
 
         port_channel_interface :
-            # from 3560-af155-c21a GigabitEthernet0/17
+            # from XXXX-XXXXX-c21a GigabitEthernet0/17
             l_interface interface_name
             l_description description
             l_sp_access_vlan sp_access_vlan
@@ -138,7 +138,7 @@ sub new {
             l_ch_grp ch_grp l_ch_grp_mode ch_grp_mode
             span_tree_pf_disable
             { chomp(%item); $return = \%item }
-        | # from 6509-af155-d5a Port-channel2
+        | # from XXXX-XXXXX-d5a Port-channel2
             l_interface pc_interface_name
             l_description description
             "switchport"
@@ -148,7 +148,7 @@ sub new {
             "no ip address"
             span_tree_pf_disable
             { chomp(%item); $return = \%item }
-        | # from 6509-af155-d5a GigabitEthernet3/1
+        | # from XXXX-XXXXX-d5a GigabitEthernet3/1
             l_interface interface_name
             l_description description
             "switchport"
@@ -160,7 +160,7 @@ sub new {
             l_ch_grp ch_grp l_ch_grp_mode ch_grp_mode
             { chomp(%item); $return = \%item }
 
-        vlan_interface : # 3560-af155-c21a Vlan93
+        vlan_interface : # XXXX-XXXXX-c21a Vlan93
             l_interface vlan_interface_name
             l_description description
             l_ip_address ip_address
@@ -171,7 +171,7 @@ sub new {
             standby_preempt
             l_standby_track standby_track
             { chomp(%item); $return = \%item }
-        | # 6509-af155-d5a Vlan102
+        | # XXXX-XXXXX-d5a Vlan102
             l_interface vlan_interface_name
             ### HAAACCKK!!!
             l_description /\*\*\* [a-zA-Z0-9\-_\/ ]+ \*\*\*/
@@ -187,7 +187,7 @@ sub new {
             standby_ip
             standby_preempt
             { chomp(%item); $return = \%item }
-        | # 6509-af155-d5a Vlan105 and others
+        | # XXXX-XXXXX-d5a Vlan105 and others
             l_interface vlan_interface_name
             l_description description
             l_ip_address ip_address
