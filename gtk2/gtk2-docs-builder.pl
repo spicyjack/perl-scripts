@@ -8,5 +8,5 @@
 #  awk '{ print $2}' | uniq
 
 # get a list of currently installed Gtk2-Perl packages on a Debian machine
-# dpkg -l | egrep "gtk2|glib|pango|cairo|gnome2" | grep perl | awk '{print $3,
-# $2}'
+#  dpkg -l | egrep "gtk2|glib|cairo|pango|gnome2|extutils" | grep perl | sort
+#  | awk '{ printf "%10s %s\n", $3, $2}'
