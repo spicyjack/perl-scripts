@@ -10,3 +10,10 @@
 # get a list of currently installed Gtk2-Perl packages on a Debian machine
 #  dpkg -l | egrep "gtk2|glib|cairo|pango|gnome2|extutils" | grep perl | sort
 #  | awk '{ printf "%10s %s\n", $3, $2}'
+
+# once the packages are built, generate the docs
+# get a list of pod files to copy
+# for PKG in $(dpkg -l \
+# | egrep "gtk2|glib|cairo|pango|gnome2|extutils|gstreamer" \
+# | grep perl | awk '{print $2}'); do dpkg -L $PKG | grep "pod$"; done >
+# gtk2-perl.podfiles.txt
