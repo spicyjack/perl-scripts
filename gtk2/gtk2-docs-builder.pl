@@ -17,3 +17,7 @@
 # | egrep "gtk2|glib|cairo|pango|gnome2|extutils|gstreamer" \
 # | grep perl | awk '{print $2}'); do dpkg -L $PKG | grep "pod$"; done >
 # gtk2-perl.podfiles.txt
+
+# generating pod docs:
+# mpod2html -dir pod2html-out/ pods/
+# pod2projdocs -out podprojectdocs/ -l pods/
