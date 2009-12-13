@@ -3,6 +3,15 @@
 # script to automatically build the Gtk2-Perl modules, so that the
 # documentation can be extracted from them and then distributed
 
+# Missing:
+# Gtk2::SourceView
+# Gnome2::Wnck
+# Gnome2::Vte
+# Gnome2::Print
+# Gnome2::Rsvg
+# Gnome2::PanelApplet
+# Gnome2::GConf
+
 # grab the list of git repos to sync with
 #  lynx -dump http://git.gnome.org/cgit/ | grep "\/perl-" | grep  "\. http" |
 #  awk '{ print $2}' | uniq
