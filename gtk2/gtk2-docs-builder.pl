@@ -4,28 +4,41 @@
 # documentation can be extracted from them and then distributed
 
 # Missing:
-# Gtk2::SourceView
-# Gnome2::Wnck
-# Gnome2::Vte
-# Gnome2::Print
-# Gnome2::Rsvg
-# Gnome2::PanelApplet
-# Gnome2::GConf
+# Gtk2::SourceView (built using dh-make-perl)
+# Gnome2::Wnck (installed from package)
+# Gnome2::Vte (built using dh-make-perl)
+# Gnome2::Print (installed from package)
+# Gnome2::Rsvg (built using dh-make-perl)
+# Gnome2::PanelApplet (built using dh-make-perl)
+# Gnome2::GConf (installed from package)
+
+# Pod::ProjectDocs Needs Syntax::Highlighting::Universal, which needs Colorer
+# * http://search.cpan.org/perldoc?Pod::ProjectDocs
+# * http://colorer.sourceforge.net/
+# * http://search.cpan.org/perldoc?Syntax::Highlight::Universal
+
+# create the Gtk2/Glib .deb using:
+# time dh-make-perl --build --version 1:1.221-0
+# not using this version string will cause the default version of libglib-perl
+# to be installed, as Debian's package tools don't understand Perl version
+# strings
 
 # grab the list of git repos to sync with
 #  lynx -dump http://git.gnome.org/cgit/ | grep "\/perl-" | grep  "\. http" |
 #  awk '{ print $2}' | uniq
 
-# get a list of currently installed Gtk2-Perl packages on a Debian machine
-#  dpkg -l | egrep "gtk2|glib|cairo|pango|gnome2|extutils" | grep perl | sort
-#  | awk '{ printf "%10s %s\n", $3, $2}'
+# get a list of currently installed Gtk2-Perl packages on a Debian
+# machine; don't include package from the Gtk2::Ex package space
+# dpkg -l | egrep "gtk2|glib|cairo|pango|gnome2|extutils" | grep perl
+# | grep -v "-ex-" | sort | awk '{ printf "%12s %s\n", $3, $2}'
 
-# once the packages are built, generate the docs
+# once the packages are built, generate the docs;
 # get a list of pod files to copy
 # for PKG in $(dpkg -l \
 # | egrep "gtk2|glib|cairo|pango|gnome2|extutils|gstreamer" \
-# | grep perl | awk '{print $2}'); do dpkg -L $PKG | grep "pod$"; done >
-# gtk2-perl.podfiles.txt
+# | grep perl | grep -v "-ex-" | awk '{print $2}'); 
+# do dpkg -L $PKG | egrep "pm$|pod$"; 
+# done > usrlibperl.txt
 
 # cut out the full paths in the filelists so that you can cd to the
 # directories with the docs in them and make tarballs with relative files
@@ -33,9 +46,17 @@
 # package into a tarball so you can move them around/combine them into one
 # directory
 # cd /usr/lib/perl5
-# tar -cvT /usr/local/src/gtk2-perl/gtk2-perl.podfiles.txt > /usr/local/src
-# /gtk2-perl/gtk2-perl.pods.tar
+# tar -cvT /usr/local/src/gtk2-perl/usrlibperl.txt \
+# > /usr/local/src/gtk2-perl/gtk2-perl.pods.tar
+
+# do any locally installed files
+# cd /usr/local/lib/perl/5.10.0/GStreamer
+# find . | egrep "pm$|pod$" > usrlocallibperl.txt
+# find GStreamer | egrep "pm$|pod$" \
+# > /usr/local/src/gtk2-perl/usrlocallibperl.txt
+# tar -rvT /usr/local/src/gtk2-perl/usrlocallibperl.txt \
+# -f /usr/local/src/gtk2-perl/gtk2-perl.pods.tar
 
 # generating pod docs:
-# mpod2html -dir mpod2html-out/ pods/
-# pod2projdocs -out podprojectdocs/ -l pods/
+# mpod2html -dir pod-mpod2html/ pods/
+# pod2projdocs -out pod-pod2projectdocs/ -l pods/
