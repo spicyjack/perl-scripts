@@ -58,8 +58,10 @@
 # -f /usr/local/src/gtk2-perl/gtk2-perl.pods.tar
 
 # generating pod docs:
-# mpod2html -dir pod-mpod2html/ pods/
-# time mpod2html -dir pod-mpod2html/ -tocname index \
-# -toctitle "Gtk2-Perl - Table of Contents" -idxtitle "Gtk2-Perl - Index" pods
-# pod2projdocs -out pod-pod2projectdocs/ -l pods/ -title "Gtk2-Perl" -desc "A
-# set of Perl bindings for Gtk+ 2.0 and various related libraries"
+# time mpod2html -dir Gtk2-Perl-MarekPodHTML/ -tocname index 
+# -idxname "idx" -stylesheet "/doc/style.css" \
+# -toctitle "Gtk2-Perl - Table of Contents" \
+# -idxtitle "Gtk2-Perl - Index" -nowarnings -noverbose pods
+# time pod2projdocs -out Gtk2-Perl-PodProjDocs/ -lib pods/ -title "Gtk2-Perl" \
+# -desc "A set of Perl bindings for Gtk+ 2.0 and various related libraries" \
+# -except "Install/Files\.pm"
