@@ -63,7 +63,12 @@ foreach $start ( @INC ) { find(\&modules, $start); }
 
 use ExtUtils::MakeMaker;
 # reset counter
-$i=1;
+my $i=1;
+#foreach $module ( sort(@found_modules) ) {
+#    eval "require $module";
+#    printf (qq(%4d %-50s: %s\n), $i++, $module, $module->VERSION) unless ($@);
+    #$printf (qq(%4d %-50s\n), $i++, $module);
+#$i=1;
 foreach $module ( sort { $a->[0] cmp $b->[0] } @found_modules ) {
     printf (qq(%4d %-50s: %s\n), 
         $i++, $module->[0], MM->parse_version($module->[1]));
