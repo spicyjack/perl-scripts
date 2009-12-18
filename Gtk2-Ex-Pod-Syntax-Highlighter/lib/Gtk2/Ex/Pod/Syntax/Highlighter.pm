@@ -3,9 +3,13 @@ package Gtk2::Ex::Pod::Syntax::Highlighter;
 use warnings;
 use strict;
 
-use Marek::Pod::HTML;
+use Marek::Pod::HTML qw(pod2html);
 use Text::VimColor;
+require Exporter;
+#use vars qw(@ISA @EXPORT @EXPORT_OK);
+use vars qw(@ISA @EXPORT_OK);
 @ISA = qw(Marek::Pod::HTML);
+@EXPORT_OK = qw(&pod2html);
 
 =head1 NAME
 
@@ -57,26 +61,31 @@ sub verbatim {
         $self->{_current}->push_content(HTML::Element->new('p'), "\n");
     } elsif(!$self->{_begin}) {
         # a regular paragraph
-        my $pre;
+        my $div;
         my $content = $self->{_current}->content();
-        # reuse last <pre> if immediate predecessor
+        # reuse last <div> if immediate divdecessor
         if(defined $content && ref($content) && @$content &&
-         ref($content->[-2]) && $content->[-2]->tag() eq 'pre') {
-          $pre = $content->[-2];
+         ref($content->[-2]) && $content->[-2]->tag() eq 'div') {
+          $div = $content->[-2];
         } else {
-          $pre = HTML::Element->new('pre', CLASS => 'POD_VERBATIM');
-          $self->{_current}->push_content($pre,"\n");
+          $div = HTML::Element->new('div', CLASS => 'POD_VERBATIM');
+          $self->{_current}->push_content($div,"\n");
         }
-        $pre->push_content("\n");
+        $div->push_content("\n");
 
         if($self->{_current_head1_title} eq 'NAME' && !$self->description()) {
             # save the description for further use in TOC
-        my $str = $paragraph;
-        $str =~ s/^[\n\s]+//;
+            my $str = $paragraph;
+            $str =~ s/^[\n\s]+//;
             $self->description($str) if($str);
         } # if($self->{_current_head1_title} eq 'NAME' && !$self->description())
         # this is special in perl.pod
-        foreach(split(/\n/,$paragraph)) {
+        my $syntax = Text::VimColor->new(
+            string => \$paragraph,
+            filetype => q(perl),
+        );
+        #foreach(split(/\n/,$paragraph)) {
+        foreach( split(/\n/, $syntax->html()) ) {
             # TODO expand tabs correctly?
             if(s/^(\s+)([\w:]+)(\t+)//) {
                 # this is for perl.pod - an implied list
@@ -90,9 +99,9 @@ sub verbatim {
                     $link->push_content($page);
                     $page = $link;
                 }
-                $pre->push_content($indent,$page,$postdent,$_,"\n");
+                $div->push_content($indent,$page,$postdent,$_,"\n");
             } else {
-                $pre->push_content($_,"\n");
+                $div->push_content($_,"\n");
             } # if(s/^(\s+)([\w:]+)(\t+)//)
         } # foreach(split(/\n/,$paragraph))
     } elsif($self->{_begin} eq 'html') {

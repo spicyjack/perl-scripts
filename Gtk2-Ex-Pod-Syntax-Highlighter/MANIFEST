@@ -2,6 +2,7 @@ Changes
 MANIFEST
 Makefile.PL
 README
+bin/synpod2html
 lib/Gtk2/Ex/Pod/Syntax/Highlighter.pm
 t/00-load.t
 t/pod-coverage.t
