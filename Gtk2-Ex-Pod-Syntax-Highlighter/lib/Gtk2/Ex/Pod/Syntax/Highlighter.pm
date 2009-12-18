@@ -84,7 +84,7 @@ sub verbatim {
             string => \$paragraph,
             filetype => q(perl),
         );
-        #foreach(split(/\n/,$paragraph)) {
+        #foreach(split(/\n/,$paragraph)) {}
         foreach( split(/\n/, $syntax->html()) ) {
             # TODO expand tabs correctly?
             if(s/^(\s+)([\w:]+)(\t+)//) {
@@ -108,8 +108,26 @@ sub verbatim {
         # a "verbatim" =begin html paragraph
         $self->{_raw_html} .= $paragraph;
     } # unless(length($paragraph))
+} # sub verbatim
 
-}
+sub _write_html {
+    my ($obj, $file, $handle,$verbose) = @_;
+    warn "Writing HTML $file\n" if($verbose);
+    # pass an empty scalar to as_HTML to make it not encode HTML entities
+    # see HTML::Element->as_HTML() method for more info
+    my $html = $obj->as_HTML(q(&)) . "\n";
+    unless($handle) {
+        unless(open(OUT, ">$file")) {
+            warn "Error: Cannot write: $!\n";
+            return 0;
+        } # unless(open(OUT, ">$file"))
+        print OUT $html;
+        close(OUT);
+    } else {
+        print $handle $html;
+    } # unless($handle)
+    1;
+} # sub _write_html
 
 =head1 AUTHOR
 
