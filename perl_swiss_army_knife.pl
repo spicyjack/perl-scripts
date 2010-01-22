@@ -6,7 +6,7 @@
 
 # The original script most likely appears in the Perl Cookbook from O'Reilly.
 # Hacks for the module version were taken from:
-# http://www.perlmonks.org/?node_id=37237
+# perl module version - http://www.perlmonks.org/?node_id=37237
 
 # if the script detects that it's running as under a CGI environment (the
 # REQUEST_METHOD environment variable is set), it will wrap the plaintext
@@ -15,6 +15,9 @@
 
 use strict;
 use warnings;
+use ExtUtils::MakeMaker;
+use File::Find;
+use Scalar::Util qw(tainted);
 
 my @found_modules; # a list of modules that were found in @INC paths
 my $i=1;	# a counter
@@ -61,10 +64,20 @@ print "##################################################################\n";
 #   2. Skip files with a suffix other than .pm
 #   3. Format the filename so that it looks more like a module
 #   4. Print it
-use File::Find;
-foreach $start ( @INC ) { find(\&modules, $start); }
 
-use ExtUtils::MakeMaker;
+# go through each directory in the @INC list
+foreach my $this_dir ( @INC ) { 
+    # untaint the directory
+    #print qq(tainted: $this_dir\n);
+    $this_dir =~ /([a-zA-Z0-9\/\._-]+)/;
+    if ( tainted($1) ) {
+        die qq(ERROR: this_dir still tainted: $1);
+    } # if ( tainted($1) )
+    if ( -d $1 ) { 
+        find(\&modules, $1); 
+    } # if ( -d $1 )
+} # foreach my $this_dir ( @INC )
+
 # reset counter
 $i=1;
 #foreach $module ( sort(@found_modules) ) {
@@ -72,8 +85,8 @@ $i=1;
 #    printf (qq(%4d %-50s: %s\n), $i++, $module, $module->VERSION) unless ($@);
     #$printf (qq(%4d %-50s\n), $i++, $module);
 #$i=1;
-foreach $module ( sort { $a->[0] cmp $b->[0] } @found_modules ) {
-    printf (qq(%4d %-50s: %s\n), 
+foreach my $module ( sort { $a->[0] cmp $b->[0] } @found_modules ) {
+    printf(qq(%4d %-50s: %s\n), 
         $i++, $module->[0], MM->parse_version($module->[1]));
 } # foreach $module ( sort(@found_modules) )
 
@@ -86,13 +99,15 @@ exit 0;
 
 ### modules ###
 sub modules {
-	if (-d && /^[a-z]/) { $File::Find::prune = 1; return; }
+    my $dir = $_;
+    #print qq(this inc dir is $dir\n);
+	if (-d $dir && $dir =~ /^[a-z]/) { $File::Find::prune = 1; return; }
 		return unless /\.pm$/;
-       	my $filename = "$File::Find::dir/$_";
-      	$filename =~ s!^$start/!!;
+       	my $filename = "$File::Find::dir/$dir";
+      	$filename =~ s!^$dir/!!;
        	$filename =~ s!\.pm$!!;
         $filename =~ s!/!::!g;
-        push(@found_modules, [ $filename, "$File::Find::dir/$_" ]);
+        push(@found_modules, [ $filename, "$File::Find::dir/$dir" ]);
 		$i++;
 } # sub modules
 
