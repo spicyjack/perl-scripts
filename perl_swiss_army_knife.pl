@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 # $Id$
 
 # A script to print out a bunch of info about the current Perl environment
@@ -12,6 +12,9 @@
 # REQUEST_METHOD environment variable is set), it will wrap the plaintext
 # output in the correct HTML tags so the browser will render it in the same
 # manner as if the script were running in a shell.
+
+use strict;
+use warnings;
 
 my @found_modules; # a list of modules that were found in @INC paths
 my $i=1;	# a counter
@@ -63,7 +66,7 @@ foreach $start ( @INC ) { find(\&modules, $start); }
 
 use ExtUtils::MakeMaker;
 # reset counter
-my $i=1;
+$i=1;
 #foreach $module ( sort(@found_modules) ) {
 #    eval "require $module";
 #    printf (qq(%4d %-50s: %s\n), $i++, $module, $module->VERSION) unless ($@);
