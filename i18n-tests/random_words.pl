@@ -13,7 +13,7 @@ use IO::File;
     my ($input_file, $num_of_words);
     my $parser = Getopt::Long::Parser->new();
     $parser->getoptions(
-        q(input|i=s) => \$input_file,
+        q(inputfile|filename|f=s) => \$input_file,
         q(number|n=i) => \$num_of_words,
     ); # $parser->getoptions
     
@@ -29,6 +29,8 @@ use IO::File;
     foreach my $line (@lines) {
         chomp($line);
         print $line . qq(\n);
+        my ( $word, $definition ) = split(q(,), $line);
         #print $line . q( ) . sprintf(q(%0x), $line) . qq(\n);
+        print qq($word : $definition\n);
     }
 
