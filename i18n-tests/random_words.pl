@@ -7,6 +7,7 @@
 
 use strict;
 use warnings;
+use utf8;
 use Getopt::Long;
 use IO::File;
 
@@ -28,7 +29,7 @@ use IO::File;
 
     foreach my $line (@lines) {
         chomp($line);
-        print $line . qq(\n);
+        #print $line . qq(\n);
         my ( $word, $definition ) = split(q(,), $line);
         #print $line . q( ) . sprintf(q(%0x), $line) . qq(\n);
         print qq($word : $definition\n);
