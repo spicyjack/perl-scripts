@@ -1,0 +1,35 @@
+# list of Russian adverbs
+# word, definition
+# fields are split by commas, any extra values in the array are concatenated
+# together after the 1st comma in each line
+здесь,here
+тоже,also (two different people, same thing)
+
+там,there
+только,only
+тут,here
+быстро,quickly
+всегда,always
+довольно,quite
+ещё,still
+иногда,sometimes
+медленно,slowly
+немного,a little
+немножко,a little, a tiny bit (colloquial)
+неплохо,pretty well
+нормально,in a normal way
+очень,very
+плохо,poorly
+свободно,fluently
+сейчас,now
+так,so
+хорошо,well
+# Урок 4
+обычно,usually
+отлично,perfectly
+приятно,pleasantly
+раньше,previously
+регулярно,regularly
+также,also (one person, two different things)
+теперь,now (as opposed to some other time)
+уже,already
