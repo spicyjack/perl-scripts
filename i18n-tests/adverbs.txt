@@ -2,9 +2,10 @@
 # word, definition
 # fields are split by commas, any extra values in the array are concatenated
 # together after the 1st comma in each line
+# Урок 2 
 здесь,here
 тоже,also (two different people, same thing)
-
+# Урок 3
 там,there
 только,only
 тут,here
