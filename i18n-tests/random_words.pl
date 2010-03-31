@@ -31,7 +31,14 @@ use IO::File;
         chomp($line);
         #print $line . qq(\n);
         my ( $word, $definition ) = split(q(,), $line);
-        #print $line . q( ) . sprintf(q(%0x), $line) . qq(\n);
-        print qq($word : $definition\n);
+        # split on the null string, aka split on characters
+        my @word = split(//, $word);
+        my $hexword = q();
+        foreach my $letter ( @word ) {
+            $hexword .= sprintf(q(%0x), ord($letter)) . q( );
+        } # foreach my $letter ( @word )
+        # trim any trailing spaces
+        $hexword =~ s/\s+$//;
+        print qq|$word : $definition ($hexword) \n|;
     }
 
