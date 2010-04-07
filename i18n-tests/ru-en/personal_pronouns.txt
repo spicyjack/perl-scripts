@@ -1,7 +1,11 @@
-я
-ты
-он
-она
-мы
-вы
-они
+#!/usr/bin/less
+# template: personal pronoun, definition
+# list of Russian personal pronouns
+# lines that start with the pound sign are comments
+я,I
+ты,you (informal)
+он,he
+она,she
+мы,we
+вы,you (formal), you plural
+они,they

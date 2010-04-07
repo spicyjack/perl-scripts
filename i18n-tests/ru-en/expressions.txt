@@ -1,0 +1,17 @@
+#!/usr/bin/less
+# template: expression, translation
+# list of Russian expressions
+# lines that start with the pound sign are comments
+# Урок 1
+познакомьтес,
+здравствуйте,
+очень приятно,
+доброе утро,
+как ты сказал?,
+очень приятно познакомиться,
+добрый день,
+простите,
+до свидания,
+добрый вечер,
+значит,
+давайте познакомимся,

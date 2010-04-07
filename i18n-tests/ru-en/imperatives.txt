@@ -1,0 +1,8 @@
+#!/usr/bin/less
+# template: singular imperative, plural imperative, definition
+# list of Russian imperative phrases
+# lines that start with the pound sign are comments
+положи,положите,put
+повесь,повесьте,hang
+поставь,поставьте,place, stand upright
+

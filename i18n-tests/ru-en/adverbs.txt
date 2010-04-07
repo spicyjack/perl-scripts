@@ -2,8 +2,7 @@
 # template: adverb, definition
 # list of Russian adverbs
 # word, definition
-# fields are split by commas, any extra values in the array are concatenated
-# together after the 1st comma in each line
+# lines that start with the pound sign are comments
 # Урок 2 
 здесь,here
 тоже,also (two different people, same thing)
