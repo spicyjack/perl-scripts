@@ -1,3 +1,5 @@
+#!/usr/bin/less
+# template: imperfective, perfective, definition
 # list of Russian verbs
 # imperfective, perfective, definition
 # fields are split by commas, any extra values in the array are concatenated

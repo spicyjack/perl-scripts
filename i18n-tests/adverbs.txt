@@ -1,3 +1,5 @@
+#!/usr/bin/less
+# template: adverb, definition
 # list of Russian adverbs
 # word, definition
 # fields are split by commas, any extra values in the array are concatenated
