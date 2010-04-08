@@ -3,15 +3,16 @@
 # list of Russian expressions
 # lines that start with the pound sign are comments
 # Урок 1
-познакомьтес,
-здравствуйте,
-очень приятно,
-доброе утро,
-как ты сказал?,
-очень приятно познакомиться,
-добрый день,
-простите,
-до свидания,
-добрый вечер,
-значит,
-давайте познакомимся,
+познакомьтес,Let me introduce you! (literally: Get aquainted!)
+здравствуй(те),Hello!
+очень приятно,Pleased
+доброе утро,Good morning.
+как ты сказал(a)?,What did you say? (informal)
+как вы сказали?,What did you say? (formal)
+очень приятно познакомиться,Pleased to meet you.
+добрый день,Good afternoon.
+простите,Excuse me.
+до свидания,Good-bye.
+добрый вечер,Good evening.
+значит,So...
+давайте познакомимся,Let's get aquainted!
