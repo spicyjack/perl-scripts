@@ -23,7 +23,7 @@ our $VERSION = '0.01';
  -v|--verbose       Verbose script execution
  -h|--help          Shows this help text
  -c|--config        Configuration file to use for script options
- -g|--generate      Generate a sample .ini file to modify
+ -g|--generate      Generate a sample .ini config file to modify
 
  Example usage:
 
@@ -45,12 +45,12 @@ B<dnsgentool.pl> is a tool that creates zone files compatable with BIND 9
 servers, using a configuration file patterned after Windows-style C<.ini>
 files.
 
+=head1 OBJECTS
+
 Note that the objects described below are documented for informational
 purposes only, you don't need to instantiate them in order to use this script.
 
-=head1 OBJECTS
-
-=head2 DNЅGenTool::Config
+=head2 DNSGenTool::Config
 
 An object used for storing configuration data.
 
@@ -59,9 +59,9 @@ An object used for storing configuration data.
 =cut 
 
 ######################
-# DNЅGenTool::Config #
+# DNSGenTool::Config #
 ######################
-package DNЅGenTool::Config;
+package DNSGenTool::Config;
 use strict;
 use warnings;
 use Getopt::Long;
@@ -72,7 +72,7 @@ use POSIX qw(strftime);
 
 =item new( )
 
-Creates the L<DNЅGenTool::Config> object, and parses out options using
+Creates the L<DNSGenTool::Config> object, and parses out options using
 L<Getopt::Long>.
 
 =cut
@@ -102,9 +102,7 @@ sub new {
         q(verbose|v+),
         q(help|h),
         q(config|c=s),
-        # other options
-        q(password|a=s),
-        q(user|u=s),
+        q(generate|g),
     ); # $parser->getoptions
 
     # assign the args hash to this object so it can be reused later on
@@ -138,7 +136,7 @@ sub new {
     if ( $self->get(q(help)) ) { pod2usage(-exitstatus => 1); }
 
     # generate a config file and exit?
-    if ( defined $self->get(q(gen-config)) ) {
+    if ( defined $self->get(q(generate)) ) {
         # apply the default configuration options to the Config object
         $self->_apply_defaults();
         # now print out the sample config file
@@ -202,7 +200,7 @@ EOC
 
     # apply script defaults to whatver remaining key/value pairs don't have
     # anything set
-    $self->_apply_defaults();
+    #$self->_apply_defaults();
 
     # return this object to the caller
     return $self;
@@ -220,7 +218,7 @@ sub _apply_defaults {
 =item get($key)
 
 Returns the scalar value of the key passed in as C<key>, or C<undef> if the
-key does not exist in the L<DNЅGenTool::Config> object.
+key does not exist in the L<DNSGenTool::Config> object.
 
 =cut
 
@@ -236,9 +234,9 @@ sub get {
 
 =item set( key => $value )
 
-Sets in the L<DNЅGenTool::Config> object the key/value pair passed in as
+Sets in the L<DNSGenTool::Config> object the key/value pair passed in as
 arguments.  Returns the old value if the key already existed in the
-L<DNЅGenTool::Config> object, or C<undef> otherwise.
+L<DNSGenTool::Config> object, or C<undef> otherwise.
 
 =cut
 
@@ -275,7 +273,7 @@ sub get_args {
 
 =back
 
-=head2 DNЅGenTool::Logger
+=head2 DNSGenTool::Logger
 
 A simple logger module, for logging script output and errors.
 
@@ -284,9 +282,9 @@ A simple logger module, for logging script output and errors.
 =cut
 
 ######################
-# DNЅGenTool::Logger #
+# DNSGenTool::Logger #
 ######################
-package DNЅGenTool::Logger;
+package DNSGenTool::Logger;
 use strict;
 use warnings;
 use POSIX qw(strftime);
@@ -297,8 +295,8 @@ use IO::Handle;
 
 =item new($config)
 
-Creates the L<DNЅGenTool::Logger> object, and sets up various filehandles
-needed to log to files or C<STDOUT>.  Requires a L<DNЅGenTool::Config> object
+Creates the L<DNSGenTool::Logger> object, and sets up various filehandles
+needed to log to files or C<STDOUT>.  Requires a L<DNSGenTool::Config> object
 as the argument, so that options having to deal with logging can be
 parsed/acted upon.  Returns the logger object to the caller.
 
@@ -366,7 +364,7 @@ sub timelog {
 
 =back
 
-=head2 DNЅGenTool::File
+=head2 DNSGenTool::File
 
 An object that represents the file that is to be streamed to the
 Icecast/Shoutcast server.  This is a helper object for the file that helps out
@@ -378,9 +376,9 @@ C<undef> if the file doesn't exist on the filesystem or can't be read.
 =cut
 
 ####################
-# DNЅGenTool::File #
+# DNSGenTool::File #
 ####################
-package DNЅGenTool::File;
+package DNSGenTool::File;
 use strict;
 use warnings;
 
@@ -402,11 +400,11 @@ sub new {
         unless ( exists $args{filename} );
     $filename = $args{filename};
 
-    die qq( ERR: DNЅGenTool::Logger object required as 'logger =>')
+    die qq( ERR: DNSGenTool::Logger object required as 'logger =>')
         unless ( exists $args{logger} );
     $logger = $args{logger};
         
-    die qq( ERR: DNЅGenTool::Logger object required as 'logger =>')
+    die qq( ERR: DNSGenTool::Logger object required as 'logger =>')
         unless ( exists $args{config} );
     $config = $args{config};
 
@@ -455,10 +453,10 @@ use warnings;
 #use bytes; # I think this is used for the sysread call when reading MP3 files
 
     # create a logger object
-    my $config = DNЅGenTool::Config->new();
+    my $config = DNSGenTool::Config->new();
 
     # create a logger object, and prime the logfile for this session
-    my $logger = DNЅGenTool::Logger->new($config);
+    my $logger = DNSGenTool::Logger->new($config);
     $logger->timelog(qq(INFO: Starting dnsgentool.pl, version $VERSION));
     $logger->timelog(qq(INFO: my PID is $$));
 
