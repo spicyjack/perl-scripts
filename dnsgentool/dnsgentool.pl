@@ -79,10 +79,22 @@ L<Getopt::Long>.
 
 # a list of valid arguments to this script
 my @_valid_script_args = ( qw(verbose config) );
-); # my @_valid_script_args 
 
-# a list of arguments that won't cause the script to barf if Shout is not
-# installed
+# [dnsgentool] block
+my @_valid_global_cfg_args = ( 
+    qw(soa_serial_file soa_serial_file_autocreate)
+); # my %_valid_global_cfg_args
+
+# [zone_global] block
+my @_valid_zone_global_args = ( 
+    qw(soa_serial soa_refresh soa_retry soa_expire soa_ttl 
+        zone_ttl nameservers path)
+); # my %_valid_zone_global_args
+
+# any block that describes a specific zone
+my @_valid_zone_args = (
+    qw(include alias cname a aaaa);
+); # my %_valid_zone_args
 
 sub new {
     my $class = shift;
@@ -144,7 +156,7 @@ sub new {
         print qq(# any line that starts with '#' is a comment\n);
         print qq(# sample config generated on ) 
             . POSIX::strftime( q(%c), localtime() ) . qq(\n);
-        foreach my $arg ( @_valid_shout_args ) {
+        foreach my $arg ( @_valid_script_args ) {
             print $arg . q( = ) . $self->get($arg) . qq(\n);
         } # foreach my $arg ( @_valid_shout_args )
         # cheat a bit and add these last config settings
@@ -460,23 +472,6 @@ use warnings;
     $logger->timelog(qq(INFO: Starting dnsgentool.pl, version $VERSION));
     $logger->timelog(qq(INFO: my PID is $$));
 
-    # reroute some signals to our handlers
-    # exiting the script
-    $SIG{INT} = $SIG{TERM} = sub { 
-        my $signal = shift;
-        $logger->timelog(qq(CRIT: Received SIG$signal; exiting...));
-        # close the connection to the icecast server
-        $conn->close();
-    }; # $SIG{INT}
-
-    $SIG{HUP} = sub { 
-        $logger->timelog(qq(INFO: Received SIGHUP;));
-    }; # $SIG{HUP}
-
-    $SIG{USR1} = sub { 
-        $logger->timelog(qq(INFO: Received SIGUSR1;));
-    }; # $SIG{USR1}
-
 =head1 AUTHOR
 
 Brian Manning, C<< <elspicyjack at gmail dot com> >>
@@ -484,7 +479,7 @@ Brian Manning, C<< <elspicyjack at gmail dot com> >>
 =head1 BUGS
 
 Please report any bugs or feature requests to 
-C<< <streambake at googlegroups dot com> >>.
+C<< <elspicyjack at gmail dot com> >>.
 
 =head1 SUPPORT
 
@@ -494,7 +489,7 @@ You can find documentation for this script with the perldoc command.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright (c) 2008,2010 Brian Manning, all rights reserved.
+Copyright (c) 2010 Brian Manning, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
