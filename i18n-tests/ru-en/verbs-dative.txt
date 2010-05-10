@@ -5,33 +5,5 @@
 покупать,купить,to buy, to purchase
 писать,написать,to write (по-)
 читать,прочитать,to read (takes по-)
+дарить,подарить,to give (as a gift)
 
-учить,выучить,to study (requires direct object)
-изучать,изучить,to study (a subject, language; язык-)
-знать,,to know
-любить,,to like/love
-понимать,понять,to understand (takes по-/язык-)
-смотреть,посмотреть,to watch, look at
-слушать,послушать,to listen
-слышать,послышать,to hear
-
-
-делать,сделать,to do, make
-готовить,приготовить,to prepare, train, cook
-
-переводить,перевести,to lead across, convey, translate
-повторять,повторить,to repeat
-открывать,открыть,to open, discover
-закрывать,закрыть,to shut, close (be closed)
-опаздывать,опоздать,to be running late (опоздать - to already be late)
-принимать,приять,to take, accept, receive, admit
-убирать,убрать,to clean
-отдыхать,отдохнуть,to rest, vacation, relax
-ложиться,лечь,to lie down, go to bed
-вставать,встать,to get up, stand up
-одеваться,одеться,to get dressed
-завтракать,позавтракать,to breakfast, have breakfast
-обедать,пообедать,to lunch, have the midday meal
-ужинать,поужинать,to have supper
-ждать,,to wait
-приглашать,пригласить,to invite
