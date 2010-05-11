@@ -10,7 +10,7 @@
 смотреть,посмотреть,to watch, look at
 слушать,послушать,to listen
 слышать,послышать,to hear
-писать,написать,to write (по-)
+писать,написать,to write (takes по-)
 читать,прочитать,to read (takes по-)
 делать,сделать,to do, make
 готовить,приготовить,to prepare, train, cook
@@ -31,3 +31,11 @@
 ужинать,поужинать,to have supper
 ждать,,to wait
 приглашать,пригласить,to invite
+# from 03Мая, all can be used with dative case
+дарить,подарить,to give (as a gift)
+давать,дать,to give, to let
+звонить,позвонить,to telephone, to call up
+показылать,показать,to show, to demonstrate, to point
+советовать,посоветовать,to advise
+помогать,помочь,to help, to aid, to assist
+мочь,смочь,can, be able to, may
