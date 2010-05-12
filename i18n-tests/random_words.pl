@@ -8,6 +8,47 @@
 # notes:
 # http://ahinea.com/en/tech/perl-unicode-struggle.html
 
+package Random::Word;
+use strict;
+use warnings;
+use utf8;
+
+sub new {
+    my $class = shift;
+    my @words = @_;
+   
+    my $self;
+
+    if ( scalar(@words) == 2 ) {
+        # only two elements, assign it to word and definition
+        my ($word, $definition) = @words;
+        $self = bless({
+            _word => $words[0],
+            _definition => $words[1]
+        }); # $self = bless
+    } else {
+        $self = bless({
+            _imperfective => $words[0],
+            _word => $words[0],
+            _perfective => $words[1],
+            _definition =>  join(q(,), @words),
+        }); # $self = bless
+    } # if ( scalar(@words) == 2 )
+    return $self;
+} # sub new
+
+sub get_word {
+    my $self = shift;
+    return $self->{_word};
+} # sub get_word 
+
+sub get_definition {
+    my $self = shift;
+    return $self->{_definition};
+} # sub get_word 
+
+package main;
+
 use strict;
 use warnings;
 use utf8;
@@ -33,6 +74,8 @@ use IO::File;
     my @lines=<$INFD>;
     my $counter = 0;
 
+    # FIXME add something in here to pull out a random line
+    my @word_objs;
     foreach my $line (@lines) {
         # skip commented lines
         next if ( $line =~ /^#/ );
@@ -40,36 +83,20 @@ use IO::File;
         #print $line . qq(\n);
         my $decoded_line = decode_utf8($line);
         my @words = split(q(,), $decoded_line);
-        my ($imperfective, $perfective, $word, $definition);
-        if ( scalar(@words) == 2 ) {
-            # only two elements, assign it to word and definition
-            ($word, $definition) = @words;
-        } else {
-            # first element is the imperfective word
-            $imperfective = shift(@words);
-            # second element is the perfective word
-            $perfective = shift(@words);
-            # combine the rest of the word chunks back up
-            $definition = join(q(,), @words);
-        } # if ( scalar(@words) == 2 )
-        # run decode_utf8 on the word before we split it into characters
-        #my $new_word = decode_utf8($word);
-        # split on the null string, aka split on characters
-        #my @word = split(//, $new_word);
-        if ( defined $imperfective ) {
-            $word = $imperfective;
-        } # if ( defined $imperfective )
-        my @word = split(//, $word);
-        my $hexword = q();
-        foreach my $letter ( @word ) {
-            $hexword .= sprintf(q(0x%0x), ord($letter)) . q( );
-        } # foreach my $letter ( @word )
-        # trim any trailing spaces
-        $hexword =~ s/\s+$//;
-        if ( defined $perfective && length($perfective) > 0 ) {
-            print qq|$word, $perfective : $definition ($hexword) \n|;
-        } else {
-            print qq|$word : $definition ($hexword) \n|;
-        } # if ( defined $perfective )
-    }
+        push(@word_objs, Random::Word->new(@words));
+    } # foreach my $line (@lines)
+    # grab a random word object out of the word_objs array
+    my $random_word = $word_objs[int(rand(scalar(@word_objs)))];
+    print qq(Guess the word based on the definition.\n);
+    print $random_word->get_definition() . q(: );
+    my $answer = <ЅTDIN>;
+    chomp($answer);
+    if ( $answer eq $random_word->get_word() ) {
+        print qq(Correct! $answer = ) . $random_word->get_definition() 
+            . qq(\n);
+    } else {
+        print qq(Incorrect! ) . $random_word->get_word() . q( = ) 
+            . $random_word->get_definition() . qq(\n);
+    } # if ( $answer eq $word )
 
+# fin!
