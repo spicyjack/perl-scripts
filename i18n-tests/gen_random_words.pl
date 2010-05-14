@@ -56,7 +56,8 @@ use Encode;
 use Getopt::Long;
 use IO::File;
 
-    my ($input_file, $num_of_words);
+    my $input_file;
+    my $num_of_words = 1;
     my $parser = Getopt::Long::Parser->new();
     $parser->getoptions(
         q(inputfile|filename|f=s) => \$input_file,
@@ -74,7 +75,7 @@ use IO::File;
     my @lines=<$INFD>;
     my $counter = 0;
 
-    # FIXME add something in here to pull out a random line
+    # a list of word objects
     my @word_objs;
     foreach my $line (@lines) {
         # skip commented lines
@@ -85,18 +86,23 @@ use IO::File;
         my @words = split(q(,), $decoded_line);
         push(@word_objs, Random::Word->new(@words));
     } # foreach my $line (@lines)
-    # grab a random word object out of the word_objs array
-    my $random_word = $word_objs[int(rand(scalar(@word_objs)))];
-    print qq(Guess the word based on the definition.\n);
-    print $random_word->get_definition() . q(: );
-    my $answer = <ЅTDIN>;
-    chomp($answer);
-    if ( $answer eq $random_word->get_word() ) {
-        print qq(Correct! $answer = ) . $random_word->get_definition() 
-            . qq(\n);
-    } else {
-        print qq(Incorrect! ) . $random_word->get_word() . q( = ) 
-            . $random_word->get_definition() . qq(\n);
-    } # if ( $answer eq $word )
+
+    # loop as many times as was requested
+    for ( my $x = 1; $x == $num_of_words; $x++ ) {
+        # grab a random word object out of the word_objs array
+        my $random_word = $word_objs[int(rand(scalar(@word_objs)))];
+        print qq(Guess the word based on the definition....\n);
+        print $random_word->get_definition() . q(: );
+        # use the diamond operator to read in user input
+        my $answer = <>;
+        chomp($answer);
+        if ( $answer eq $random_word->get_word() ) {
+            print qq(Correct! $answer = ) . $random_word->get_definition() 
+                . qq(\n);
+        } else {
+            print qq(Incorrect! ) . $random_word->get_word() . q( = ) 
+                . $random_word->get_definition() . qq(\n);
+        } # if ( $answer eq $word )
+    } # for ( my $x = 1; $x == $num_of_words; $x++ )
 
 # fin!
