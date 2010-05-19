@@ -39,3 +39,5 @@
 советовать,посоветовать,to advise
 помогать,помочь,to help, to aid, to assist
 мочь,смочь,can, be able to, may
+брать,взять,to take (once/continously)
+заказывать,заказать,to order
