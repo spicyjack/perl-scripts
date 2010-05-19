@@ -31,13 +31,14 @@
 ужинать,поужинать,to have supper
 ждать,,to wait
 приглашать,пригласить,to invite
-# from 03Мая, all can be used with dative case
+# from 03Май, all can be used with dative case
 дарить,подарить,to give (as a gift)
 давать,дать,to give, to let
 звонить,позвонить,to telephone, to call up
-показылать,показать,to show, to demonstrate, to point
+показывать,показать,to show, to demonstrate, to point
 советовать,посоветовать,to advise
 помогать,помочь,to help, to aid, to assist
 мочь,смочь,can, be able to, may
 брать,взять,to take (once/continously)
 заказывать,заказать,to order
+говорить,сказать,to speak, talk
