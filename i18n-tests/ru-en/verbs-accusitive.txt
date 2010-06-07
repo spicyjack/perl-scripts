@@ -23,8 +23,10 @@
 одеваться,одеться
 ждать,,to wait
 приглашать,пригласить,to invite
-# from 03Мая, all can be used with dative case
+# from 03Май, all can be used with dative case
 дарить,подарить
 давать,дать
 брать,взять
 заказывать,заказать
+# from 24Май
+посылать,послать
