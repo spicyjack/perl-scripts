@@ -1,4 +1,4 @@
-#!/usr/bin/perl -T
+#!/usr/bin/perl
 # $Id$
 
 # A script to print out a bunch of info about the current Perl environment
