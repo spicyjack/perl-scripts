@@ -3,13 +3,14 @@
 # list of Russian adverbs
 # word, definition
 # lines that start with the pound sign are comments
-# Урок 2 
+# Урок 1 
 здесь,here
 тоже,also (two different people, same thing)
-# Урок 3
+# Урок 2
 там,there
 только,only
 тут,here
+# Урок 3
 быстро,quickly
 всегда,always
 довольно,quite
@@ -22,18 +23,52 @@
 нормально,in a normal way
 очень,very
 плохо,poorly
+раньше,previously
 свободно,fluently
 сейчас,now
 так,so
 хорошо,well
 # Урок 4
 обычно,usually
-отлично,perfectly
+отлично,perfectly,excellent
 приятно,pleasantly
-раньше,previously
 регулярно,regularly
 также,also (one person, two different things)
 теперь,now (as opposed to some other time)
 уже,already
 # Урок 5
 вечером,in the evening
+вместе,together
+всегда,always
+вчера,yesterday
+днём,in the afternoon
+завтра,tomorrow
+иногда,sometimes
+каждый день,every day
+наконец,finally
+никогда не,never
+ночью,at night
+поздно,late
+потом,later
+рано,early
+редко,rarely
+сегодня,today
+сначала,to begin with; at first
+утром,in the morning
+часто,frequently
+# Урок 6
+далеко,far
+дальше,farther, next
+недалеко,near, not far
+рядом,alongside
+тогда,in that case
+следа,on the left
+справа,on the right
+# Урок 7
+ладно,okay
+мало,(too) few; not much; little
+много,many; much; a great deal
+наверное,probably
+несколько,a few; some; several
+совсем не,not at all...
+точно,precisely
