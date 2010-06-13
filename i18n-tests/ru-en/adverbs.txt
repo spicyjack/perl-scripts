@@ -72,3 +72,14 @@
 несколько,a few; some; several
 совсем не,not at all...
 точно,precisely
+# Урок 8
+весде,everywhere
+давно,for a long time
+даже,even
+дёшево,inexpensive(ly)
+дорого,expensive(ly)
+недавно,recently
+практически,practically
+скоро,soon
+совсем,completely
+туда,there (answers куда)
