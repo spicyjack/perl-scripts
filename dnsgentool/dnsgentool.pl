@@ -86,15 +86,25 @@ my @_valid_global_cfg_args = (
 ); # my %_valid_global_cfg_args
 
 # [zone_global] block
-my @_valid_zone_global_args = ( 
-    qw(soa_serial soa_refresh soa_retry soa_expire soa_ttl 
-        zone_ttl nameservers path)
-); # my %_valid_zone_global_args
+my @_valid_zone_global_args = qw(
+    soa_serial 
+    soa_refresh 
+    soa_retry 
+    soa_expire 
+    soa_ttl 
+    zone_ttl 
+    nameservers 
+    path
+); # # [zone_global] block
 
 # any block that describes a specific zone
-my @_valid_zone_args = (
-    qw(include alias cname a aaaa);
-); # my %_valid_zone_args
+my @_valid_zone_args = qw(
+    include 
+    alias 
+    cname 
+    a 
+    aaaa
+); # my @_valid_zone_args
 
 sub new {
     my $class = shift;
