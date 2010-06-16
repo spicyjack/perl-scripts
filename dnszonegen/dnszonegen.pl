@@ -24,6 +24,7 @@ our $VERSION = '0.01';
  -h|--help          Shows this help text
  -c|--config        Configuration file to use for script options
  -g|--generate      Generate a sample .ini config file to modify
+ --continue         Continue parsing files even if an error is encountered
 
  Example usage:
 
@@ -50,7 +51,7 @@ files.
 Note that the objects described below are documented for informational
 purposes only, you don't need to instantiate them in order to use this script.
 
-=head2 DNSGenTool::Config
+=head2 DNSZoneGen::Config
 
 An object used for storing configuration data.
 
@@ -59,9 +60,9 @@ An object used for storing configuration data.
 =cut 
 
 ######################
-# DNSGenTool::Config #
+# DNSZoneGen::Config #
 ######################
-package DNSGenTool::Config;
+package DNSZoneGen::Config;
 use strict;
 use warnings;
 use Getopt::Long;
@@ -72,43 +73,15 @@ use POSIX qw(strftime);
 
 =item new( )
 
-Creates the L<DNSGenTool::Config> object, and parses out options using
+Creates the L<DNSZoneGen::Config> object, and parses out options using
 L<Getopt::Long>.
 
 =cut
 
-# a list of valid arguments to this script
 my @_valid_script_args = ( qw(verbose config) );
-
-# [dnsgentool] block
-my @_valid_dnszonegen_args = ( 
-    qw(soa_serial_file soa_serial_file_autocreate)
-); # my %_valid_global_cfg_args
-
-# [zone_global] block
-my @_valid_zone_global_args = qw(
-    soa_serial 
-    soa_refresh 
-    soa_retry 
-    soa_expire 
-    soa_ttl 
-    zone_ttl 
-    nameservers 
-    path
-); # # [zone_global] block
-
-# any block that describes a specific zone
-my @_valid_zone_args = qw(
-    include 
-    alias 
-    cname 
-    a 
-    aaaa
-); # my @_valid_zone_args
 
 sub new {
     my $class = shift;
-
     my $self = bless ({}, $class);
 
     # script arguments 
@@ -124,7 +97,11 @@ sub new {
         q(verbose|v+),
         q(help|h),
         q(config|c=s),
+        q(continue),
         q(generate|g),
+        # FIXME make this work
+        # run the testing harness scripts by do'ing or require'ing them
+        # q(test|t),
     ); # $parser->getoptions
 
     # assign the args hash to this object so it can be reused later on
@@ -143,61 +120,17 @@ sub new {
     } # if ( defined $self->get(q(generate)) )
 
     # read a config file if that's specified
-    if ( defined $self->get(q(config)) && -r $self->get(q(config)) ) {
-        open( CFG, q(<) . $self->get(q(config)) );
-        my @config_lines = <CFG>;
-        my $config_errors = 0;
-        my $current_section = q();
-        foreach my $line ( @config_lines ) {
-            chomp $line;
-            warn qq(VERB: parsing line '$line'\n) 
-                if ( defined $self->get(q(verbose)));
-            next if ( $line =~ /^#/ || $line =~ /^;/ );
-            # check 
-            if ( $line =~ /^\[[[:alnum:]]\._+\]/ ) {
-                warn qq(VERB: current section is now $line) 
-                    if ( defined $self->get(q(verbose)));
-                # FIXME do something here; maybe a new zone object?
-                # parse the next line                        
-                next;
-            } # if ( $line =~ /[a-zA-Z0-9\.]/ )
-            my ($key, $value) = split(/\s*=\s*/, $line);
-            warn qq(VERB: key/value for line is '$key'/'$value'\n) 
-                if ( defined $self->get(q(verbose)));
-            if ( grep(/$key/, @_valid_script_args) > 0 ) {
-                $self->set($key => $value);
-            } else {
-                warn qq(WARN: unknown config line found in )
-                    . $self->get(q(config)) . qq(\n);
-                warn qq(WARN: unknown config line key/value: $key/$value\n);
-                $config_errors++;
-            } # if ( grep($key, @_valid_shout_args) > 0 )
-        } # foreach my $line ( @config_lines )
-        if ( defined $self->get(q(check-config)) ) {
-            warn qq|Found $config_errors total config error(s)\n|;
-            warn qq(Exiting script...\n);
-            exit 0;
-        } # if ( defined $self->get(q(check-config)) )
-    } # if ( exists $args{config} && -r $args{config} )
-
-=begin comment
-
-    # some checks to make sure we have needed arguments
-    die qq( ERR: script called without --config or --filelist arguments;\n)
-        . qq( ERR: run script with --help switch for usage examples\n)
-        unless ( defined $self->get(q(filelist)) );
-
-=end comment
-
-=cut
-
-    # apply script defaults to whatver remaining key/value pairs don't have
-    # anything set
-    #$self->_apply_defaults();
+    if ( ! defined $self->get(q(config)) ) {
+        die qq| ERR: missing config file argument (--config)|;
+    } # if ( ! defined $self->get(q(config)) )
+    if ( ! -r $self->get(q(config)) ) {
+        die q( ERR: config file ') . $self->get(q(config)) . q( not readable);
+    } # if ( ! -r $self->get(q(config)) )
 
     # return this object to the caller
     return $self;
 } # sub new
+
 
 # set defaults here for any missing arugments
 sub _apply_defaults {
@@ -218,9 +151,9 @@ sub _print_default_config {
     print qq(# any line that starts with '#' is a comment\n);
     print qq(# sample config generated on ) 
         . POSIX::strftime( q(%c), localtime() ) . qq(\n);
-    foreach my $arg ( @_valid_script_args ) {
-        print $arg . q( = ) . $self->get($arg) . qq(\n);
-    } # foreach my $arg ( @_valid_shout_args )
+    #foreach my $arg ( @_valid_script_args ) {
+    #    print $arg . q( = ) . $self->get($arg) . qq(\n);
+    #} # foreach my $arg ( @_valid_shout_args )
     # cheat a bit and add these last config settings
     # here document syntax
     print <<EOC;
@@ -235,7 +168,7 @@ EOC
 =item get($key)
 
 Returns the scalar value of the key passed in as C<key>, or C<undef> if the
-key does not exist in the L<DNSGenTool::Config> object.
+key does not exist in the L<DNSZoneGen::Config> object.
 
 =cut
 
@@ -251,9 +184,9 @@ sub get {
 
 =item set( key => $value )
 
-Sets in the L<DNSGenTool::Config> object the key/value pair passed in as
+Sets in the L<DNSZoneGen::Config> object the key/value pair passed in as
 arguments.  Returns the old value if the key already existed in the
-L<DNSGenTool::Config> object, or C<undef> otherwise.
+L<DNSZoneGen::Config> object, or C<undef> otherwise.
 
 =cut
 
@@ -290,7 +223,178 @@ sub get_args {
 
 =back
 
-=head2 DNSGenTool::Logger
+=head2 DNSZoneGen::Parser
+
+Parses the DNSZoneGen INI config file(s), creating objects for each zone read
+in from file(s).
+
+=head3 Object Methods
+
+=cut
+
+######################
+# DNSZoneGen::Parser #
+######################
+package DNSZoneGen::Parser;
+use strict;
+use warnings;
+use Config::IniFiles;
+
+# [dnsgentool] block
+my @_valid_dnszonegen_args = ( 
+    qw(soa_serial_file soa_serial_file_autocreate)
+); # my %_valid_global_cfg_args
+
+# [zone_global] block
+my @_valid_zone_global_args = qw(
+    soa_serial 
+    soa_refresh 
+    soa_retry 
+    soa_expire 
+    soa_ttl 
+    zone_ttl 
+    nameservers 
+    path
+); # # [zone_global] block
+
+# any block that describes a specific zone
+my @_valid_zone_args = qw(
+    include 
+    alias 
+    cname 
+    a 
+    aaaa
+); # my @_valid_zone_args
+
+=over
+
+=item new( )
+
+Creates the L<DNSZoneGen::Parser> object, which opens up the INI file and
+parses it into DNS zone objects.
+
+=cut
+
+sub new {
+    my $class = shift;
+    my %args = @_;
+
+    die qq( ERR: DNSZoneGen::Logger object required as 'logger =>')
+        unless ( exists $args{logger} );
+    my $_logger = $args{logger};
+        
+    die qq( ERR: DNSZoneGen::Logger object required as 'config =>')
+        unless ( exists $args{config} );
+    my $_config = $args{config};
+
+    my $self = bless ({
+        _logger => $_logger,
+        _config => $_config,
+    }, $class);
+
+    return $self;
+} # sub new
+
+=item parse($_inifile)
+
+Parses the INI file specified with C<$_inifile>.
+
+=cut
+
+sub parse {
+    my $self = shift;
+    my $_inifile = shift;
+    my $_config = $self->{_config};
+
+    my $_ini = Config::IniFiles->new( -file => $_config->get(q(config)) );
+    $self->{_ini} = $_ini;
+
+    # parse out all of the sections in the zone file
+    foreach my $section_name ( $_ini->Sections() ) {
+        if ( $section_name eq q(dnszonegen) ) {
+            $self->_check_dnszonegen();
+        } elsif ( $section_name eq q(zone_global) ) {
+            $self->_check_zone_global();
+        } else { 
+            $self->_check_zone($section_name);
+        } # if ( $section_name eq q(dnszonegen) )
+    } # foreach my $section_name ( $_ini->Sections() )
+} # sub parse
+# check the [dnszonegen] section
+sub _check_dnszonegen {
+    my $self = shift;
+    my $_ini = $self->{_ini};
+    my $_config = $self->{_config};
+
+    foreach my $param ($_ini->Parameters(q(dnszonegen))) {
+        if ( grep(/$param/, @_valid_dnszonegen_args) > 0 ) {
+            # add this parameter to the main config object
+            $_config->set( $param => $_ini->val(q(dnszonegen), $param) );
+        } else { 
+            if ( defined $self->get(q(continue)) ) {
+                warn qq(WARN: unknown parameter '$param' in section )
+                    . qq([dnszonegen]\n);
+            } else {
+                die qq( ERR: unknown parameter '$param' in section )
+                    . qq([dnszonegen]\n);
+            } # if ( defined $self->get(q(continue)) )
+        } # if ( grep(/$param/, @_valid_dnszonegen_args) > 0 )
+    } # foreach my $param ($_ini->Parameters(q(dnszonegen)))
+} # sub _check_dnszonegen
+
+# check the [zone_global] section
+sub _check_zone_global {
+    my $self = shift;
+    my $_ini = $self->{_ini};
+
+    my %global_args;
+    foreach my $param ($_ini->Parameters(q(zone_global))) {
+        if ( grep(/$param/, @_valid_zone_global_args) > 0 ) {
+            # add this parameter to the main config object
+            $global_args{$param} = $_ini->val(q(dnszonegen), $param);
+        } else { 
+            if ( defined $self->get(q(continue)) ) {
+                warn qq(WARN: unknown parameter '$param' in section )
+                    . qq([zone_global]\n);
+            } else {
+                die qq( ERR: unknown parameter '$param' in section )
+                    . qq([zone_global]\n);
+            } # if ( defined $self->get(q(continue)) )
+        } # if ( grep(/$param/, @_valid_zone_global_args) > 0 )
+    } # foreach my $param ($_ini->Parameters(q(zone_global)))
+} # sub _check_dnszonegen
+
+# check the [zone_global] section
+sub _check_zone {
+    my $self = shift;
+    my $section = shift;
+    my $_ini = $self->{_ini};
+
+    if ( ! defined $section ) { 
+        die q( ERR: _check_zone called without $section object!);
+    } # if ( ! defined $section )
+
+    my %zone_args;
+
+    # scrape all of the key/value pairs out of this section
+    foreach my $param ($_ini->Parameters($section)) {
+        $zone_args{$param} = $_ini->val($section, $param);
+    } # foreach my $param ($_ini->Parameters($section))
+
+    # don't print anything if this section is empty
+    if ( scalar(keys(%zone_args)) > 0 ) {
+        print qq(Zone parameters for zone ) . $section . qq(:\n);
+        foreach my $key ( sort(keys(%zone_args)) ) {
+            print qq(\t$key -> ) . $zone_args{$key} . qq(\n);
+        } # foreach my $key ( sort(keys(%zone_args)) )
+    } # if ( scalar(keys(%zone_args)) > 0 )
+
+    # FIXME create the zone object here, then return it
+} # sub _check_zone
+
+=back
+
+=head2 DNSZoneGen::Logger
 
 A simple logger module, for logging script output and errors.
 
@@ -299,9 +403,9 @@ A simple logger module, for logging script output and errors.
 =cut
 
 ######################
-# DNSGenTool::Logger #
+# DNSZoneGen::Logger #
 ######################
-package DNSGenTool::Logger;
+package DNSZoneGen::Logger;
 use strict;
 use warnings;
 use POSIX qw(strftime);
@@ -310,10 +414,10 @@ use IO::Handle;
 
 =over 
 
-=item new($config)
+=item new($_config)
 
-Creates the L<DNSGenTool::Logger> object, and sets up various filehandles
-needed to log to files or C<STDOUT>.  Requires a L<DNSGenTool::Config> object
+Creates the L<DNSZoneGen::Logger> object, and sets up various filehandles
+needed to log to files or C<STDOUT>.  Requires a L<DNSZoneGen::Config> object
 as the argument, so that options having to deal with logging can be
 parsed/acted upon.  Returns the logger object to the caller.
 
@@ -321,13 +425,13 @@ parsed/acted upon.  Returns the logger object to the caller.
 
 sub new {
     my $class = shift;
-    my $config = shift;
+    my $_config = shift;
 
     my $logfd;
-    if ( defined $config->get(q(logfile)) ) {
+    if ( defined $_config->get(q(logfile)) ) {
         # append to the existing logfile, if any
-        $logfd = IO::File->new(q( >> ) . $config->get(q(logfile)));
-        die q( ERR: Can't open logfile ) . $config->get(q(logfile)) . qq(: $!)
+        $logfd = IO::File->new(q( >> ) . $_config->get(q(logfile)));
+        die q( ERR: Can't open logfile ) . $_config->get(q(logfile)) . qq(: $!)
             unless ( defined $logfd );
         # apply UTF-8-ness to the filehandle 
         $logfd->binmode(qq|:encoding(utf8)|);
@@ -381,7 +485,7 @@ sub timelog {
 
 =back
 
-=head2 DNSGenTool::File
+=head2 DNSZoneGen::File
 
 An object that represents the file that is to be streamed to the
 Icecast/Shoutcast server.  This is a helper object for the file that helps out
@@ -393,18 +497,17 @@ C<undef> if the file doesn't exist on the filesystem or can't be read.
 =cut
 
 ####################
-# DNSGenTool::File #
+# DNSZoneGen::File #
 ####################
-package DNSGenTool::File;
+package DNSZoneGen::Zone;
 use strict;
 use warnings;
 
 =over 
 
-=item new(filename => $file, logger => $logger, config => $config)
+=item new(logger => $_logger, C<key/value pairs)
 
-Creates an object that wraps the file to be streamed, so that requests for
-file metadata can be answered.
+Creates an object that represents a DNS zone. 
 
 =cut
 
@@ -412,47 +515,19 @@ sub new {
     my $class = shift;
     my %args = @_;
 
-    my ($filename, $logger, $config);
-    die qq( ERR: Missing file to be streamed as 'filename =>')
-        unless ( exists $args{filename} );
-    $filename = $args{filename};
+    my $_logger;
 
-    die qq( ERR: DNSGenTool::Logger object required as 'logger =>')
+    die qq( ERR: DNSZoneGen::Logger object required as 'logger =>')
         unless ( exists $args{logger} );
-    $logger = $args{logger};
+    $_logger = $args{logger};
         
-    die qq( ERR: DNSGenTool::Logger object required as 'logger =>')
-        unless ( exists $args{config} );
-    $config = $args{config};
-
     my $self = bless ({
         # save the config and logger objects so that this object's methods can
         # use them
-        _logger => $logger,
-        _config => $config,
-        _filename => $filename,
+        _logger => $_logger,
     }, $class);
 
-    # some tests of the actual file on the filesystem
-    # does it exist?
-    unless ( -e $self->get_filename() ) { 
-        $logger->timelog( qq(WARN: Missing file on filesystem!) );
-        $logger->log(qq(- ) . $self->get_display_name() );
-        # return an undefined object so that callers know something's wrong
-        undef $self;
-    } # unless ( -e $self->get_filename() )
-
-    # previous step may have set $self to undef
-    if ( defined $self ) {
-        # can we read the file?
-        unless ( -r $self->get_filename() ) { 
-            $logger->timelog( qq(WARN: Can't read file on filesystem!) );
-            $logger->log(qq(- ) . $self->get_display_name() );
-            # return an undefined object so that callers know something's wrong
-            undef $self;
-        } # unless ( -r $self->get_filename() )
-    } # if ( defined $self )
-
+    # FIXME populate the zone object here so it can be returned
     return $self
 } # sub new
 
@@ -470,13 +545,17 @@ use warnings;
 #use bytes; # I think this is used for the sysread call when reading MP3 files
 
     # create a logger object
-    my $config = DNSGenTool::Config->new();
+    my $_config = DNSZoneGen::Config->new();
 
     # create a logger object, and prime the logfile for this session
-    my $logger = DNSGenTool::Logger->new($config);
-    $logger->timelog(qq(INFO: Starting dnsgentool.pl, version $VERSION));
-    $logger->timelog(qq(INFO: my PID is $$));
-
+    my $_logger = DNSZoneGen::Logger->new($_config);
+    $_logger->timelog(qq(INFO: Starting dnsgentool.pl, version $VERSION));
+    $_logger->timelog(qq(INFO: my PID is $$));
+    my $parser = DNSZoneGen::Parser->new(
+        config => $_config, 
+        logger => $_logger
+    ); # my $parser = DNSZoneGen::Parser->new
+    $parser->parse($_config->get(q(config)));
 =head1 AUTHOR
 
 Brian Manning, C<< <elspicyjack at gmail dot com> >>
