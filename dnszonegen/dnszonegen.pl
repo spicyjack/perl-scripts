@@ -81,7 +81,7 @@ L<Getopt::Long>.
 my @_valid_script_args = ( qw(verbose config) );
 
 # [dnsgentool] block
-my @_valid_global_cfg_args = ( 
+my @_valid_dnszonegen_args = ( 
     qw(soa_serial_file soa_serial_file_autocreate)
 ); # my %_valid_global_cfg_args
 
@@ -138,6 +138,9 @@ sub new {
 
     # generate a config file and exit?
     if ( defined $self->get(q(generate)) ) {
+        # this method exits the script after outputting the config
+        $self->_print_default_config();
+    } # if ( defined $self->get(q(generate)) )
 
     # read a config file if that's specified
     if ( defined $self->get(q(config)) && -r $self->get(q(config)) ) {
