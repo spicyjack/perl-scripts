@@ -133,27 +133,6 @@ sub new {
     # a check to verify the shout module is available
     # it's put here so some warning is given if --help was called
 
-=begin comment
-
-    BEGIN {
-        eval q( use Shout; );
-        if ( $@ ) {
-            if ( defined grep(/-h|--help|-j|--gen-config/, @ARGV) ) {
-                warn qq(\nWARNING: Shout Perl module is not installed!\n\n);
-            } else {
-                warn qq( ERR: Shout module not installed\n);
-                warn qq( ERR: === Begin error output ===\n\n);
-                warn qq($@\n);
-                warn qq( ERR: === End error output ===\n);
-                die qq(Missing 'Shout' Perl module; exiting...);
-            } # if ( $self->get(q(help)) )
-        } # if ( $@ )
-    } # BEGIN
-
-=end comment
-
-=cut
-
     # dump and bail if we get called with --help
     if ( $self->get(q(help)) ) { pod2usage(-exitstatus => 1); }
 
@@ -185,11 +164,20 @@ EOC
         open( CFG, q(<) . $self->get(q(config)) );
         my @config_lines = <CFG>;
         my $config_errors = 0;
+        my $current_section = q();
         foreach my $line ( @config_lines ) {
             chomp $line;
             warn qq(VERB: parsing line '$line'\n) 
                 if ( defined $self->get(q(verbose)));
-            next if ( $line =~ /^#/ );
+            next if ( $line =~ /^#/ || $line =~ /^;/ );
+            # check 
+            if ( $line =~ /^\[[[:alnum:]]\._+\]/ ) {
+                warn qq(VERB: current section is now $line) 
+                    if ( defined $self->get(q(verbose)));
+                # FIXME do something here; maybe a new zone object?
+                # parse the next line                        
+                next;
+            } # if ( $line =~ /[a-zA-Z0-9\.]/ )
             my ($key, $value) = split(/\s*=\s*/, $line);
             warn qq(VERB: key/value for line is '$key'/'$value'\n) 
                 if ( defined $self->get(q(verbose)));
