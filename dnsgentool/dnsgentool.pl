@@ -138,26 +138,6 @@ sub new {
 
     # generate a config file and exit?
     if ( defined $self->get(q(generate)) ) {
-        # apply the default configuration options to the Config object
-        $self->_apply_defaults();
-        # now print out the sample config file
-        print qq(# sample template config file\n);
-        print qq(# any line that starts with '#' is a comment\n);
-        print qq(# sample config generated on ) 
-            . POSIX::strftime( q(%c), localtime() ) . qq(\n);
-        foreach my $arg ( @_valid_script_args ) {
-            print $arg . q( = ) . $self->get($arg) . qq(\n);
-        } # foreach my $arg ( @_valid_shout_args )
-        # cheat a bit and add these last config settings
-        # here document syntax
-        print <<EOC;
-# more config file parameters here
-key1 = value1
-# commenting the logfile will log to STDOUT instead
-logfile = /path/to/output.log
-EOC
-        exit 0;
-    } # if ( exists $args{gen-config} )
 
     # read a config file if that's specified
     if ( defined $self->get(q(config)) && -r $self->get(q(config)) ) {
@@ -224,6 +204,30 @@ sub _apply_defaults {
     $self->set( password => q(default) ) unless ( 
         defined $self->get(q(password)) );
 } # sub _apply_defaults
+
+sub _print_default_config {
+    my $self = shift;
+
+    # apply the default configuration options to the Config object
+    $self->_apply_defaults();
+    # now print out the sample config file
+    print qq(# sample template config file\n);
+    print qq(# any line that starts with '#' is a comment\n);
+    print qq(# sample config generated on ) 
+        . POSIX::strftime( q(%c), localtime() ) . qq(\n);
+    foreach my $arg ( @_valid_script_args ) {
+        print $arg . q( = ) . $self->get($arg) . qq(\n);
+    } # foreach my $arg ( @_valid_shout_args )
+    # cheat a bit and add these last config settings
+    # here document syntax
+    print <<EOC;
+# more config file parameters here
+key1 = value1
+# commenting the logfile will log to STDOUT instead
+logfile = /path/to/output.log
+EOC
+    exit 0;
+} # if ( exists $args{gen-config} )
 
 =item get($key)
 
