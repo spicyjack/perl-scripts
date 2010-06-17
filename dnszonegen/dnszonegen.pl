@@ -13,13 +13,13 @@ Version 0.01
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 # verify the modules needed for this script are available
 BEGIN {
     # hash format; module_name => module_options, or undef for no options
     my %modules_to_check = (
-        q(Log::Log4perl)    => q(get_logger :levels),
+        #q(Log::Log4perl)    => q(get_logger :levels),
         q(POSIX)            => qw(strftime),
         q(IO::File)         => undef,
         q(IO::Handle)       => undef,
@@ -531,7 +531,7 @@ C<undef> if the file doesn't exist on the filesystem or can't be read.
 =cut
 
 ####################
-# DNSZoneGen::File #
+# DNSZoneGen::Zone #
 ####################
 package DNSZoneGen::Zone;
 use strict;
