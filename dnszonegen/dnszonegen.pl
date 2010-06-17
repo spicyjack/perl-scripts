@@ -15,6 +15,40 @@ Version 0.01
 
 our $VERSION = '0.01';
 
+# verify the modules needed for this script are available
+BEGIN {
+    # hash format; module_name => module_options, or undef for no options
+    my %modules_to_check = (
+        q(Log::Log4perl)    => q(get_logger :levels),
+        q(POSIX)            => qw(strftime),
+        q(IO::File)         => undef,
+        q(IO::Handle)       => undef,
+        q(Config::IniFiles) => undef,
+        q(Getopt::Long)     => undef,
+        q(Pod::Usage)       => undef,
+    ); # my %modules_to_check
+
+    my @missing_modules;
+    foreach ( keys(%modules_to_check) ) {
+        if ( defined $modules_to_check{$_} ) {
+            eval "use $_ qw(" . $modules_to_check{$_} . ");";
+        } else {
+            eval "use $_";
+        } # if ( defined $modules_to_check{$_} )
+        # push the missing module onto a stack so the missing modules can all
+        # be printed out at once
+        if ( $@ ) { push(@missing_modules, $_); }
+    } # foreach ( keys(%modules_to_check) )
+    if ( scalar(@missing_modules) > 0 ) {
+        warn qq( ERR: The following modules are missing or failed to load:\n);
+        foreach my $missing_mod ( @missing_modules ) {
+            warn qq(\t$missing_mod\n);
+        } # foreach my $missing_mod ( @missing_modules )
+        die qq(Please install/build the above modules,)
+            . qq(then rerun this script.\n);
+    } # if ( scalar(@missing_modules) > 0 )
+} # BEGIN
+
 =head1 SYNOPSIS
 
  perl dnsgentool.pl [OPTIONS]
@@ -542,9 +576,8 @@ package main;
 use strict;
 use warnings;
 
-#use bytes; # I think this is used for the sysread call when reading MP3 files
 
-    # create a logger object
+    # create a config object
     my $_config = DNSZoneGen::Config->new();
 
     # create a logger object, and prime the logfile for this session
