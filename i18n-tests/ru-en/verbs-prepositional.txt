@@ -1,11 +1,11 @@
 #!/usr/bin/less
-# template: imperfective, perfective, definition
+# template: imperfective, perfective
 # list of Russian verbs that are used in the prepositional case
 # lines that start with the pound sign are comments
-писать,написать,to write (takes по-)
-читать,прочитать,to read (takes по-)
-отдыхать,отдохнуть,to rest, vacation, relax
-ложиться,лечь,to lie down, go to bed
-завтракать,позавтракать,to breakfast, have breakfast
-обедать,пообедать,to lunch, have the midday meal
-ужинать,поужинать,to have supper
+писать,написать
+читать,прочитать
+отдыхать,отдохнуть
+ложиться,лечь
+завтракать,позавтракать
+обедать,пообедать
+ужинать,поужинать

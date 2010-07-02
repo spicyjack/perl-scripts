@@ -1,7 +1,7 @@
 #!/usr/bin/less
-# template: imperfective, perfective, definition
+# template: imperfective, perfective
 # list of Russian verbs
 # lines that start with the pound sign are comments
-ложиться,лечь,to lie down, go to bed
-вставать,встать,to get up, stand up
-одеваться,одеться,to get dressed
+ложиться,лечь
+вставать,встать
+одеваться,одеться

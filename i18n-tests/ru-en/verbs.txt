@@ -33,7 +33,7 @@
 приглашать,пригласить,to invite
 # from 03Май, all can be used with dative case
 дарить,подарить,to give (as a gift)
-давать,дать,to give, to let
+давать,дать,to give, to let (передате - give/pass over)
 звонить,позвонить,to telephone, to call up
 показывать,показать,to show, to demonstrate, to point
 советовать,посоветовать,to advise
