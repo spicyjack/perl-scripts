@@ -30,6 +30,18 @@ END_PERSON
         понравились
 END_VERB
 
+    my @object = <<END_OBJECT =~ m/(\S.*\S)/g;
+        твоя футболка
+        русская литература
+        книги по истории
+        твой подарок
+        новая книга Пелевина
+        моё новое пальто
+        новые перчатки
+        русский сувенир
+        матрёшки
+END_OBJECT
+
     binmode STDOUT, ":utf8";
 
     # - get a count of how many members each structure has
