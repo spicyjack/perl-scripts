@@ -56,12 +56,27 @@ use Encode;
 use Getopt::Long;
 use IO::File;
 
+sub ShowHelp {
+    print <<EOH;
+    $0 [options]
+
+    -f|--filename   Name of the wordlist file
+    -n|--number     Number of words to loop through
+    -s|--swap       Guess the definition instead of the word (for numbers)
+    -h|--help       Show this help output
+EOH
+    exit 0;
+} # sub ShowHelp
+
     my $input_file;
     my $num_of_words = 1;
+    my $swap_words = 0;
     my $parser = Getopt::Long::Parser->new();
     $parser->getoptions(
         q(inputfile|filename|f=s) => \$input_file,
         q(number|n=i) => \$num_of_words,
+        q(swap|s) => \$swap_words,
+        q(help|h) => \&ShowHelp,
     ); # $parser->getoptions
     
     my $INFD;
@@ -70,7 +85,8 @@ use IO::File;
     if ( defined $input_file ) {
         $INFD = IO::File->new(qq( < $input_file));
     } else {
-        $INFD = IO::Handle->new_from_fd(fileno(STDIN), q(<));
+        die qq(ERROR: no input file; run $0 --help for script options\n);
+        #$INFD = IO::Handle->new_from_fd(fileno(STDIN), q(<));
     } # if ( length($parsed{input}) > 0 )
     my @lines=<$INFD>;
     my $counter = 0;
@@ -91,18 +107,33 @@ use IO::File;
     for ( my $x = 1; $x == $num_of_words; $x++ ) {
         # grab a random word object out of the word_objs array
         my $random_word = $word_objs[int(rand(scalar(@word_objs)))];
-        print qq(Guess the word based on the definition....\n);
-        print $random_word->get_definition() . q(: );
+        if ( $swap_words ) {
+            print qq(Guess the definition based on the word....\n);
+            print $random_word->get_word() . q(: );
+        } else {
+            print qq(Guess the word based on the definition....\n);
+            print $random_word->get_definition() . q(: );
+        } # if ( $swap_words )
         # use the diamond operator to read in user input
         my $answer = <>;
         chomp($answer);
-        if ( $answer eq $random_word->get_word() ) {
-            print qq(Correct! $answer = ) . $random_word->get_definition() 
-                . qq(\n);
+        if ( $swap_words ) {
+            if ( $answer eq $random_word->get_definition() ) {
+                print qq(Correct! $answer = ) . $random_word->get_definition() 
+                    . qq(\n);
+            } else {
+                print qq(Incorrect! ) . $random_word->get_definition() . q( = ) 
+                    . $random_word->get_word() . qq(\n);
+            } # if ( $answer eq $word )
         } else {
-            print qq(Incorrect! ) . $random_word->get_word() . q( = ) 
-                . $random_word->get_definition() . qq(\n);
-        } # if ( $answer eq $word )
+            if ( $answer eq $random_word->get_definition() ) {
+                print qq(Correct! $answer = ) . $random_word->get_definition() 
+                    . qq(\n);
+            } else {
+                print qq(Incorrect! ) . $random_word->get_word() . q( = ) 
+                    . $random_word->get_definition() . qq(\n);
+            } # if ( $answer eq $word )
+        } # if ( $swap_words )
     } # for ( my $x = 1; $x == $num_of_words; $x++ )
 
 # fin!
