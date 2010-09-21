@@ -104,7 +104,7 @@ EOH
     } # foreach my $line (@lines)
 
     # loop as many times as was requested
-    for ( my $x = 1; $x == $num_of_words; $x++ ) {
+    for ( my $x = 1; $x <= $num_of_words; $x++ ) {
         # grab a random word object out of the word_objs array
         my $random_word = $word_objs[int(rand(scalar(@word_objs)))];
         if ( $swap_words ) {
