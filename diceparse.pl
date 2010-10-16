@@ -118,7 +118,7 @@ my %diceware; # wordlist with numbers as the index
 		if ( $line =~ m/^[1-6]{5}/ ) {
 			$counter++;
 			my ($dicenum, $diceword) = split(/\t/, $line);
-			$diceware{$dicenum} = $diceword;
+			$diceware{$dicenum} = ucfirst($diceword);
 	        #print q(line # ) . sprintf(q(%03d), $counter) . q(:  ') 
 	        print q(number: ) . $dicenum . q(, word: ') 
 				. $diceword . qq('\n) if ( defined $DEBUG && $DEBUG > 0 );
