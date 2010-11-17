@@ -1,7 +1,0 @@
-#!/usr/bin/less
-# template: imperfective, perfective
-# list of Russian verbs
-# lines that start with the pound sign are comments
-ложиться,лечь
-вставать,встать
-одеваться,одеться
