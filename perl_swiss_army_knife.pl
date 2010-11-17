@@ -20,7 +20,7 @@ use File::Find;
 use Scalar::Util qw(tainted);
 
 my @found_modules; # a list of modules that were found in @INC paths
-my $i=1;	# a counter
+my $i=1;    # a counter
 
 # are we CGI?
 if ( exists $ENV{'REQUEST_METHOD'} ) {
@@ -40,11 +40,11 @@ print "##################################################################\n";
 # print the runtime environment
 foreach my $key ( sort(keys(%ENV)) ) {
     print(sprintf("%2d", $i) . qq( $key = ) . $ENV{$key} . qq(\n));
-	$i++;	
+    $i++;    
 } # while (($key, $val) = each %ENV)
 print "\n";
 
-$i=1;	# reset counter
+$i=1;    # reset counter
 
 # print the @INC array
 print "##################################################################\n";
@@ -53,7 +53,7 @@ print "##################################################################\n";
 printf qq(%2d %s\n), $i++, $_ for sort(@INC);
 print "\n";
 
-$i=0;	# reset counter
+$i=0;    # reset counter
 
 # print installed modules
 print "##################################################################\n";
@@ -101,13 +101,13 @@ exit 0;
 sub modules {
     my $dir = $_;
     #print qq(this inc dir is $dir\n);
-	if (-d $dir && $dir =~ /^[a-z]/) { $File::Find::prune = 1; return; }
-		return unless /\.pm$/;
-       	my $filename = "$File::Find::dir/$dir";
-      	$filename =~ s!^$dir/!!;
-       	$filename =~ s!\.pm$!!;
+    if (-d $dir && $dir =~ /^[a-z]/) { $File::Find::prune = 1; return; }
+        return unless /\.pm$/;
+           my $filename = "$File::Find::dir/$dir";
+          $filename =~ s!^$dir/!!;
+           $filename =~ s!\.pm$!!;
         $filename =~ s!/!::!g;
         push(@found_modules, [ $filename, "$File::Find::dir/$dir" ]);
-		$i++;
+        $i++;
 } # sub modules
 
