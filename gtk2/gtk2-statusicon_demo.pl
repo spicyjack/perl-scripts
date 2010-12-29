@@ -10,7 +10,7 @@ my $icon_cur = $icon{ 'g' };
 
 my %val;
 while(<DATA>){
-  chomp; 
+  chomp;
   my($key,$value) = split(/=/,$_);
   if( defined $key){
     $val{$key} = $value;
@@ -20,7 +20,7 @@ while(<DATA>){
 # check data reloaded properly
 #foreach my $key(sort keys %val){print $key.'='.$val{$key}."\n"}
 
-# default global variables if not saved to __DATA__ 
+# default global variables if not saved to __DATA__
 $val{'dir'}  ||= './';
 $val{'file'} ||= $0;
 $val{'check1'} ||= 1;
@@ -68,12 +68,12 @@ sub pop_it{
   $hbox->pack_end( $ebutton, 0, 0, 0 );
   $ebutton->signal_connect( clicked => sub{ $popup->hide_all  } );
 
-  # Create a textbuffer to contain that string 
+  # Create a textbuffer to contain that string
   my $textbuffer = Gtk2::TextBuffer->new();
   my $tail = `tail -n 20 $val{'file'}`;
   $textbuffer->set_text($tail);
 
-# Create a textview using that textbuffer 
+# Create a textview using that textbuffer
 my $textview = Gtk2::TextView->new_with_buffer($textbuffer);
 
 # Add the textview to a scrolledwindow 
@@ -88,8 +88,8 @@ $popup->show_all;
 
 #right click menu
 sub config_it {
-   
-# change Mode or whatever.... a menu entry   
+
+# change Mode or whatever.... a menu entry
    my $menu = Gtk2::Menu->new();
 
   my $menu_Z1 = Gtk2::ImageMenuItem->new_with_label( "Mode Z1" );
@@ -103,7 +103,7 @@ sub config_it {
    $menu_Z1->set_image( Gtk2::Image->new_from_stock( 'gtk-refresh', 'menu' ) );
    $menu->add( $menu_Z1);
 
-# launch configure window 
+# launch configure window
    my $menu_pref = Gtk2::ImageMenuItem->new_with_label( "Configure" );
    $menu_pref->signal_connect( activate => \&configure );
    $menu_pref->set_image(
@@ -125,7 +125,7 @@ sub config_it {
  my ($x, $y, $push_in) = Gtk2::StatusIcon::position_menu($menu, $statusicon);
  # print "$x, $y, $push_in\n";
  $menu->popup( undef, undef, sub{return ($x,$y,0)} , undef, 0, 0 );
-  
+
   return 1;
 }
 
@@ -180,10 +180,10 @@ sub configure {
 
    $button_1_p1->signal_connect(
       'clicked' => sub {
-        
+
     my $fs = Gtk2::FileChooserDialog->new(
-    	'Choose a Directory',
-	 $config_window, 'select-folder',
+        'Choose a Directory',
+     $config_window, 'select-folder',
         'gtk-cancel' => 'cancel',
         'gtk-ok' => 'accept'
     );
@@ -199,7 +199,7 @@ sub configure {
 
    $button_2_p1->signal_connect(
       'clicked' => sub {
-        
+
     my $fs = Gtk2::FileChooserDialog->new(
         "FS", $config_window, 'open',
         "Cancel" => "cancel",
@@ -232,7 +232,7 @@ $checkbutton3->signal_connect( clicked => \&check_button_callback3 );
 
 
 
-#the Second Page; 
+#the Second Page;
    my $vbox_p2 = Gtk2::VBox->new( 0, 1 );
    my $label_1_p2   = Gtk2::Label->new( 'Label 1' );
    my $entry_1_p2   = Gtk2::Entry->new;
@@ -246,7 +246,7 @@ $checkbutton3->signal_connect( clicked => \&check_button_callback3 );
    $vbox_p2->pack_start( $entry_2_p2, 0, 0, 1 );
 
 
-#the Third Page; 
+#the Third Page;
    my $table_p3        = Gtk2::Table->new( 4, 2, 0 );
    my $label_1_p3      = Gtk2::Label->new( 'First Label' );
    my $entry_1_p3      = Gtk2::Entry->new;
@@ -270,7 +270,7 @@ $checkbutton3->signal_connect( clicked => \&check_button_callback3 );
    $table_p3->attach_defaults( $label_4_p3, 0, 1, 3, 4 );
    $table_p3->attach_defaults( $entry_4_p3, 1, 2, 3, 4 );
 
-#the Fourth Page; 
+#the Fourth Page;
    my $vbox_p4 = Gtk2::VBox->new( 0, 1 );
    my $table_1_p4 = Gtk2::Table->new( 4, 2, 0 );
    my $frame_1_p4  = Gtk2::Frame->new( 'Some Cool Title' );
@@ -280,13 +280,13 @@ $checkbutton3->signal_connect( clicked => \&check_button_callback3 );
    my $entry_2_p4 = Gtk2::Entry->new;
    $entry_1_p4->set_text( $val{'var7'} );
    $entry_2_p4->set_text( $val{'var8'} );
-   
+
    $table_1_p4->attach_defaults( $label_1_p4, 0, 1, 0, 1 );
    $table_1_p4->attach_defaults( $entry_1_p4, 1, 2, 0, 1 );
    $table_1_p4->attach_defaults( $label_2_p4, 0, 1, 1, 2 );
    $table_1_p4->attach_defaults( $entry_2_p4, 1, 2, 1, 2 );
    $frame_1_p4->add( $table_1_p4 );
-   
+
    my $table_2_p4       = Gtk2::Table->new( 4, 2, 0 );
    my $frame_2_p4       = Gtk2::Frame->new( 'Another Cool Title' );
    my $label_3_p4       = Gtk2::Label->new( 'Third Label' );
@@ -300,10 +300,9 @@ $checkbutton3->signal_connect( clicked => \&check_button_callback3 );
    $table_2_p4->attach_defaults( $label_4_p4, 0, 1, 1, 2 );
    $table_2_p4->attach_defaults( $entry_4_p4, 1, 2, 1, 2 );
    $frame_2_p4->add( $table_2_p4 );
-  
+
    $vbox_p4->pack_start( $frame_1_p4, 0, 0, 1 );
    $vbox_p4->pack_start( $frame_2_p4, 0, 0, 1 );
-
 
 #append pages
    $config_notebook->append_page( $vbox_p1,   "File Stuff" );
@@ -324,8 +323,10 @@ $checkbutton3->signal_connect( clicked => \&check_button_callback3 );
    $config_window->show_all;
 
 #Button Functions
-   $button_cancel->signal_connect( 'clicked' => sub { $config_window->destroy } );
-   
+   $button_cancel->signal_connect(
+    'clicked' => sub { $config_window->destroy }
+   );
+
    $button_accept->signal_connect(
       'clicked' => sub {
          my @settings = (
@@ -349,12 +350,11 @@ $checkbutton3->signal_connect( clicked => \&check_button_callback3 );
          $config_window->destroy;
       }
    );
-   
 
    return 1;
 }
 
-#Exit 
+#Exit
 sub exit_it {
    Gtk2->main_quit;
    return 0;
@@ -370,7 +370,7 @@ while(<SELF>){last if /^__DATA__/}
  foreach my $key(sort keys %val ) {
       print SELF $key.'='.$val{$key}."\n"; #default line ending
    }
-   
+
  truncate(SELF,tell SELF);
  close SELF;
 
@@ -385,9 +385,9 @@ sub check_button_callback1 {
      } else {
     # if control reaches here, the check button is off
       # undo something here
- 
+
       }
-}  
+}
 
 sub check_button_callback2 {
   my ($button) = @_;
@@ -402,7 +402,7 @@ sub check_button_callback2 {
          $statusicon->set_tooltip( "Mode Normal" );
          $statusicon->set_blinking (0);
       }
-}  
+}
 
 sub check_button_callback3 {
   my ($button) = @_;
@@ -415,14 +415,14 @@ sub check_button_callback3 {
          $statusicon->set_from_pixbuf($icon_cur);
          $statusicon->set_tooltip( "Mode Normal" );
       }
-}  
+}
 
 
 sub build_icons {
    my %data;
 
    $data{ 'r' } = decode_base64(
-      'iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAAACXBI
+'iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAAACXBI
 WXMAAAsTAAALEwEAmpwYAAAB00lEQVRYw+3WP2gUURAG8N++iwoRxRSilSiiHN4iWJhe7MTCQiJW
 IqiFtUIQQWyENNpZxkYxjVgKNnb24hUGQe0s0gj+PcztWtw7WC63d2TJbQrvwbK8x2Pmm2++mXlJ
 nue2cwXbvKYApgBmqsFON55l7f8rBQv4gm/xv1AVQLLpRtSjfx2NwmkXM1XSUJWBxpj9tAwnDuDj
@@ -436,7 +436,7 @@ HMJf3IvVUiLCjQDWcAvPSqPdPKAGTsXULBYqKf8H7mhziLP34moAAAAASUVORK5CYII='
 
 
    $data{ 'g' } = decode_base64(
-      'iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAAACXBI
+'iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAAACXBI
 WXMAAAsTAAALEwEAmpwYAAABwUlEQVRYw+2VvS8EURTFf8/4CKJQTKOgEIlEqFCIRnSUhE6iUOhV
 Go3Kf0ChkiipNWqFQuErEtFJSEREfO7O0dyNid2Z3X3sbmHfy82bdzPv3TPnnnvHSaKWo4EajzqA
 OoBGn0MOl+cT+l8pmANugEdb53wBuHIbkdGfAYKYOws0+qTBl4GgyL5ehhUHcFVkX3ERfm9jraAq
@@ -450,7 +450,7 @@ egAKEMOI9R9lHH0BkYPO/OE8jeIAAAAASUVORK5CYII='
 
 
    $data{ 'y' } = decode_base64(
-      'iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAAACXBI
+'iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAAACXBI
 WXMAAAsTAAALEwEAmpwYAAAB2UlEQVRYw+3WP2gUQRQG8N/mokJEMRyi2UIUUQ4FwcL0YicWFhKx
 EkEtrBWCCGIjpNHOMjaKNmIp2NjZi41BUKuzSBYE/x7mbi12DpbL7R1ZcnuFN7AsM8y8973vvffN
 RGmaGueYMuYxATABMF3qVBJvXKs3/68ULOALvoX/QlkA0aaFKKN/HbXcahvTZdJQloHakPmkDUcO
