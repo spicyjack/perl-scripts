@@ -35,7 +35,7 @@
 #
 #    o Explicitly close the pipe from ldapsearch and check
 #      error status.
-#  
+#
 
 # enable this command in mutt with:
 # set query_command = "/usr/local/bin/mutt_ldap_query '%s'"
@@ -45,7 +45,7 @@ use strict;
 # Please change the following 2 lines to match your site configuration
 #
 my $ldap_server = "directory.qualcomm.com";
-my $BASEDN = "o=qualcomm";           
+my $BASEDN = "o=qualcomm";
 
 # Fields to search in the LDAP database:
 #
@@ -54,26 +54,27 @@ my @fields = qw(cn mail sn givenname);
 die "Usage: $0 <name_to_query>, [[<other_name_to_query>], ...]\n"
     if ! @ARGV;
 
-$/ = '';	# Paragraph mode for input.
+$/ = '';    # Paragraph mode for input.
 my @results;
 
 foreach my $askfor ( @ARGV ) {
 
-    $askfor =~ s/,$//;	# Remove optional trailing comma.
+    $askfor =~ s/,$//;    # Remove optional trailing comma.
 
     my $query = join '', map { "($_=$askfor*)" } @fields;
     my $command = "ldapsearch -h $ldap_server -b '$BASEDN' -x '(|$query)'" .
                   " sn cn givenName mail telephoneNumber";
+    print STDERR "about to run command: $command\n";
 
-    open( LDAPQUERY, "$command |" ) or die "LDAP query error: $!"; 
+    open( LDAPQUERY, "$command |" ) or die "LDAP query error: $!";
 
     while ( <LDAPQUERY> ) {
-	next if ! /^mail:(.*)$/im;
-	my $email = $1;
-	my $phone = /^telephoneNumber:(.*)$/im ? $1 : '';
-	my ( @name ) = ( /^cn:(.*)$/im, /^sn=(.*)$/im );
-	push @results, "$email\t@name\t$phone\n";
-    }
+        next if ! /^mail:(.*)$/im;
+        my $email = $1;
+        my $phone = /^telephoneNumber:(.*)$/im ? $1 : '';
+        my ( @name ) = ( /^cn:(.*)$/im, /^sn=(.*)$/im );
+        push @results, "$email\t@name\t$phone\n";
+    } # while ( <LDAPQUERY> )
 
     close( LDAPQUERY ) or die "ldapsearch failed: $!\n";
 }
