@@ -49,10 +49,12 @@ Parse the output of an RSS feed.
 
     my $xml = get($args{url});
     my $rp = XML::RSS::Parser::Lite->new();
+    use Data::Dumper;
     $rp->parse($xml);
 
+    print qq(There are ) . $rp->count() . qq( items in this feed\n);
     print $rp->get(q(title)) . " " . $rp->get('url') . " "
-        . $rp->get('description') . "\n";
+        . $rp->get('description') . $rp->get(q(channel)) . "\n";
 
 =head1 AUTHOR
 
