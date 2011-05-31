@@ -4,7 +4,7 @@
 use Getopt::Long;
 use Log::Log4perl qw(get_logger :levels);
 use LWP::Simple;
-use Mouse; # sets strict and warnings
+use Moo; # sets strict and warnings
 use XML::RSS::Parser::Lite;
 
 =head1 NAME
@@ -37,7 +37,7 @@ Parse the output of an RSS feed.
         q(url|u=s),
     ); # $p->getoptions
 
-    $self->{_args} = \%args;
+    my $self->{_args} = \%args;
     # if --help was called, print help output via Pod::Usage
     if ( defined $args{help} ) {
         pod2usage( { -verbose => 1, -exitval => 0, -input => __FILE__ } );
