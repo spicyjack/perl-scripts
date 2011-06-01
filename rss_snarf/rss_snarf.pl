@@ -5,7 +5,8 @@ use Getopt::Long;
 use Log::Log4perl qw(get_logger :levels);
 use LWP::Simple;
 use Moo; # sets strict and warnings
-use XML::RSS::Parser::Lite;
+#use XML::RSS::Parser::Lite;
+use XML::FeedPP;
 
 =head1 NAME
 
@@ -47,14 +48,16 @@ Parse the output of an RSS feed.
     $logger_conf .= qq(log4perl.appender.Screen = )
         . qq(Log::Log4perl::Appender::ScreenColoredLevels\n);
 
-    my $xml = get($args{url});
-    my $rp = XML::RSS::Parser::Lite->new();
+    my $feed = XML::FeedPP->new($args{url});
     use Data::Dumper;
-    $rp->parse($xml);
+    print qq(Feed Title: ) . $feed->title() . qq(\n);
+#    print qq(Feed Date:  ) . $feed->pubDate() . qq(\n);
 
-    print qq(There are ) . $rp->count() . qq( items in this feed\n);
-    print $rp->get(q(title)) . " " . $rp->get('url') . " "
-        . $rp->get('description') . $rp->get(q(channel)) . "\n";
+    print qq(There are ) . $feed->get_item() . qq( items in this feed\n);
+    foreach my $item ( $feed->get_item() ) {
+        print q(Title: ) . $item->title() . qq(\n);
+        print q(URL:   ) . $item->link() . qq(\n);
+    } #
 
 =head1 AUTHOR
 
