@@ -13,7 +13,11 @@ chomp($input);
 # HH:MM ???
 #my $regex = '\d\d:\d\d \(\d+?\+?\d+:\d+\)';
 # phone number
-my $regex = '\d{3}-\d{3}-\d{4}';
+#my $regex = '\d{3}-\d{3}-\d{4}';
+# MS-DOS path/filename
+# ^([c-zC-Z]:/[a-zA-Z0-9_.-]+)
+# a file path: >./deathmatch/deathtag:<
+my $regex = q(^\.[\/\w]*:$);
 if ( $input =~ /$regex/ ) {
 #if ( $input =~ m#^([c-zC-Z]:/[a-zA-Z0-9_.-]+)# ) {
     print "MATCH; pattern '$regex' matches '$input'\n";
