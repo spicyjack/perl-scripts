@@ -17,8 +17,9 @@ chomp($input);
 # MS-DOS path/filename
 # ^([c-zC-Z]:/[a-zA-Z0-9_.-]+)
 # a file path: >./deathmatch/deathtag:<
-my $regex = q(^\.[\/\w]*:$);
-if ( $input =~ /$regex/ ) {
+#my $regex = q(^\.[\/\w]*:$);
+my $regex = q(headers:local:archive:size:same);
+if ( $regex =~ /$input/ ) {
 #if ( $input =~ m#^([c-zC-Z]:/[a-zA-Z0-9_.-]+)# ) {
     print "MATCH; pattern '$regex' matches '$input'\n";
     print "Thanks for playing!!\n";
