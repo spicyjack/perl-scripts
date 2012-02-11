@@ -8,6 +8,10 @@
 # Hacks for the module version were taken from:
 # perl module version - http://www.perlmonks.org/?node_id=37237
 
+# File::Find was used because it comes with core Perl, i.e. you don't have to
+# install any external modules to use this script.  The only downside is that
+# File::Find sucks balls to use.
+
 # if the script detects that it's running as under a CGI environment (the
 # REQUEST_METHOD environment variable is set), it will wrap the plaintext
 # output in the correct HTML tags so the browser will render it in the same
@@ -16,10 +20,11 @@
 use strict;
 use warnings;
 use ExtUtils::MakeMaker;
-use File::Find;
+use File::Find; # File::Find was first released with perl 5
 use Scalar::Util qw(tainted);
 
 my @found_modules; # a list of modules that were found in @INC paths
+my $working_dir; # the directory that File::Find started processing in
 my $i=1;    # a counter
 
 # are we CGI?
@@ -40,7 +45,7 @@ print "##################################################################\n";
 # print the runtime environment
 foreach my $key ( sort(keys(%ENV)) ) {
     print(sprintf("%2d", $i) . qq( $key = ) . $ENV{$key} . qq(\n));
-    $i++;    
+    $i++;
 } # while (($key, $val) = each %ENV)
 print "\n";
 
@@ -66,15 +71,19 @@ print "##################################################################\n";
 #   4. Print it
 
 # go through each directory in the @INC list
-foreach my $this_dir ( @INC ) { 
+foreach my $this_dir ( @INC ) {
     # untaint the directory
     #print qq(tainted: $this_dir\n);
+    # save the name of the directory as $1
     $this_dir =~ /([a-zA-Z0-9\/\._-]+)/;
     if ( tainted($1) ) {
         die qq(ERROR: this_dir still tainted: $1);
     } # if ( tainted($1) )
-    if ( -d $1 ) { 
-        find(\&modules, $1); 
+    if ( -d $1 ) {
+        print qq(Calling find on $1\n);
+        # the find() method calls the callback on every file and directory
+        # found in $1
+        find(\&modules, $1);
     } # if ( -d $1 )
 } # foreach my $this_dir ( @INC )
 
@@ -86,7 +95,7 @@ $i=1;
     #$printf (qq(%4d %-50s\n), $i++, $module);
 #$i=1;
 foreach my $module ( sort { $a->[0] cmp $b->[0] } @found_modules ) {
-    printf(qq(%4d %-50s: %s\n), 
+    printf(qq(%4d %-50s: %s\n),
         $i++, $module->[0], MM->parse_version($module->[1]));
 } # foreach $module ( sort(@found_modules) )
 
@@ -99,15 +108,26 @@ exit 0;
 
 ### modules ###
 sub modules {
-    my $dir = $_;
-    #print qq(this inc dir is $dir\n);
-    if (-d $dir && $dir =~ /^[a-z]/) { $File::Find::prune = 1; return; }
-        return unless /\.pm$/;
-           my $filename = "$File::Find::dir/$dir";
-          $filename =~ s!^$dir/!!;
-           $filename =~ s!\.pm$!!;
-        $filename =~ s!/!::!g;
-        push(@found_modules, [ $filename, "$File::Find::dir/$dir" ]);
-        $i++;
+    my $current_file = $_;
+    print qq(Recieved $current_file from caller\n);
+    if ($current_file eq q(.) ) {
+        $working_dir = $File::Find::dir;
+        print qq(New working directory: $working_dir\n);
+    }
+    if (-d $current_file && $current_file =~ /^[a-z]/) {
+        $File::Find::prune = 1; return;
+    }
+    return unless /\.pm$/;
+    # FIXME use the contents of $working_dir to trim off the beginning of
+    # $current_dir, so the end result is full the name of the module without
+    # having to figure out the module's namespace/full path
+    my $current_dir = $File::Find::dir;
+    my $filename = "$File::Find::dir/$current_file";
+    $filename =~ s!^$current_file/!!;
+    $filename =~ s!\.pm$!!;
+    $filename =~ s!/!::!g;
+    print qq(this inc dir is $current_file, filename $filename\n);
+    push(@found_modules, [ $filename, "$File::Find::dir/$current_file" ]);
+    $i++;
 } # sub modules
 
