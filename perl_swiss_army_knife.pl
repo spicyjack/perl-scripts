@@ -100,7 +100,7 @@ $i=1;
     #$printf (qq(%4d %-50s\n), $i++, $module);
 #$i=1;
 foreach my $module ( sort { $a->[0] cmp $b->[0] } @found_modules ) {
-    printf(qq(%4d %-50s: %s\n),
+    printf(qq(%4d %-60s: %s\n),
         $i++, $module->[0], MM->parse_version($module->[1]));
 } # foreach $module ( sort(@found_modules) )
 
