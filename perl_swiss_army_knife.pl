@@ -2,10 +2,10 @@
 # $Id$
 
 # A script to print out a bunch of info about the current Perl environment
-# by Brian Manning (elspicyjack {at} gmail &sdot; com)
+# by Brian Manning (brian {at} xaoc dot org)
 
 # The original script most likely appears in the Perl Cookbook from O'Reilly.
-# Hacks for the module version were taken from:
+# Hacks for obtaining the module version string were taken from:
 # perl module version - http://www.perlmonks.org/?node_id=37237
 
 # File::Find was used because it comes with core Perl, i.e. you don't have to
@@ -23,6 +23,8 @@ use ExtUtils::MakeMaker;
 use File::Find; # File::Find was first released with perl 5
 use Scalar::Util qw(tainted);
 
+my $DEBUG = 0;
+my $print_module_names = 0;
 my @found_modules; # a list of modules that were found in @INC paths
 my $global_working_dir; # the directory that File::Find started processing in
 my $i=1;    # a counter
@@ -76,16 +78,16 @@ foreach my $this_dir ( @INC ) {
     #print qq(tainted: $this_dir\n);
     # save the name of the directory as $1
     $this_dir =~ /([a-zA-Z0-9\/\._-]+)/;
-    # FIXME this is bad; we should instead see if this path is a parent of a
-    # path that's already been searched, and *THEN* skip it if it has already
-    # been searched
+    # FIXME excluding vendor/site perl directories is bad; we should instead
+    # see if this path is a parent of a path that's already been searched, and
+    # *THEN* skip it if it has already been searched
     next if ( $this_dir =~ /vendor_perl$/ );
     next if ( $this_dir =~ /site_perl$/ );
     if ( tainted($1) ) {
         die qq(ERROR: this_dir still tainted: $1);
     } # if ( tainted($1) )
     if ( -d $1 ) {
-        print q(=== @INC: ) . qq($1 ===\n);
+        print q(=== @INC: ) . qq($1 ===\n) if ($DEBUG);
         # the find() method calls the callback on every file and directory
         # found in $1
         find(\&modules, $1);
@@ -94,15 +96,11 @@ foreach my $this_dir ( @INC ) {
 
 # reset counter
 $i=1;
-#foreach $module ( sort(@found_modules) ) {
-#    eval "require $module";
-#    printf (qq(%4d %-50s: %s\n), $i++, $module, $module->VERSION) unless ($@);
-    #$printf (qq(%4d %-50s\n), $i++, $module);
-#$i=1;
 foreach my $module ( sort { $a->[0] cmp $b->[0] } @found_modules ) {
     printf(qq(%4d %-60s: %s\n),
         $i++, $module->[0], MM->parse_version($module->[1]));
-} # foreach $module ( sort(@found_modules) )
+    printf(qq(   - ) . $module->[1] . qq(\n)) if ($print_module_names);
+}
 
 # print the butt-end of the HTML if this is CGI
 if ( exists $ENV{'REQUEST_METHOD'} ) {
@@ -114,31 +112,31 @@ exit 0;
 ### modules ###
 sub modules {
     my $current_file = $_;
-    #print qq(Recieved $current_file from caller\n);
+    print qq(Recieved $current_file from caller\n) if ($DEBUG);
     if ($current_file eq q(.) ) {
         $global_working_dir = $File::Find::dir;
-        #print qq(New working directory: $global_working_dir\n);
+        print qq(New working directory: $global_working_dir\n) if ($DEBUG);
     }
     if (-d $current_file && $current_file =~ /^[a-z]/) {
         $File::Find::prune = 1; return;
     }
     return unless /\.pm$/;
-    # FIXME use the contents of $global_working_dir to trim off the beginning
+    # Use the contents of $global_working_dir to trim off the beginning
     # of $current_dir, so the end result is full the name of the module
     # without having to figure out the module's namespace/full path
     my $current_dir = $File::Find::dir;
-    my $filename = "$current_dir/$current_file";
-    my $module_name = substr($filename, length($global_working_dir));
-    #print qq(module name is: $module_name\n);
+    my $curr_file = "$current_dir/$current_file";
+    my $module_name = substr($curr_file, length($global_working_dir));
+    print qq(module name is: $module_name\n) if ($DEBUG);
     # remove leading slash
     $module_name =~ s!^/!!;
     # remove trailing '.pm'
     $module_name =~ s!\.pm$!!;
     # convert remaining slashes to double colons
     $module_name =~ s!/!::!g;
-    print qq(Module $module_name; filename $filename\n);
+    print qq(Module $module_name; filename $curr_file\n) if ($DEBUG);
     #push(@found_modules, [ $module_name, "$current_dir/$current_file" ]);
-    push(@found_modules, [ $module_name, $filename ]);
+    push(@found_modules, [ $module_name, $curr_file ]);
     $i++;
 } # sub modules
 
