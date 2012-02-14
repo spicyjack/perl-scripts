@@ -24,7 +24,7 @@ use File::Find; # File::Find was first released with perl 5
 use Scalar::Util qw(tainted);
 
 my @found_modules; # a list of modules that were found in @INC paths
-my $working_dir; # the directory that File::Find started processing in
+my $global_working_dir; # the directory that File::Find started processing in
 my $i=1;    # a counter
 
 # are we CGI?
@@ -76,11 +76,16 @@ foreach my $this_dir ( @INC ) {
     #print qq(tainted: $this_dir\n);
     # save the name of the directory as $1
     $this_dir =~ /([a-zA-Z0-9\/\._-]+)/;
+    # FIXME this is bad; we should instead see if this path is a parent of a
+    # path that's already been searched, and *THEN* skip it if it has already
+    # been searched
+    next if ( $this_dir =~ /vendor_perl$/ );
+    next if ( $this_dir =~ /site_perl$/ );
     if ( tainted($1) ) {
         die qq(ERROR: this_dir still tainted: $1);
     } # if ( tainted($1) )
     if ( -d $1 ) {
-        print qq(Calling find on $1\n);
+        print q(=== @INC: ) . qq($1 ===\n);
         # the find() method calls the callback on every file and directory
         # found in $1
         find(\&modules, $1);
@@ -109,25 +114,31 @@ exit 0;
 ### modules ###
 sub modules {
     my $current_file = $_;
-    print qq(Recieved $current_file from caller\n);
+    #print qq(Recieved $current_file from caller\n);
     if ($current_file eq q(.) ) {
-        $working_dir = $File::Find::dir;
-        print qq(New working directory: $working_dir\n);
+        $global_working_dir = $File::Find::dir;
+        #print qq(New working directory: $global_working_dir\n);
     }
     if (-d $current_file && $current_file =~ /^[a-z]/) {
         $File::Find::prune = 1; return;
     }
     return unless /\.pm$/;
-    # FIXME use the contents of $working_dir to trim off the beginning of
-    # $current_dir, so the end result is full the name of the module without
-    # having to figure out the module's namespace/full path
+    # FIXME use the contents of $global_working_dir to trim off the beginning
+    # of $current_dir, so the end result is full the name of the module
+    # without having to figure out the module's namespace/full path
     my $current_dir = $File::Find::dir;
-    my $filename = "$File::Find::dir/$current_file";
-    $filename =~ s!^$current_file/!!;
-    $filename =~ s!\.pm$!!;
-    $filename =~ s!/!::!g;
-    print qq(this inc dir is $current_file, filename $filename\n);
-    push(@found_modules, [ $filename, "$File::Find::dir/$current_file" ]);
+    my $filename = "$current_dir/$current_file";
+    my $module_name = substr($filename, length($global_working_dir));
+    #print qq(module name is: $module_name\n);
+    # remove leading slash
+    $module_name =~ s!^/!!;
+    # remove trailing '.pm'
+    $module_name =~ s!\.pm$!!;
+    # convert remaining slashes to double colons
+    $module_name =~ s!/!::!g;
+    print qq(Module $module_name; filename $filename\n);
+    #push(@found_modules, [ $module_name, "$current_dir/$current_file" ]);
+    push(@found_modules, [ $module_name, $filename ]);
     $i++;
 } # sub modules
 
