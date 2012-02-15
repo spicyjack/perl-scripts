@@ -17,6 +17,19 @@
 # output in the correct HTML tags so the browser will render it in the same
 # manner as if the script were running in a shell.
 
+# FIXME
+# - add handling of CGI inputs so you can set things like DEBUG and
+# print_module_names; CGI is a core module since 5.004 :/
+# - add detection of duplicate modules (same module, different paths); 
+#   - flag the output in a way so it gets the user's attention
+#   - try to also flag which module gets loaded by the order of what's in the
+#   @INC path
+# - pretty print the output with nice formatting when the output is HTML and
+# not text
+# - add a help method that prints the script's POD either on the command line
+# or converts it to HTML
+# - document this script via POD
+
 use strict;
 use warnings;
 use ExtUtils::MakeMaker;
