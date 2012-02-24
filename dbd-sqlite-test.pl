@@ -1,6 +1,6 @@
 #!perl -T
 
-=head1 TEST: Exercise the C<Lotto.pm> db_init() method
+=head1 TEST: Test using different SQLite functions via DBD::SQLite
 
 =over
 
@@ -62,11 +62,10 @@ exit 0;
 #print $dbh->do(q(.schema));
 =item * db_init() returns success value, meaning DBI reports table creation
 was successful; note that running this test with DEBUG turned on will produce
-debug output from the L<Lotto> module.
 
 =cut
 
-# sample data to be insertedinto the database
+# sample data to be inserted into the database
 my %example = (
     2533 => q(07-13-2011),
     2534 => q(07-23-2011),
