@@ -28,7 +28,7 @@ log4perl.appender.Screen.layout = PatternLayout
 log4perl.appender.Screen.layout.ConversionPattern = [%6r] %p %m%n
 L4PCFG
 
-Log::Log4perl->init_once($log4perl_cfg);
+Log::Log4perl->init(\$log4perl_cfg);
 my $log = Log::Log4perl->get_logger();
 
 # :memory: is a special parameter to the DBD::SQLite driver
