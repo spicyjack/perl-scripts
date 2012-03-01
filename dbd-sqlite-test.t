@@ -53,7 +53,8 @@ $log->debug(qq(Creating database tables));
 my $result = $dbh->do($db_init_sql);
 ok($result, q(Initialziation of database returned 'true' value));
 
-my $info = $dbh->table_info('%', '', '');
+# get information about the table(s)
+my $info = $dbh->table_info('', '', '', '%');
 
 my $info_ref = $info->fetchall_arrayref();
 use Data::Dumper;
