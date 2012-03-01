@@ -33,7 +33,10 @@ my $log = Log::Log4perl->get_logger();
 
 # :memory: is a special parameter to the DBD::SQLite driver
 # https://metacpan.org/module/DBD::SQLite#Database-Name-Is-A-File-Name
-my $dbh = DBI->connect(qq(dbi:SQLite:dbname=:memory:), q(), q());
+# AutoCommit is set to ON to make the database driver create the table
+# immediately, so it can be tested later on
+my $dbh = DBI->connect(qq(dbi:SQLite:dbname=:memory:), q(), q(),
+    {AutoCommit => 1} );
 isa_ok($dbh, q(DBI::db));
 
 =item * Test script can create a database handle to an in-memory test database
@@ -41,8 +44,6 @@ isa_ok($dbh, q(DBI::db));
 =cut
 
 my $db_init_sql = <<'DB_INIT';
-DROP TABLE IF EXISTS draws;
-
 CREATE TABLE draws (
     draw_num        INTEGER,
     draw_date       VARCHAR(15)
@@ -50,15 +51,18 @@ CREATE TABLE draws (
 DB_INIT
 
 $log->debug(qq(Creating database tables));
+#$log->debug($db_init_sql);
 my $result = $dbh->do($db_init_sql);
 ok($result, q(Initialziation of database returned 'true' value));
 
 # get information about the table(s)
-my $info = $dbh->table_info('', '', '', '%');
+#my $info = $dbh->table_info('', '', '', '%');
+my @tables = $dbh->tables();
 
-my $info_ref = $info->fetchall_arrayref();
+#my $info_ref = $info->fetchall_arrayref();
 use Data::Dumper;
-print Dumper $info_ref;
+#print Dumper $info_ref;
+print Dumper @tables;
 exit 0;
 #print $dbh->do(q(.schema));
 =item * db_init() returns success value, meaning DBI reports table creation
