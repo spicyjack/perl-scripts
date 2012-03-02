@@ -98,7 +98,7 @@ foreach my $this_dir ( @INC ) {
         print q(=== @INC: ) . qq($1 ===\n) if ($DEBUG);
         # the find() method calls the callback on every file and directory
         # found in $1
-        find(\&modules, $1);
+        find(\&found_object, $1);
     } # if ( -d $1 )
 } # foreach my $this_dir ( @INC )
 
@@ -125,8 +125,8 @@ if ( exists $ENV{'REQUEST_METHOD'} ) {
 
 exit 0;
 
-### modules ###
-sub modules {
+### objects that were found via File::Find ###
+sub found_object {
     my $current_file = $_;
     print qq(Recieved $current_file from caller\n) if ($DEBUG);
     if ($current_file eq q(.) ) {
@@ -147,7 +147,7 @@ sub modules {
     if ( exists $found_modules{$curr_file} ) {
         warn qq(Module file $curr_file already exists in found modules hash!)
             if ($DEBUG);
-        next;
+        return;
     }
     my $module_name = substr($curr_file, length($global_working_dir));
     print qq(module name is: $module_name\n) if ($DEBUG);
@@ -161,5 +161,5 @@ sub modules {
     # store the module name as the value for a filename key
     $found_modules{$curr_file} = $module_name;
     $i++;
-} # sub modules
+}
 
