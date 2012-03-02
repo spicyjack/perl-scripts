@@ -145,7 +145,8 @@ sub modules {
     # skip adding this file to the modules hash if it already exists in the
     # hash
     if ( exists $found_modules{$curr_file} ) {
-        warn qq(Module file $curr_file already exists in found modules hash!);
+        warn qq(Module file $curr_file already exists in found modules hash!)
+            if ($DEBUG);
         next;
     }
     my $module_name = substr($curr_file, length($global_working_dir));
