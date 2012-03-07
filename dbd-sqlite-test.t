@@ -21,7 +21,7 @@ diag(qq(Perl $], $^X" ));
 
 my $log4perl_cfg = <<L4PCFG;
 # simple Log::Log4perl configuration for running tests
-log4perl.rootLogger = DEBUG, Screen
+log4perl.rootLogger = INFO, Screen
 log4perl.appender.Screen = Log::Log4perl::Appender::ScreenColoredLevels
 log4perl.appender.Screen.stderr = 1
 log4perl.appender.Screen.layout = PatternLayout
@@ -51,20 +51,16 @@ CREATE TABLE draws (
 DB_INIT
 
 $log->debug(qq(Creating database tables));
-#$log->debug($db_init_sql);
+$log->debug($db_init_sql);
 my $result = $dbh->do($db_init_sql);
-ok($result, q(Initialziation of database returned 'true' value));
+is($result, q(0E0), q(Initialziation of database returned '0E0' value));
 
 # get information about the table(s)
 #my $info = $dbh->table_info('', '', '', '%');
 my @tables = $dbh->tables();
+is(scalar(grep(/"main"\."draws"/, @tables)), 1,
+    q(main.draws table exists in database));
 
-#my $info_ref = $info->fetchall_arrayref();
-use Data::Dumper;
-#print Dumper $info_ref;
-print Dumper @tables;
-exit 0;
-#print $dbh->do(q(.schema));
 =item * db_init() returns success value, meaning DBI reports table creation
 was successful; note that running this test with DEBUG turned on will produce
 
@@ -95,9 +91,12 @@ my $draws_ref = $dbh->selectall_arrayref(
 $log->debug(qq(Getting number of rows));
 
 my @db_draws = @{$draws_ref};
-is(scalar(@old_draws), 5,
+is(scalar(@db_draws), 5,
     q(Returned the same number of rows that was inserted into database));
 
+use Data::Dumper;
+print Dumper @db_draws;
+print qq(\n);
 =item * sample data inserted into database is returned correctly when
 get_draw_rows is called
 
