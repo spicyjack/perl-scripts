@@ -6,9 +6,7 @@
 
 =cut
 
-# useѕ the 'done_testing()' function below to denote that all tests have been
-# run; if you need to update the number of tests, update done_testing below
-use Test::More;
+use Test::More tests => 6;
 use Test::File;
 
 BEGIN {
@@ -94,9 +92,10 @@ my @db_draws = @{$draws_ref};
 is(scalar(@db_draws), 5,
     q(Returned the same number of rows that was inserted into database));
 
-use Data::Dumper;
-print Dumper @db_draws;
-print qq(\n);
+#use Data::Dumper;
+#print Dumper @db_draws;
+#print qq(\n);
+
 =item * sample data inserted into database is returned correctly when
 get_draw_rows is called
 
@@ -104,4 +103,3 @@ get_draw_rows is called
 
 =cut
 
-done_testing();
