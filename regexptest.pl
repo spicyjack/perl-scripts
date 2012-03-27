@@ -2,7 +2,7 @@
 
 # test regular expressions
 
-print "please input a test string: ";
+print "Please input a string to test against: ";
 $input = <STDIN>;
 chomp($input);
 # .1.3.6.1.2.1.25.2
@@ -18,14 +18,13 @@ chomp($input);
 # ^([c-zC-Z]:/[a-zA-Z0-9_.-]+)
 # a file path: >./deathmatch/deathtag:<
 #my $regex = q(^\.[\/\w]*:$);
-my $regex = q(headers:local:archive:size:same);
-if ( $regex =~ /$input/ ) {
 #if ( $input =~ m#^([c-zC-Z]:/[a-zA-Z0-9_.-]+)# ) {
-    print "MATCH; pattern '$regex' matches '$input'\n";
-    print "Thanks for playing!!\n";
+#if ( $regex =~ s/^\s([a-zA-Z0-9\.,]+)\s+$/$1/g ) {
+my $regex = q(^[a-zA-Z]+$);
+if ( $input =~ /$regex/ ) {
+    print qq(Worked!\n);
 } else {
-    print "Does not match pattern \n";
-    print "Regex was: $regex\n";
+    print qq(Did not work!\n);
 } # if ( $input =~
-
+print "regex: '$regex' input: '$input'\n";
 
