@@ -1,0 +1,7 @@
+spawn ssh -l username <some_ip_address>
+expect "*password:"
+send "s3kr3t"
+expect "host>"
+send "show ip flow top-talkers\r"
+expect "host>"
+send "exit\r"
