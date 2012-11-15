@@ -4,7 +4,8 @@
 use Getopt::Long;
 use Log::Log4perl qw(get_logger :levels);
 use LWP::Simple;
-use Moo; # sets strict and warnings
+#use Moo; # sets strict and warnings
+use Pod::Usage;
 #use XML::RSS::Parser::Lite;
 use XML::FeedPP;
 
