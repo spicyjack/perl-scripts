@@ -61,7 +61,7 @@ Parse the output of an RSS feed.
 
 =head1 AUTHOR
 
-Brian Manning, C<< <brian at portaboom dot com> >>
+Brian Manning, C<< <brian at xaoc dot org> >>
 
 =head1 BUGS
 
@@ -76,7 +76,6 @@ changes.
 You can find documentation for this module with the perldoc command.
 
     perldoc App::Mayhem
-
 
 You can also look for information at:
 
