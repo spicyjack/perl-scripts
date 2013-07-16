@@ -88,9 +88,12 @@ print "##################################################################\n";
 
 # go through each directory in the @INC list
 foreach my $this_dir ( @INC ) {
+    # skip the dot directory
+    next if ( $this_dir =~ /\./ );
     #print qq(tainted: $this_dir\n);
     # untaint the directory
-    $this_dir =~ /([a-zA-Z0-9\/\._-]+)/;
+    # the colon is for Windows
+    $this_dir =~ /([a-zA-Z0-9:\/\._-]+)/;
     if ( tainted($1) ) {
         die qq(ERROR: this_dir still tainted: $1);
     } # if ( tainted($1) )
