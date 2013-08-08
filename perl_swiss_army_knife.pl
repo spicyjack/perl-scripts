@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # $Id$
 
 # A script to print out a bunch of info about the current Perl environment
@@ -89,7 +89,7 @@ print "##################################################################\n";
 # go through each directory in the @INC list
 foreach my $this_dir ( @INC ) {
     # skip the dot directory
-    next if ( $this_dir =~ /\./ );
+    next if ( $this_dir =~ /^\.$/ );
     #print qq(tainted: $this_dir\n);
     # untaint the directory
     # the colon is for Windows
