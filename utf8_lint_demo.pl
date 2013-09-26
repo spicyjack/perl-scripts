@@ -227,7 +227,7 @@ use Log::Log4perl::Level;
             . qq(= Log::Log4perl::Appender::Screen\n);
     }
 
-    $log_conf .= qq(log4perl.appender.Screen.stderr = 1\n)
+    $log4perl_conf .= qq(log4perl.appender.Screen.stderr = 1\n)
         . qq(log4perl.appender.Screen.utf8 = 1\n)
         . qq(log4perl.appender.Screen.layout = PatternLayout\n)
         . q(log4perl.appender.Screen.layout.ConversionPattern )
@@ -242,19 +242,36 @@ use Log::Log4perl::Level;
         #. qq(= %d{HH.mm.ss} %p -> %m%n\n);
 
     # create a logger object, and prime the logfile for this session
-    Log::Log4perl::init( \$log_conf );
+    Log::Log4perl::init( \$log4perl_conf );
     my $log = get_logger("");
 
     # print a nice banner
     $log->info(qq(Starting utf8_lint_demo.pl, version $VERSION));
     $log->info(qq(My PID is $$));
 
-    # FIXME script guts go here
-    my %invalid_utf8 = {
+    use constant {
+        # use an XOR with these?
+        UTF8_ONE_BYTE_MASK => 0b10000000,
+        UTF8_TWO_BYTE_MASK => 0b00111111, # this byte plus continuation byte
+        UTF8_THREE_BYTE_MASK => 0b00011111, # this byte plus 2 cont. bytes
+        UTF8_CONTINUATION_BYTE_MASK => 0b01111111,
     };
 
-    my %valid_utf8 = {
-    };
+    foreach my $number ( ( 0xf3, 0xe1, 0x75 ) ) {
+        # FIXME read each byte, and depending on how that byte masks out, set
+        # the bytes_expected flag, then read in the expected bytes and
+        # validate that the bytes are valid UTF-8
+        #if ( $number & UTF8_ONE_BYTE_MASK )
+        #if ( $number & UTF8_TWO_BYTE_MASK )
+        #   set a flag with the number 2 for two bytes
+        #if ( $number & UTF8_THREE_BYTE_MASK )
+        #   set a flag with the number 3 for three bytes
+        #if ( $number & UTF8_CONTINUATION_BYTE_MASK )
+        say sprintf(q(Testing number: 0x%0.2x), $number);
+        say sprintf(q(hex: 0x%0.2x binary: 0b%0.8b), $number, $number);
+        my $and = $number & UTF8_ONE_BYTE_MASK;
+        say sprintf(q(hex: 0x%0.2x binary: 0b%0.8b), $and, $and);
+    }
 
 =cut
 
