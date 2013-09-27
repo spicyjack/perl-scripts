@@ -32,7 +32,7 @@ our $VERSION = '0.01';
 
  Example usage:
 
- utf8_lint_demo.pl --file /path/to/a/file \
+ utf8_lint_demo.pl --file /path/to/a/file
 
 You can view the full C<POD> documentation of this file by calling C<perldoc
 utf8_lint_demo.pl>.
@@ -304,22 +304,31 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
         0xc0, 0x80,       # illegal as per RFC3629
         0xed, 0xa1, 0x8c, 0xed, 0xbe, 0xb4, # illegal surrogate pairs
     );
-    foreach my $number ( @check_numbers ) {
-        #say sprintf(q(Testing number: 0x%0.2x/0b%0.8b), $number, $number);
-        if ( $number < UTF8_ONE_BYTE_UPPER ) {
+    my @valid_bytes;
+    # FIXME dump the valid bytes array when a new starting byte is found
+    foreach my $byte ( @check_numbers ) {
+        #say sprintf(q(Testing number: 0x%0.2x/0b%0.8b), $byte, $byte);
+        if ( $byte < UTF8_ONE_BYTE_UPPER ) {
             if ( $utf8_byte_counter > 0 ) {
-                $log->error("Expecting multi-byte number, found new character");
+                $log->error(q(Expecting multi-byte number, )
+                    . q(found new character));
                 $utf8_byte_counter = 0;
+                $log->error(q(Bytes in holding array:));
+                foreach my $error_byte (@valid_bytes) {
+                    $log->error(sprintf(q(0x%0.2x/0b%0.8b),
+                        $error_byte, $error_byte));
+                }
             }
-            say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
-                $utf8_byte_counter, UTF8_ONE_BYTE_FLAG, $number, $number));
+            $utf8_byte_counter++;
+            $log->info(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
+                $utf8_byte_counter, UTF8_ONE_BYTE_FLAG, $byte, $byte));
             $utf8_byte_counter = 0;
             $utf8_check_flag = UTF8_NO_CHECK_FLAG;
-        } elsif ( $number > UTF8_TAIL_BYTE_LOWER
-            && $number < UTF8_TAIL_BYTE_UPPER  ) {
+        } elsif ( $byte > UTF8_TAIL_BYTE_LOWER
+            && $byte < UTF8_TAIL_BYTE_UPPER  ) {
             $utf8_byte_counter++;
             say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
-                $utf8_byte_counter, $utf8_check_flag, $number, $number));
+                $utf8_byte_counter, $utf8_check_flag, $byte, $byte));
             if ( $utf8_byte_counter > $utf8_check_flag ) {
                 $log->error(q(Recieved too many bytes )
                     . q(for this UTF-8 character));
@@ -329,9 +338,10 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
                 # found the correct amount of bytes, reset counters/flags
                 $utf8_byte_counter = 0;
                 $utf8_check_flag = 0;
+                @valid_bytes = ();
             }
-        } elsif ( $number > UTF8_TWO_BYTE_LOWER
-            && $number < UTF8_TWO_BYTE_UPPER  ) {
+        } elsif ( $byte > UTF8_TWO_BYTE_LOWER
+            && $byte < UTF8_TWO_BYTE_UPPER  ) {
             # set a flag with the number 2 for two bytes
             $utf8_check_flag = UTF8_TWO_BYTE_FLAG;
             # FIXME move this to the top of the block with the check for the
@@ -342,13 +352,14 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
                     q(Found new leading character in a multi-byte sequence));
                 $log->error(sprintf(q(Sequence counter: %u/%u),
                     $utf8_byte_counter, $utf8_check_flag));
-                $log->error(sprintf(q(Offending byte: 0x%0.2x), $number));
+                $log->error(sprintf(q(Offending byte: 0x%0.2x), $byte));
             }
             $utf8_byte_counter++;
+            push(@valid_bytes, $byte);
             say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
-                $utf8_byte_counter, $utf8_check_flag, $number, $number));
-        } elsif ( $number > UTF8_THREE_BYTE_LOWER
-            && $number < UTF8_THREE_BYTE_UPPER  ) {
+                $utf8_byte_counter, $utf8_check_flag, $byte, $byte));
+        } elsif ( $byte > UTF8_THREE_BYTE_LOWER
+            && $byte < UTF8_THREE_BYTE_UPPER  ) {
             # set a flag with the number 2 for two bytes
             $utf8_check_flag = UTF8_THREE_BYTE_FLAG;
             # FIXME move this to the top of the block with the check for the
@@ -359,17 +370,25 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
                     q(Found new leading character in a multi-byte sequence));
                 $log->error(sprintf(q(Sequence counter: %u/%u),
                     $utf8_byte_counter, $utf8_check_flag));
-                $log->error(sprintf(q(Offending byte: 0x%0.2x), $number));
+                $log->error(sprintf(q(Offending byte: 0x%0.2x), $byte));
             }
+            push(@valid_bytes, $byte);
             $utf8_byte_counter++;
             say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
-                $utf8_byte_counter, $utf8_check_flag, $number, $number));
+                $utf8_byte_counter, $utf8_check_flag, $byte, $byte));
         } else {
-            $log->error(
-                q(Found illegal character));
+            push(@valid_bytes, $byte);
+            $utf8_byte_counter++;
+            say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
+                $utf8_byte_counter, $utf8_check_flag, $byte, $byte));
+            $log->error(q(Found illegal byte));
             $log->error(sprintf(q(Sequence counter: %u/%u),
                 $utf8_byte_counter, $utf8_check_flag));
-            $log->error(sprintf(q(Offending byte: 0x%0.2x), $number));
+            $log->error(sprintf(q(Offending byte: 0x%0.2x/0b%0.8b),
+                $byte, $byte));
+            $utf8_byte_counter = 0;
+            $utf8_check_flag = 0;
+            @valid_bytes = ();
         }
     }
 
