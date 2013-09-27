@@ -305,7 +305,6 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
         0xed, 0xa1, 0x8c, 0xed, 0xbe, 0xb4, # illegal surrogate pairs
     );
     my @valid_bytes;
-    # FIXME dump the valid bytes array when a new starting byte is found
     foreach my $byte ( @check_numbers ) {
         #say sprintf(q(Testing number: 0x%0.2x/0b%0.8b), $byte, $byte);
         if ( $byte < UTF8_ONE_BYTE_UPPER ) {
@@ -344,9 +343,6 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
             && $byte < UTF8_TWO_BYTE_UPPER  ) {
             # set a flag with the number 2 for two bytes
             $utf8_check_flag = UTF8_TWO_BYTE_FLAG;
-            # FIXME move this to the top of the block with the check for the
-            # continuation byte, so we know if when we get a continuation
-            # byte, it's a valid continuation byte?
             if ( $utf8_byte_counter > 0 ) {
                 $log->error(
                     q(Found new leading character in a multi-byte sequence));
@@ -362,9 +358,6 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
             && $byte < UTF8_THREE_BYTE_UPPER  ) {
             # set a flag with the number 2 for two bytes
             $utf8_check_flag = UTF8_THREE_BYTE_FLAG;
-            # FIXME move this to the top of the block with the check for the
-            # continuation byte, so we know if when we get a continuation
-            # byte, it's a valid continuation byte?
             if ( $utf8_byte_counter > 0 ) {
                 $log->error(
                     q(Found new leading character in a multi-byte sequence));
