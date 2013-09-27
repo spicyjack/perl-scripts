@@ -182,6 +182,8 @@ sub defined {
 
 Returns a hash containing the parsed script arguments.
 
+=back
+
 =cut
 
 sub get_args {
@@ -250,32 +252,126 @@ use Log::Log4perl::Level;
     $log->info(qq(My PID is $$));
 
     use constant {
+        # flags for checking for multi-byte UTF-8 characters
+        UTF8_NO_CHECK_FLAG                => 0,
+        UTF8_ONE_BYTE_FLAG                => 1,
+        UTF8_TWO_BYTE_FLAG                => 2,
+        UTF8_THREE_BYTE_FLAG              => 3,
+        #UTF8_CHECK_TAIL_BYTE_FLAG => 2,
         # use an XOR with these?
-        UTF8_ONE_BYTE_MASK => 0b10000000,
-        UTF8_TWO_BYTE_MASK => 0b00111111, # this byte plus continuation byte
-        UTF8_THREE_BYTE_MASK => 0b00011111, # this byte plus 2 cont. bytes
-        UTF8_CONTINUATION_BYTE_MASK => 0b01111111,
-    };
+        UTF8_ONE_BYTE_UPPER               => 0x7f,
+        UTF8_TAIL_BYTE_LOWER              => 0x80,
+        UTF8_TAIL_BYTE_UPPER              => 0xbf,
+        UTF8_TWO_BYTE_LOWER               => 0xc0,
+        UTF8_TWO_BYTE_UPPER               => 0xdf,
+        UTF8_THREE_BYTE_LOWER             => 0xe0,
+        UTF8_THREE_BYTE_UPPER             => 0xef,
 
-    foreach my $number ( ( 0xf3, 0xe1, 0x75 ) ) {
-        # FIXME read each byte, and depending on how that byte masks out, set
-        # the bytes_expected flag, then read in the expected bytes and
-        # validate that the bytes are valid UTF-8
-        #if ( $number & UTF8_ONE_BYTE_MASK )
-        #if ( $number & UTF8_TWO_BYTE_MASK )
-        #   set a flag with the number 2 for two bytes
-        #if ( $number & UTF8_THREE_BYTE_MASK )
-        #   set a flag with the number 3 for three bytes
-        #if ( $number & UTF8_CONTINUATION_BYTE_MASK )
-        say sprintf(q(Testing number: 0x%0.2x), $number);
-        say sprintf(q(hex: 0x%0.2x binary: 0b%0.8b), $number, $number);
-        my $and = $number & UTF8_ONE_BYTE_MASK;
-        say sprintf(q(hex: 0x%0.2x binary: 0b%0.8b), $and, $and);
-    }
+        UTF8_FOUR_BYTE_LOWER              => 0xf0,
+        UTF8_FOUR_BYTE_UPPER              => 0xf4,
+    };
+    # 0x10ffff is the last code point in UTF-8, but it's not a valid code
+    # point
+    # http://www.unicode.org/charts/PDF/U10FF80.pdf
+    # http://www.fileformat.info/info/unicode/char/10ffff/index.htm
+
+=begin COMMENT
+
+http://en.wikipedia.org/wiki/Unicode
+Code points in the range U+D800..U+DBFF (1,024 code points) are known as
+high-surrogate code points, and code points in the range U+DC00..U+DFFF (1,024
+code points) are known as low-surrogate code points. A high-surrogate code
+point (also known as a leading surrogate) followed by a low-surrogate code
+point (also known as a trailing surrogate) together form a surrogate pair used
+in UTF-16 to represent 1,048,576 code points outside BMP. High and low
+surrogate code points are not valid by themselves. Thus the range of code
+points that are available for use as characters is U+0000..U+D7FF and
+U+E000..U+10FFFF (1,112,064 code points). The value of these code points (i.e.
+excluding surrogates) is sometimes referred to as the character's scalar value.
+
+=end COMMENT
 
 =cut
 
-=back
+    my $utf8_check_flag = UTF8_NO_CHECK_FLAG;
+    my $utf8_byte_counter = 0;
+    my @check_numbers = (
+        0xf3,             # illegal one byte seq., ISO-8859-1
+        0xe1,             # illegal one byte seq., ISO-8859-1
+        0x66,             # legal one byte seq., ASCII 'f'
+        0xc3, 0xa1,       # legal two byte seq., 'a with agrave'
+        0xe2, 0x99, 0xa8, # legal three byte seq., 'buntu/hot springs (U+2668)
+        0xc0, 0x80,       # illegal as per RFC3629
+        0xed, 0xa1, 0x8c, 0xed, 0xbe, 0xb4, # illegal surrogate pairs
+    );
+    foreach my $number ( @check_numbers ) {
+        #say sprintf(q(Testing number: 0x%0.2x/0b%0.8b), $number, $number);
+        if ( $number < UTF8_ONE_BYTE_UPPER ) {
+            if ( $utf8_byte_counter > 0 ) {
+                $log->error("Expecting multi-byte number, found new character");
+                $utf8_byte_counter = 0;
+            }
+            say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
+                $utf8_byte_counter, UTF8_ONE_BYTE_FLAG, $number, $number));
+            $utf8_byte_counter = 0;
+            $utf8_check_flag = UTF8_NO_CHECK_FLAG;
+        } elsif ( $number > UTF8_TAIL_BYTE_LOWER
+            && $number < UTF8_TAIL_BYTE_UPPER  ) {
+            $utf8_byte_counter++;
+            say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
+                $utf8_byte_counter, $utf8_check_flag, $number, $number));
+            if ( $utf8_byte_counter > $utf8_check_flag ) {
+                $log->error(q(Recieved too many bytes )
+                    . q(for this UTF-8 character));
+                $utf8_byte_counter = 0;
+                $utf8_check_flag = UTF8_NO_CHECK_FLAG;
+            } elsif ( $utf8_byte_counter == $utf8_check_flag ) {
+                # found the correct amount of bytes, reset counters/flags
+                $utf8_byte_counter = 0;
+                $utf8_check_flag = 0;
+            }
+        } elsif ( $number > UTF8_TWO_BYTE_LOWER
+            && $number < UTF8_TWO_BYTE_UPPER  ) {
+            # set a flag with the number 2 for two bytes
+            $utf8_check_flag = UTF8_TWO_BYTE_FLAG;
+            # FIXME move this to the top of the block with the check for the
+            # continuation byte, so we know if when we get a continuation
+            # byte, it's a valid continuation byte?
+            if ( $utf8_byte_counter > 0 ) {
+                $log->error(
+                    q(Found new leading character in a multi-byte sequence));
+                $log->error(sprintf(q(Sequence counter: %u/%u),
+                    $utf8_byte_counter, $utf8_check_flag));
+                $log->error(sprintf(q(Offending byte: 0x%0.2x), $number));
+            }
+            $utf8_byte_counter++;
+            say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
+                $utf8_byte_counter, $utf8_check_flag, $number, $number));
+        } elsif ( $number > UTF8_THREE_BYTE_LOWER
+            && $number < UTF8_THREE_BYTE_UPPER  ) {
+            # set a flag with the number 2 for two bytes
+            $utf8_check_flag = UTF8_THREE_BYTE_FLAG;
+            # FIXME move this to the top of the block with the check for the
+            # continuation byte, so we know if when we get a continuation
+            # byte, it's a valid continuation byte?
+            if ( $utf8_byte_counter > 0 ) {
+                $log->error(
+                    q(Found new leading character in a multi-byte sequence));
+                $log->error(sprintf(q(Sequence counter: %u/%u),
+                    $utf8_byte_counter, $utf8_check_flag));
+                $log->error(sprintf(q(Offending byte: 0x%0.2x), $number));
+            }
+            $utf8_byte_counter++;
+            say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
+                $utf8_byte_counter, $utf8_check_flag, $number, $number));
+        } else {
+            $log->error(
+                q(Found illegal character));
+            $log->error(sprintf(q(Sequence counter: %u/%u),
+                $utf8_byte_counter, $utf8_check_flag));
+            $log->error(sprintf(q(Offending byte: 0x%0.2x), $number));
+        }
+    }
 
 =head1 AUTHOR
 
