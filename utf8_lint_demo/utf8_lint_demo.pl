@@ -61,13 +61,13 @@ looking for valid and invalid C<UTF-8> encoded bytes.
 
 An object used for storing configuration data.
 
-=head3 Object Methods
+=head3 Methods
 
 =cut
 
-#############################
+####################
 # UTF8Test::Config #
-#############################
+####################
 package UTF8Test::Config;
 use strict;
 use warnings;
@@ -78,10 +78,12 @@ use POSIX qw(strftime);
 
 =over
 
-=item new( )
+=item new()
 
-Creates the L<UTF8Test::Config> object, and parses out options using
-L<Getopt::Long>.
+Creates an L<UTF8Test::Config> object, and parses out options using
+L<Getopt::Long>, then stores the options as key/value pairs in the
+L<UTF8Test::Config> object that other objects can query using the methods
+below.
 
 =cut
 
@@ -322,6 +324,8 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
             $log->info(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
                 $utf8_byte_counter, UTF8_ONE_BYTE_FLAG, $byte, $byte));
             $utf8_byte_counter = 0;
+            @valid_bytes = ();
+
             $utf8_check_flag = UTF8_NO_CHECK_FLAG;
         } elsif ( $byte > UTF8_TAIL_BYTE_LOWER
             && $byte < UTF8_TAIL_BYTE_UPPER  ) {
