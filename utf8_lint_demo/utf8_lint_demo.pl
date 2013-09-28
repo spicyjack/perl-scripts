@@ -194,6 +194,44 @@ sub get_args {
     return %{$self->{_args}};
 }
 
+=head2 UTF8Test::Formatter
+
+An object used for storing configuration data.
+
+=head3 Methods
+
+=cut
+
+#######################
+# UTF8Test::Formatter #
+#######################
+package UTF8Test::Formatter;
+use strict;
+use warnings;
+use Getopt::Long;
+use Log::Log4perl;
+use Pod::Usage;
+use POSIX qw(strftime);
+
+=over
+
+=item new( )
+
+Creates an L<UTF8Test::Formatter> object, which is used to format and display
+data parsed by the script.
+
+=cut
+
+sub new {
+    my $class = shift;
+    my $self = bless ({}, $class);
+    return $self;
+}
+
+=back
+
+=cut
+
 ################
 # package main #
 ################
