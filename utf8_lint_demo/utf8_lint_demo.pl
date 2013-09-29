@@ -228,6 +228,26 @@ sub new {
     return $self;
 }
 
+sub write {
+    my $self = shift;
+    my %args = @_;
+    my $log = Log::Log4perl->get_logger();
+
+    $log->logdie(q(Missing UTF-8 byte counter))
+        unless (exists $args{utf8_byte_counter});
+    $log->logdie(q(Missing UTF-8 check flag))
+        unless (exists $args{utf8_check_flag});
+    $log->logdie(q(Missing UTF-8 byte))
+        unless (exists $args{byte});
+
+    my $byte = $args{byte};
+    my $utf8_byte_counter = $args{utf8_byte_counter};
+    my $utf8_check_flag = $args{utf8_check_flag};
+
+    say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
+        $utf8_byte_counter, $utf8_check_flag, $byte, $byte));
+}
+
 =back
 
 =cut
