@@ -208,9 +208,8 @@ An object used for storing configuration data.
 package UTF8Test::Formatter;
 use strict;
 use warnings;
-use Getopt::Long;
+use 5.010;
 use Log::Log4perl;
-use Pod::Usage;
 use POSIX qw(strftime);
 
 =over
@@ -238,9 +237,9 @@ sub write {
     $log->logdie(q(Missing UTF-8 check flag))
         unless (exists $args{utf8_check_flag});
     $log->logdie(q(Missing UTF-8 byte))
-        unless (exists $args{byte});
+        unless (exists $args{utf8_byte});
 
-    my $byte = $args{byte};
+    my $byte = $args{utf8_byte};
     my $utf8_byte_counter = $args{utf8_byte_counter};
     my $utf8_check_flag = $args{utf8_check_flag};
 
@@ -268,6 +267,7 @@ use Log::Log4perl::Level;
     #my $catalog_file = q(/srv/www/purl/html/Ural_Catalog/UralCatalog.xls);
     # create a logger object
     my $cfg = UTF8Test::Config->new();
+    my $formatter = UTF8Test::Formatter->new();
 
     # Start setting up the Log::Log4perl object
     my $log4perl_conf = qq(log4perl.rootLogger = WARN, Screen\n);
@@ -388,8 +388,13 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
         } elsif ( $byte > UTF8_TAIL_BYTE_LOWER
             && $byte < UTF8_TAIL_BYTE_UPPER  ) {
             $utf8_byte_counter++;
-            say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
-                $utf8_byte_counter, $utf8_check_flag, $byte, $byte));
+            $formatter->write(
+                utf8_byte_counter => $utf8_byte_counter,
+                utf8_check_flag   => $utf8_check_flag,
+                utf8_byte         => $byte,
+            );
+            #say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
+            #    $utf8_byte_counter, $utf8_check_flag, $byte, $byte));
             if ( $utf8_byte_counter > $utf8_check_flag ) {
                 $log->error(q(Recieved too many bytes )
                     . q(for this UTF-8 character));
