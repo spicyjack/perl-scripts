@@ -355,7 +355,7 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
 
     my $utf8_check_flag = UTF8_NO_CHECK_FLAG;
     my $utf8_byte_counter = 0;
-    my @check_numbers = (
+    my @check_bytes = (
         0xf3,             # illegal one byte seq., ISO-8859-1
         0xe1,             # illegal one byte seq., ISO-8859-1
         0x66,             # legal one byte seq., ASCII 'f'
@@ -365,7 +365,7 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
         0xed, 0xa1, 0x8c, 0xed, 0xbe, 0xb4, # illegal surrogate pairs
     );
     my @valid_bytes;
-    foreach my $byte ( @check_numbers ) {
+    foreach my $byte ( @check_bytes ) {
         #say sprintf(q(Testing number: 0x%0.2x/0b%0.8b), $byte, $byte);
         if ( $byte < UTF8_ONE_BYTE_UPPER ) {
             if ( $utf8_byte_counter > 0 ) {
