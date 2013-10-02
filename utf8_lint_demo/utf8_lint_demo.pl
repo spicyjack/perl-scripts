@@ -305,7 +305,7 @@ use Log::Log4perl::Level;
 
     # create a logger object, and prime the logfile for this session
     Log::Log4perl::init( \$log4perl_conf );
-    my $log = get_logger("");
+    my $log = Log::Log4perl->get_logger();
 
     # print a nice banner
     $log->info(qq(Starting utf8_lint_demo.pl, version $VERSION));
