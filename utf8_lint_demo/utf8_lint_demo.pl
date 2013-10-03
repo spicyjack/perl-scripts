@@ -232,19 +232,25 @@ sub write {
     my %args = @_;
     my $log = Log::Log4perl->get_logger();
 
-    $log->logdie(q(Missing UTF-8 byte counter))
-        unless (exists $args{utf8_byte_counter});
     $log->logdie(q(Missing UTF-8 check flag))
         unless (exists $args{utf8_check_flag});
     $log->logdie(q(Missing UTF-8 byte))
-        unless (exists $args{utf8_byte});
+        unless (exists $args{byte_array});
+    $log->logdie(q(Missing file counter))
+        unless (exists $args{bytes_read});
 
-    my $byte = $args{utf8_byte};
-    my $utf8_byte_counter = $args{utf8_byte_counter};
+    my @byte_array = @{$args{byte_array}};
     my $utf8_check_flag = $args{utf8_check_flag};
+    my $bytes_read = $args{bytes_read};
 
-    say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
-        $utf8_byte_counter, $utf8_check_flag, $byte, $byte));
+    my $output = sprintf(q(%0.8x ), $bytes_read);
+    $output .= sprintf(q(%u/%u ), scalar(@byte_array), $utf8_check_flag);
+    foreach my $byte ( @byte_array ) {
+        $output .= sprintf(q( %0.2x ), $byte);
+    }
+    $log->info($output);
+    #say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
+    #    $utf8_byte_counter, $utf8_check_flag, $byte, $byte));
 }
 
 =back
@@ -270,14 +276,15 @@ use Log::Log4perl::Level;
     my $formatter = UTF8Test::Formatter->new();
 
     # Start setting up the Log::Log4perl object
-    my $log4perl_conf = qq(log4perl.rootLogger = WARN, Screen\n);
+    #my $log4perl_conf = qq(log4perl.rootLogger = WARN, Screen\n);
+    my $log4perl_conf = qq(log4perl.rootLogger = INFO, Screen\n);
     if ( $cfg->defined(q(verbose)) && $cfg->defined(q(debug)) ) {
         die(q(Script called with --debug and --verbose; choose one!));
     } elsif ( $cfg->defined(q(debug)) ) {
         $log4perl_conf = qq(log4perl.rootLogger = DEBUG, Screen\n);
-    } elsif ( $cfg->defined(q(verbose)) ) {
-        $log4perl_conf = qq(log4perl.rootLogger = INFO, Screen\n);
-    }
+    } #elsif ( $cfg->defined(q(verbose)) ) {
+      #  $log4perl_conf = qq(log4perl.rootLogger = INFO, Screen\n);
+    #}
 
     # Use color when outputting directly to a terminal, or when --colorize was
     # used
@@ -317,16 +324,16 @@ use Log::Log4perl::Level;
         UTF8_ONE_BYTE_FLAG                => 1,
         UTF8_TWO_BYTE_FLAG                => 2,
         UTF8_THREE_BYTE_FLAG              => 3,
+        UTF8_FOUR_BYTE_FLAG              => 3,
         #UTF8_CHECK_TAIL_BYTE_FLAG => 2,
         # use an XOR with these?
         UTF8_ONE_BYTE_UPPER               => 0x7f,
         UTF8_TAIL_BYTE_LOWER              => 0x80,
         UTF8_TAIL_BYTE_UPPER              => 0xbf,
-        UTF8_TWO_BYTE_LOWER               => 0xc0,
+        UTF8_TWO_BYTE_LOWER               => 0xc2,
         UTF8_TWO_BYTE_UPPER               => 0xdf,
         UTF8_THREE_BYTE_LOWER             => 0xe0,
         UTF8_THREE_BYTE_UPPER             => 0xef,
-
         UTF8_FOUR_BYTE_LOWER              => 0xf0,
         UTF8_FOUR_BYTE_UPPER              => 0xf4,
     };
@@ -354,7 +361,7 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
 =cut
 
     my $utf8_check_flag = UTF8_NO_CHECK_FLAG;
-    my $utf8_byte_counter = 0;
+    my $bytes_read = 0;
     my @check_bytes = (
         0xf3,             # illegal one byte seq., ISO-8859-1
         0xe1,             # illegal one byte seq., ISO-8859-1
@@ -364,92 +371,73 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
         0xc0, 0x80,       # illegal as per RFC3629
         0xed, 0xa1, 0x8c, 0xed, 0xbe, 0xb4, # illegal surrogate pairs
     );
-    my @valid_bytes;
+    my @read_bytes;
     foreach my $byte ( @check_bytes ) {
-        #say sprintf(q(Testing number: 0x%0.2x/0b%0.8b), $byte, $byte);
-        if ( $byte < UTF8_ONE_BYTE_UPPER ) {
-            if ( $utf8_byte_counter > 0 ) {
+        $log->debug(sprintf(q(Testing number: 0x%0.2x/0b%0.8b), $byte, $byte));
+        if ( ($byte <= UTF8_ONE_BYTE_UPPER)
+            || ($byte >= UTF8_TWO_BYTE_LOWER && $byte <= UTF8_TWO_BYTE_UPPER)
+            || ($byte >= UTF8_THREE_BYTE_LOWER
+                && $byte <= UTF8_THREE_BYTE_UPPER)
+            || ($byte >= UTF8_FOUR_BYTE_LOWER && $byte <= UTF8_FOUR_BYTE_UPPER)
+            ) {
+            # add the byte to the array, we'll use it no matter what comes
+            # next
+
+            # are we already processing a character?
+            if ( scalar(@read_bytes) > 0 ) {
+                # yes, this new character is an error
                 $log->error(q(Expecting multi-byte number, )
                     . q(found new character));
-                $utf8_byte_counter = 0;
                 $log->error(q(Bytes in holding array:));
-                foreach my $error_byte (@valid_bytes) {
-                    $log->error(sprintf(q(0x%0.2x/0b%0.8b),
-                        $error_byte, $error_byte));
+                $formatter->write(
+                    byte_array => \@read_bytes,
+                    utf8_check_flag => $utf8_check_flag,
+                    bytes_read => $bytes_read,
+                );
+                $utf8_check_flag = 0;
+                @read_bytes = ();
+            }
+            push(@read_bytes, $byte);
+            # is this a one byte character?
+            if ( $byte <= UTF8_ONE_BYTE_UPPER ) {
+                $formatter->write(
+                    byte_array      => \@read_bytes,
+                    utf8_check_flag => UTF8_ONE_BYTE_FLAG,
+                    bytes_read      => $bytes_read,
+                    );
+                $utf8_check_flag = 0;
+                @read_bytes = ();
+            } else {
+                # must be a multi-byte character
+                if ( $byte > UTF8_TWO_BYTE_LOWER
+                    && $byte < UTF8_TWO_BYTE_UPPER  ) {
+                    $utf8_check_flag = UTF8_TWO_BYTE_FLAG;
+                }
+                if ( $byte > UTF8_THREE_BYTE_LOWER
+                    && $byte < UTF8_THREE_BYTE_UPPER  ) {
+                    $utf8_check_flag = UTF8_THREE_BYTE_FLAG;
+                }
+                if ( $byte > UTF8_FOUR_BYTE_LOWER
+                    && $byte < UTF8_FOUR_BYTE_UPPER  ) {
+                    $utf8_check_flag = UTF8_FOUR_BYTE_FLAG;
                 }
             }
-            $utf8_byte_counter++;
-            $log->info(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
-                $utf8_byte_counter, UTF8_ONE_BYTE_FLAG, $byte, $byte));
-            $utf8_byte_counter = 0;
-            @valid_bytes = ();
-
-            $utf8_check_flag = UTF8_NO_CHECK_FLAG;
         } elsif ( $byte > UTF8_TAIL_BYTE_LOWER
             && $byte < UTF8_TAIL_BYTE_UPPER  ) {
-            $utf8_byte_counter++;
-            $formatter->write(
-                utf8_byte_counter => $utf8_byte_counter,
-                utf8_check_flag   => $utf8_check_flag,
-                utf8_byte         => $byte,
-            );
-            #say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
-            #    $utf8_byte_counter, $utf8_check_flag, $byte, $byte));
-            if ( $utf8_byte_counter > $utf8_check_flag ) {
-                $log->error(q(Recieved too many bytes )
-                    . q(for this UTF-8 character));
-                $utf8_byte_counter = 0;
-                $utf8_check_flag = UTF8_NO_CHECK_FLAG;
-            } elsif ( $utf8_byte_counter == $utf8_check_flag ) {
-                # found the correct amount of bytes, reset counters/flags
-                $utf8_byte_counter = 0;
+            push(@read_bytes, $byte);
+            if ( scalar(@read_bytes) == $utf8_check_flag ) {
+                # found the correct amount of bytes, write the list of bytes,
+                # and then reset counters/flags
+                $formatter->write(
+                    byte_array      => \@read_bytes,
+                    utf8_check_flag => $utf8_check_flag,
+                    bytes_read      => $bytes_read,
+                    );
                 $utf8_check_flag = 0;
-                @valid_bytes = ();
+                @read_bytes = ();
             }
-        } elsif ( $byte > UTF8_TWO_BYTE_LOWER
-            && $byte < UTF8_TWO_BYTE_UPPER  ) {
-            # set a flag with the number 2 for two bytes
-            $utf8_check_flag = UTF8_TWO_BYTE_FLAG;
-            if ( $utf8_byte_counter > 0 ) {
-                $log->error(
-                    q(Found new leading character in a multi-byte sequence));
-                $log->error(sprintf(q(Sequence counter: %u/%u),
-                    $utf8_byte_counter, $utf8_check_flag));
-                $log->error(sprintf(q(Offending byte: 0x%0.2x), $byte));
-            }
-            $utf8_byte_counter++;
-            push(@valid_bytes, $byte);
-            say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
-                $utf8_byte_counter, $utf8_check_flag, $byte, $byte));
-        } elsif ( $byte > UTF8_THREE_BYTE_LOWER
-            && $byte < UTF8_THREE_BYTE_UPPER  ) {
-            # set a flag with the number 2 for two bytes
-            $utf8_check_flag = UTF8_THREE_BYTE_FLAG;
-            if ( $utf8_byte_counter > 0 ) {
-                $log->error(
-                    q(Found new leading character in a multi-byte sequence));
-                $log->error(sprintf(q(Sequence counter: %u/%u),
-                    $utf8_byte_counter, $utf8_check_flag));
-                $log->error(sprintf(q(Offending byte: 0x%0.2x), $byte));
-            }
-            push(@valid_bytes, $byte);
-            $utf8_byte_counter++;
-            say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
-                $utf8_byte_counter, $utf8_check_flag, $byte, $byte));
-        } else {
-            push(@valid_bytes, $byte);
-            $utf8_byte_counter++;
-            say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
-                $utf8_byte_counter, $utf8_check_flag, $byte, $byte));
-            $log->error(q(Found illegal byte));
-            $log->error(sprintf(q(Sequence counter: %u/%u),
-                $utf8_byte_counter, $utf8_check_flag));
-            $log->error(sprintf(q(Offending byte: 0x%0.2x/0b%0.8b),
-                $byte, $byte));
-            $utf8_byte_counter = 0;
-            $utf8_check_flag = 0;
-            @valid_bytes = ();
         }
+        $bytes_read++;
     }
 
 =head1 AUTHOR
