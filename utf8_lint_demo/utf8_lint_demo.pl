@@ -234,21 +234,28 @@ sub write {
 
     $log->logdie(q(Missing UTF-8 check flag))
         unless (exists $args{utf8_check_flag});
-    $log->logdie(q(Missing UTF-8 byte))
+    $log->logdie(q(Missing UTF-8 byte array))
         unless (exists $args{byte_array});
-    $log->logdie(q(Missing file counter))
-        unless (exists $args{bytes_read});
+    $log->logdie(q(Missing total bytes read counter))
+        unless (exists $args{total_bytes_read});
+    $log->logdie(q(Missing "Valid UTF-8 flag"))
+        unless (exists $args{valid_utf8_flag});
 
     my @byte_array = @{$args{byte_array}};
     my $utf8_check_flag = $args{utf8_check_flag};
-    my $bytes_read = $args{bytes_read};
+    my $total_bytes_read = $args{total_bytes_read};
+    my $valid_utf8_flag = $args{valid_utf8_flag};
 
-    my $output = sprintf(q(%0.8x ), $bytes_read);
+    my $output = sprintf(q(%0.8x ), $total_bytes_read);
     $output .= sprintf(q(%u/%u ), scalar(@byte_array), $utf8_check_flag);
     foreach my $byte ( @byte_array ) {
         $output .= sprintf(q( %0.2x ), $byte);
     }
-    $log->info($output);
+    if ( $valid_utf8_flag ) {
+        $log->info($output);
+    } else {
+        $log->warn($output);
+    }
     #say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
     #    $utf8_byte_counter, $utf8_check_flag, $byte, $byte));
 }
@@ -320,22 +327,22 @@ use Log::Log4perl::Level;
 
     use constant {
         # flags for checking for multi-byte UTF-8 characters
-        UTF8_NO_CHECK_FLAG                => 0,
-        UTF8_ONE_BYTE_FLAG                => 1,
-        UTF8_TWO_BYTE_FLAG                => 2,
-        UTF8_THREE_BYTE_FLAG              => 3,
-        UTF8_FOUR_BYTE_FLAG              => 3,
-        #UTF8_CHECK_TAIL_BYTE_FLAG => 2,
-        # use an XOR with these?
-        UTF8_ONE_BYTE_UPPER               => 0x7f,
-        UTF8_TAIL_BYTE_LOWER              => 0x80,
-        UTF8_TAIL_BYTE_UPPER              => 0xbf,
-        UTF8_TWO_BYTE_LOWER               => 0xc2,
-        UTF8_TWO_BYTE_UPPER               => 0xdf,
-        UTF8_THREE_BYTE_LOWER             => 0xe0,
-        UTF8_THREE_BYTE_UPPER             => 0xef,
-        UTF8_FOUR_BYTE_LOWER              => 0xf0,
-        UTF8_FOUR_BYTE_UPPER              => 0xf4,
+        UTF8_NO_CHECK_FLAG    => 0,
+        UTF8_ONE_BYTE_FLAG    => 1,
+        UTF8_TWO_BYTE_FLAG    => 2,
+        UTF8_THREE_BYTE_FLAG  => 3,
+        UTF8_FOUR_BYTE_FLAG   => 3,
+        UTF8_INVALID_FLAG     => 0,
+        UTF8_VALID_FLAG       => 1,
+        UTF8_ONE_BYTE_UPPER   => 0x7f,
+        UTF8_TAIL_BYTE_LOWER  => 0x80,
+        UTF8_TAIL_BYTE_UPPER  => 0xbf,
+        UTF8_TWO_BYTE_LOWER   => 0xc2,
+        UTF8_TWO_BYTE_UPPER   => 0xdf,
+        UTF8_THREE_BYTE_LOWER => 0xe0,
+        UTF8_THREE_BYTE_UPPER => 0xef,
+        UTF8_FOUR_BYTE_LOWER  => 0xf0,
+        UTF8_FOUR_BYTE_UPPER  => 0xf4,
     };
     # 0x10ffff is the last code point in UTF-8, but it's not a valid code
     # point
@@ -361,8 +368,8 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
 =cut
 
     my $utf8_check_flag = UTF8_NO_CHECK_FLAG;
-    my $bytes_read = 0;
-    my @check_bytes = (
+    my $total_bytes_read = 0;
+    my @test_bytes = (
         0xf3,             # illegal one byte seq., ISO-8859-1
         0xe1,             # illegal one byte seq., ISO-8859-1
         0x66,             # legal one byte seq., ASCII 'f'
@@ -370,9 +377,11 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
         0xe2, 0x99, 0xa8, # legal three byte seq., 'buntu/hot springs (U+2668)
         0xc0, 0x80,       # illegal as per RFC3629
         0xed, 0xa1, 0x8c, 0xed, 0xbe, 0xb4, # illegal surrogate pairs
+        0x5a, 0x6f, 0x6c, 0x74, 0xe1, 0x6e, 0x20, # Zoltán<sp>
+        0x53, 0xf3, 0x66, 0x61, 0x6c, 0x76, 0x69 # Sófalvi
     );
-    my @read_bytes;
-    foreach my $byte ( @check_bytes ) {
+    my @char_bytes;
+    foreach my $byte ( @test_bytes ) {
         $log->debug(sprintf(q(Testing number: 0x%0.2x/0b%0.8b), $byte, $byte));
         if ( ($byte <= UTF8_ONE_BYTE_UPPER)
             || ($byte >= UTF8_TWO_BYTE_LOWER && $byte <= UTF8_TWO_BYTE_UPPER)
@@ -384,29 +393,32 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
             # next
 
             # are we already processing a character?
-            if ( scalar(@read_bytes) > 0 ) {
+            if ( scalar(@char_bytes) > 0 ) {
                 # yes, this new character is an error
-                $log->error(q(Expecting multi-byte number, )
-                    . q(found new character));
+                $log->error(q(Found new character where 'tail' bytes expected));
+                #$log->error(sprintf(q(%0.8x: %0.2x <-- new character),
+                #    $total_bytes_read, $byte));
                 $log->error(q(Bytes in holding array:));
                 $formatter->write(
-                    byte_array => \@read_bytes,
-                    utf8_check_flag => $utf8_check_flag,
-                    bytes_read => $bytes_read,
+                    byte_array       => \@char_bytes,
+                    utf8_check_flag  => $utf8_check_flag,
+                    total_bytes_read => ($total_bytes_read - 1),
+                    valid_utf8_flag  => UTF8_INVALID_FLAG,
                 );
                 $utf8_check_flag = 0;
-                @read_bytes = ();
+                @char_bytes = ();
             }
-            push(@read_bytes, $byte);
+            push(@char_bytes, $byte);
             # is this a one byte character?
             if ( $byte <= UTF8_ONE_BYTE_UPPER ) {
                 $formatter->write(
-                    byte_array      => \@read_bytes,
-                    utf8_check_flag => UTF8_ONE_BYTE_FLAG,
-                    bytes_read      => $bytes_read,
-                    );
+                    byte_array       => \@char_bytes,
+                    utf8_check_flag  => UTF8_ONE_BYTE_FLAG,
+                    total_bytes_read => $total_bytes_read,
+                    valid_utf8_flag  => UTF8_VALID_FLAG,
+                );
                 $utf8_check_flag = 0;
-                @read_bytes = ();
+                @char_bytes = ();
             } else {
                 # must be a multi-byte character
                 if ( $byte > UTF8_TWO_BYTE_LOWER
@@ -424,20 +436,21 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
             }
         } elsif ( $byte > UTF8_TAIL_BYTE_LOWER
             && $byte < UTF8_TAIL_BYTE_UPPER  ) {
-            push(@read_bytes, $byte);
-            if ( scalar(@read_bytes) == $utf8_check_flag ) {
+            push(@char_bytes, $byte);
+            if ( scalar(@char_bytes) == $utf8_check_flag ) {
                 # found the correct amount of bytes, write the list of bytes,
                 # and then reset counters/flags
                 $formatter->write(
-                    byte_array      => \@read_bytes,
-                    utf8_check_flag => $utf8_check_flag,
-                    bytes_read      => $bytes_read,
-                    );
+                    byte_array       => \@char_bytes,
+                    utf8_check_flag  => $utf8_check_flag,
+                    total_bytes_read => $total_bytes_read,
+                    valid_utf8_flag  => UTF8_VALID_FLAG,
+                );
                 $utf8_check_flag = 0;
-                @read_bytes = ();
+                @char_bytes = ();
             }
         }
-        $bytes_read++;
+        $total_bytes_read++;
     }
 
 =head1 AUTHOR
