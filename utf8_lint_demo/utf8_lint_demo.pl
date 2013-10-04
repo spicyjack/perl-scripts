@@ -313,7 +313,8 @@ use Log::Log4perl::Level;
         # %M{1}: Name of the method name where logging request was issued
         # %m: message
         # %n: newline
-        . qq|= [%8r] %p{1} %4L (%M{1}) %m%n\n|;
+        #. qq|= [%8r] %p{1} %4L (%M{1}) %m%n\n|;
+        . qq|= [%p{1}] %4L (%M{1}) %m%n\n|;
         #. qq( = %d %p %m%n\n)
         #. qq(= %d{HH.mm.ss} %p -> %m%n\n);
 
