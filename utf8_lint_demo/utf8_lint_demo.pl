@@ -395,16 +395,17 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
             # are we already processing a character?
             if ( scalar(@char_bytes) > 0 ) {
                 # yes, this new character is an error
-                $log->error(q(Found new character where 'tail' bytes expected));
-                #$log->error(sprintf(q(%0.8x: %0.2x <-- new character),
-                #    $total_bytes_read, $byte));
-                $log->error(q(Bytes in holding array:));
                 $formatter->write(
                     byte_array       => \@char_bytes,
                     utf8_check_flag  => $utf8_check_flag,
                     total_bytes_read => ($total_bytes_read - 1),
                     valid_utf8_flag  => UTF8_INVALID_FLAG,
                 );
+                #$log->error(sprintf(q(%0.8x: %0.2x <-- new character),
+                #    $total_bytes_read, $byte));
+                #$log->error(q(Bytes in holding array:));
+                #log->error(q(Found new character where 'tail' bytes expected))
+                $log->error(q(Invalid byte sequence found;));
                 $utf8_check_flag = 0;
                 @char_bytes = ();
             }
@@ -449,6 +450,18 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
                 $utf8_check_flag = 0;
                 @char_bytes = ();
             }
+        } else {
+            push(@char_bytes, $byte);
+            # is this a one byte character?
+            $formatter->write(
+                byte_array       => \@char_bytes,
+                utf8_check_flag  => UTF8_ONE_BYTE_FLAG,
+                total_bytes_read => $total_bytes_read,
+                valid_utf8_flag  => UTF8_INVALID_FLAG,
+            );
+            $log->error(q(Invalid byte sequence found;));
+            $utf8_check_flag = 0;
+            @char_bytes = ();
         }
         $total_bytes_read++;
     }
