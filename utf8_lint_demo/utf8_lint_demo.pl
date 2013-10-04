@@ -379,7 +379,8 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
         0xc0, 0x80,       # illegal as per RFC3629
         0xed, 0xa1, 0x8c, 0xed, 0xbe, 0xb4, # illegal surrogate pairs
         0x5a, 0x6f, 0x6c, 0x74, 0xe1, 0x6e, 0x20, # Zoltán<sp>
-        0x53, 0xf3, 0x66, 0x61, 0x6c, 0x76, 0x69 # Sófalvi
+        0x53, 0xf3, 0x66, 0x61, 0x6c, 0x76, 0x69, # Sófalvi
+        0xf5
     );
     my @char_bytes;
     foreach my $byte ( @test_bytes ) {
@@ -406,7 +407,7 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
                 #    $total_bytes_read, $byte));
                 #$log->error(q(Bytes in holding array:));
                 #log->error(q(Found new character where 'tail' bytes expected))
-                $log->error(q(Invalid byte sequence found;));
+                $log->error(q(Found invalid byte parsing for multiple bytes));
                 $utf8_check_flag = 0;
                 @char_bytes = ();
             }
@@ -452,15 +453,17 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
                 @char_bytes = ();
             }
         } else {
+            # this branch is reached if an invalid (not valid UTF-8) byte is
+            # found
+            # push the byte onto the array for the formatter to write
             push(@char_bytes, $byte);
-            # is this a one byte character?
             $formatter->write(
                 byte_array       => \@char_bytes,
                 utf8_check_flag  => UTF8_ONE_BYTE_FLAG,
                 total_bytes_read => $total_bytes_read,
                 valid_utf8_flag  => UTF8_INVALID_FLAG,
             );
-            $log->error(q(Invalid byte sequence found;));
+            $log->error(q(Invalid UTF-8 byte sequence found;));
             $utf8_check_flag = 0;
             @char_bytes = ();
         }
