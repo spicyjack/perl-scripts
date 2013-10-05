@@ -242,12 +242,21 @@ sub write {
         unless (exists $args{valid_utf8_flag});
 
     my @byte_array = @{$args{byte_array}};
+    my $character_length = scalar(@byte_array);
     my $utf8_check_flag = $args{utf8_check_flag};
     my $total_bytes_read = $args{total_bytes_read};
     my $valid_utf8_flag = $args{valid_utf8_flag};
 
-    my $output = sprintf(q(%0.8x ), $total_bytes_read);
-    $output .= sprintf(q(%u/%u ), scalar(@byte_array), $utf8_check_flag);
+    my $output;
+#    if ( $valid_utf8_flag ) {
+        $output = sprintf(q(%0.8x ),
+            $total_bytes_read - 1);
+#            $total_bytes_read - $character_length);
+#            $total_bytes_read - ($character_length - 1));
+#    } else {
+#        $output = sprintf(q(%0.8x ), $total_bytes_read);
+#    }
+    $output .= sprintf(q(%u/%u ), $character_length, $utf8_check_flag);
     foreach my $byte ( @byte_array ) {
         $output .= sprintf(q( %0.2x ), $byte);
     }
@@ -391,16 +400,13 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
                 && $byte <= UTF8_THREE_BYTE_UPPER)
             || ($byte >= UTF8_FOUR_BYTE_LOWER && $byte <= UTF8_FOUR_BYTE_UPPER)
             ) {
-            # add the byte to the array, we'll use it no matter what comes
-            # next
-
             # are we already processing a character?
             if ( scalar(@char_bytes) > 0 ) {
                 # yes, this new character is an error
                 $formatter->write(
                     byte_array       => \@char_bytes,
                     utf8_check_flag  => $utf8_check_flag,
-                    total_bytes_read => ($total_bytes_read - 1),
+                    total_bytes_read => $total_bytes_read,
                     valid_utf8_flag  => UTF8_INVALID_FLAG,
                 );
                 #$log->error(sprintf(q(%0.8x: %0.2x <-- new character),
@@ -411,6 +417,8 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
                 $utf8_check_flag = 0;
                 @char_bytes = ();
             }
+            # add the byte to the array, we'll use it no matter what comes
+            # next
             push(@char_bytes, $byte);
             # is this a one byte character?
             if ( $byte <= UTF8_ONE_BYTE_UPPER ) {
