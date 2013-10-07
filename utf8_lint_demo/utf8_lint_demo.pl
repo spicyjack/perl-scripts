@@ -430,12 +430,10 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
                 if ( $byte > UTF8_TWO_BYTE_LOWER
                     && $byte < UTF8_TWO_BYTE_UPPER  ) {
                     $utf8_check_flag = UTF8_TWO_BYTE_FLAG;
-                }
-                if ( $byte > UTF8_THREE_BYTE_LOWER
+                } elsif ( $byte > UTF8_THREE_BYTE_LOWER
                     && $byte < UTF8_THREE_BYTE_UPPER  ) {
                     $utf8_check_flag = UTF8_THREE_BYTE_FLAG;
-                }
-                if ( $byte > UTF8_FOUR_BYTE_LOWER
+                } elsif ( $byte > UTF8_FOUR_BYTE_LOWER
                     && $byte < UTF8_FOUR_BYTE_UPPER  ) {
                     $utf8_check_flag = UTF8_FOUR_BYTE_FLAG;
                 }
