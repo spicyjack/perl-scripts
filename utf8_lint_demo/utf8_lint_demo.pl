@@ -244,18 +244,10 @@ sub write {
     my @byte_array = @{$args{byte_array}};
     my $character_length = scalar(@byte_array);
     my $utf8_check_flag = $args{utf8_check_flag};
-    my $total_bytes_read = $args{total_bytes_read};
+    my $byte_position = $args{total_bytes_read};
     my $valid_utf8_flag = $args{valid_utf8_flag};
 
-    my $output;
-#    if ( $valid_utf8_flag ) {
-        $output = sprintf(q(%0.8x ),
-            $total_bytes_read - 1);
-#            $total_bytes_read - $character_length);
-#            $total_bytes_read - ($character_length - 1));
-#    } else {
-#        $output = sprintf(q(%0.8x ), $total_bytes_read);
-#    }
+    my $output = sprintf(q(%0.8x ), $byte_position - $character_length);
     $output .= sprintf(q(%u/%u ), $character_length, $utf8_check_flag);
     foreach my $byte ( @byte_array ) {
         $output .= sprintf(q( %0.2x ), $byte);
@@ -265,8 +257,6 @@ sub write {
     } else {
         $log->warn($output);
     }
-    #say(sprintf(q(%u/%u: 0x%0.2x/0b%0.8b),
-    #    $utf8_byte_counter, $utf8_check_flag, $byte, $byte));
 }
 
 =back
@@ -380,6 +370,7 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
     my $utf8_check_flag = UTF8_NO_CHECK_FLAG;
     my $total_bytes_read = 0;
     my @test_bytes = (
+        0xc0, 0x80,       # illegal as per RFC3629
         0xf3,             # illegal one byte seq., ISO-8859-1
         0xe1,             # illegal one byte seq., ISO-8859-1
         0x66,             # legal one byte seq., ASCII 'f'
@@ -393,6 +384,7 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
     );
     my @char_bytes;
     foreach my $byte ( @test_bytes ) {
+        $total_bytes_read++;
         $log->debug(sprintf(q(Testing number: 0x%0.2x/0b%0.8b), $byte, $byte));
         if ( ($byte <= UTF8_ONE_BYTE_UPPER)
             || ($byte >= UTF8_TWO_BYTE_LOWER && $byte <= UTF8_TWO_BYTE_UPPER)
@@ -406,7 +398,10 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
                 $formatter->write(
                     byte_array       => \@char_bytes,
                     utf8_check_flag  => $utf8_check_flag,
-                    total_bytes_read => $total_bytes_read,
+                    # need to use -1 here, because we've already read the next
+                    # byte when we parsed this problem; the error was with the
+                    # previous byte, not the current byte
+                    total_bytes_read => $total_bytes_read - 1,
                     valid_utf8_flag  => UTF8_INVALID_FLAG,
                 );
                 #$log->error(sprintf(q(%0.8x: %0.2x <-- new character),
@@ -475,7 +470,6 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
             $utf8_check_flag = 0;
             @char_bytes = ();
         }
-        $total_bytes_read++;
     }
 
 =head1 AUTHOR
