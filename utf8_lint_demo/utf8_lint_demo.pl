@@ -331,7 +331,7 @@ use Log::Log4perl::Level;
         UTF8_ONE_BYTE_FLAG    => 1,
         UTF8_TWO_BYTE_FLAG    => 2,
         UTF8_THREE_BYTE_FLAG  => 3,
-        UTF8_FOUR_BYTE_FLAG   => 3,
+        UTF8_FOUR_BYTE_FLAG   => 4,
         UTF8_INVALID_FLAG     => 0,
         UTF8_VALID_FLAG       => 1,
         UTF8_ONE_BYTE_UPPER   => 0x7f,
@@ -423,7 +423,7 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
                     total_bytes_read => $total_bytes_read,
                     valid_utf8_flag  => UTF8_VALID_FLAG,
                 );
-                $utf8_check_flag = 0;
+                $utf8_check_flag = UTF8_NO_CHECK_FLAG;
                 @char_bytes = ();
             } else {
                 # must be a multi-byte character
@@ -452,7 +452,7 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
                     total_bytes_read => $total_bytes_read,
                     valid_utf8_flag  => UTF8_VALID_FLAG,
                 );
-                $utf8_check_flag = 0;
+                $utf8_check_flag = UTF8_NO_CHECK_FLAG;
                 @char_bytes = ();
             }
         } else {
@@ -467,7 +467,7 @@ excluding surrogates) is sometimes referred to as the character's scalar value.
                 valid_utf8_flag  => UTF8_INVALID_FLAG,
             );
             $log->error(q(Invalid UTF-8 byte sequence found;));
-            $utf8_check_flag = 0;
+            $utf8_check_flag = UTF8_NO_CHECK_FLAG;
             @char_bytes = ();
         }
     }
