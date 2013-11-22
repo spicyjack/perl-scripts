@@ -199,6 +199,7 @@ use warnings;
 use POSIX qw(strftime);
 use IO::File;
 use IO::Handle;
+use Time::HiRes qw(gettimeofday tv_interval);
 
 use Data::Dumper;
 $Data::Dumper::Indent = 1;
@@ -265,8 +266,6 @@ sub log {
 Log C<$message> with a timestamp to the logfile, or I<STDOUT> if the
 B<--logfile> option was not used.
 
-=back
-
 =cut
 
 sub timelog {
@@ -282,8 +281,6 @@ sub timelog {
 
 Dump C<$document> with a nice header and footer.
 
-=back
-
 =cut
 
 sub header_dump {
@@ -294,11 +291,54 @@ sub header_dump {
         unless (exists $args{document});
     die q(header_dump: Missing 'header' argument)
         unless (exists $args{header});
+    die q(header_dump: Missing 'elapsed_time' argument)
+        unless (exists $args{elapsed_time});
 
     my $document = $args{document};
     my $header = $args{header};
+    my $elapsed_time = $args{elapsed_time};
     $self->timelog(qq(=== Begin $header ===\n) . Dumper($document));
-    $self->timelog(qq(=== End $header ===\n));
+    $self->timelog(qq(=== End $header ===));
+    $self->timelog(qq(--> Elapsed time: $elapsed_time));
+}
+
+=item start_timer()
+
+Starts a L<Time::HiRes> timer object, returns an array reference that
+represents the seconds and milliseconds that the timer object was created.
+This will be used with C<stop_timer()> below.
+
+=back
+
+=cut
+
+sub start_timer {
+    # explicitly use scalar context for floating epoch seconds
+    my $time = [gettimeofday];
+    return $time;
+}
+
+=item stop_timer(start => $start_ref)
+
+Compares two L<Time::HiRes> timer objects, the array reference that is passed
+in to the method, and an object that the method creates when it is called.
+Returns the floating point value that represents the difference between the
+two time values.
+
+=back
+
+=cut
+
+sub stop_timer {
+    my $self = shift;
+    my %args = @_;
+
+    die q(stop_timer: Missing 'start' argument)
+        unless ( exists $args{start} );
+
+    my $start_time = $args{start};
+    my $time_diff = tv_interval($start_time);
+    return $time_diff;
 }
 
 ################
@@ -325,6 +365,7 @@ $Data::Dumper::Indent = 1;
 $Data::Dumper::Sortkeys = 1;
 $Data::Dumper::Terse = 1;
 
+    my %elapsed_times;
     my $data = <<'DATA';
 <?xml version="1.0" encoding="UTF-8"?>
 <idgames-response version="1.0"><content><id>1243</id><title></title><dir>utils/level_edit/</dir><filename>doomed42.zip</filename><size>201047</size><age>791452800</age><date>1995-01-30</date><author></author><email></email><description></description><credits></credits><base></base><buildtime></buildtime><editors></editors><bugs></bugs><textfile><![CDATA[Yes, the LONG awaited release of DoomEd, 4.2.
@@ -346,59 +387,100 @@ DATA
 
     my $data_length = length($data);
     $log->timelog(qq|INFO: data length is $data_length byte(s)|);
-    my ($xml, $document, $module);
+    my ($xml, $document, $module, $start_timer, $elapsed_time);
 
     # XML::Twig
     $module = q(XML::Twig);
     $xml = $module->new();
+    $start_timer = $log->start_timer();
     $document = $xml->parse($data);
-    $log->header_dump(header => $module, document => $document);
+    $elapsed_time = $log->stop_timer(start => $start_timer);
+    $log->header_dump(
+        header       => $module,
+        document     => $document,
+        elapsed_time => $elapsed_time,
+    );
+    $elapsed_times{$module} = $elapsed_time;
 
     # XML::LibXML
     $module = q(XML::LibXML);
     #$xml = $module->new();
+    $start_timer = $log->start_timer();
     $xml = $module->load_xml(string => \$data);
     my $document = $xml->documentElement();
     #$xml->load_xml(string => \$data);
     #$document = $xml->findnodes( '/idgames-response/content' );
-    $log->header_dump(header => $module, document => $document);
+    $elapsed_time = $log->stop_timer(start => $start_timer);
+    $log->header_dump(
+        header       => $module,
+        document     => $document,
+        elapsed_time => $elapsed_time,
+    );
+    $elapsed_times{$module} = $elapsed_time;
 
     # XML::Parser - Tree mode
     $module = q(XML::Parser);
+    $start_timer = $log->start_timer();
     $xml = $module->new( Style => q(Tree) );
     $document = $xml->parse($data);
+    $elapsed_time = $log->stop_timer(start => $start_timer);
     $log->header_dump(
-        header => $module . q( - Tree mode),
-        document => $document
+        header       => $module . q( - Tree mode),
+        document     => $document,
+        elapsed_time => $elapsed_time,
     );
+    $elapsed_times{$module . q(::Tree)} = $elapsed_time;
 
     # XML::Parser - Object mode
     $module = q(XML::Parser);
+    $start_timer = $log->start_timer();
     $xml = $module->new( Style => q(Objects) );
     $document = $xml->parse($data);
+    $elapsed_time = $log->stop_timer(start => $start_timer);
     $log->header_dump(
-        header => $module . q( - Objects mode),
-        document => $document
+        header       => $module . q( - Objects mode),
+        document     => $document,
+        elapsed_time => $elapsed_time,
     );
+    $elapsed_times{$module . q(::Objects)} = $elapsed_time;
 
     #XML::Fast
     $module = q(XML::Fast);
-    $log->header_dump( header => $module, document => xml2hash($data));
+    $start_timer = $log->start_timer();
+    my $hashed_xml = xml2hash($data),
+    $elapsed_time = $log->stop_timer(start => $start_timer);
+    $log->header_dump(
+        header => $module,
+        document => $hashed_xml,
+        elapsed_time => $elapsed_time,
+    );
+    $elapsed_times{$module} = $elapsed_time;
 
     #XML::Parser::EasyTree;
     $module = q(XML::Parser);
+    $start_timer = $log->start_timer();
     $xml = $module->new( Style => q(EasyTree) );
     $document = $xml->parse($data);
+    $elapsed_time = $log->stop_timer(start => $start_timer);
     $log->header_dump(
-        header => $module . q( - EasyTree mode),
-        document => $document
+        header       => $module . q( - EasyTree mode),
+        document     => $document,
+        elapsed_time => $elapsed_time,
     );
-
+    $elapsed_times{$module . q(::EasyTree)} = $elapsed_time;
 
     #XML::Tiny;
     #XML::TreePP;
     #XML::XML2JSON;
 
+    $log->log(qq(\nElapsed times table:));
+    foreach my $key ( sort(keys(%elapsed_times)) ) {
+format STDOUT =
+- @<<<<<<<<<<<<<<<<<<<<< -> @<<<<<<<<<<<<<<<<<<<
+$key, $elapsed_times{$key}
+.
+        write();
+    }
 =head1 AUTHOR
 
 Brian Manning, C<< <brian at xaoc dot org> >>
