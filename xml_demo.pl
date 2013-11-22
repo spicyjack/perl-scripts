@@ -200,6 +200,11 @@ use POSIX qw(strftime);
 use IO::File;
 use IO::Handle;
 
+use Data::Dumper;
+$Data::Dumper::Indent = 1;
+$Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Terse = 1;
+
 =over
 
 =item new($config)
@@ -273,6 +278,29 @@ sub timelog {
     print $FH $timestamp . q(: ) . $msg . qq(\n);
 }
 
+=item header_dump(header => $header, message => $message)
+
+Dump C<$message> with a nice header and footer.
+
+=back
+
+=cut
+
+sub header_dump {
+    my $self = shift;
+    my %args = @_;
+
+    die q(header_dump: Missing 'message' argument)
+        unless (exists $args{message});
+    die q(header_dump: Missing 'header' argument)
+        unless (exists $args{header});
+
+    my $message = $args{message};
+    my $header = $args{header};
+    $self->timelog(qq(=== Begin $header ===\n) . Dumper($message));
+    $self->timelog(qq(=== End $header ===\n));
+}
+
 ################
 # package main #
 ################
@@ -297,6 +325,17 @@ $Data::Dumper::Indent = 1;
 $Data::Dumper::Sortkeys = 1;
 $Data::Dumper::Terse = 1;
 
+    my $data = <<'DATA';
+<?xml version="1.0" encoding="UTF-8"?>
+<idgames-response version="1.0"><content><id>1243</id><title></title><dir>utils/level_edit/</dir><filename>doomed42.zip</filename><size>201047</size><age>791452800</age><date>1995-01-30</date><author></author><email></email><description></description><credits></credits><base></base><buildtime></buildtime><editors></editors><bugs></bugs><textfile><![CDATA[Yes, the LONG awaited release of DoomEd, 4.2.
+
+Written by Geoff Allan, requires Windows 3.1 or above.
+
+Very solid editor, works with Doom 1 or Doom 2. Allows you to view 
+Heretic maps, but the Heretic lists aren't in here yet. Look for it soon.
+]]></textfile><rating>2.0000</rating><votes>7</votes><url>http://www.doomworld.com/idgames/?id=1243</url><idgamesurl>idgames://1243</idgamesurl><reviews><review><text>How would this be a "LONG awaited" release? Its a buggy peice of shit!</text><vote>0</vote></review><review><text>The automatic bug generator. -Giest118</text><vote>0</vote></review><review><text>+1</text><vote>5</vote></review></reviews></content></idgames-response>
+DATA
+
     # create a config object
     my $cfg = XMLDemo::Config->new();
 
@@ -305,11 +344,6 @@ $Data::Dumper::Terse = 1;
     $log->timelog(qq(INFO: Starting xml_demo.pl, version $VERSION));
     $log->timelog(qq(INFO: my PID is $$));
 
-    my $data;
-    # slurp the data line-by-line, and concatenate lines together
-    while ( <main::DATA> ) {
-        $data .= $_;
-    }
     my $data_length = length($data);
     $log->timelog(qq|INFO: data length is $data_length byte(s)|);
     my ($xml, $document, $module);
@@ -318,37 +352,32 @@ $Data::Dumper::Terse = 1;
     $module = q(XML::Twig);
     $xml = $module->new();
     $document = $xml->parse($data);
-    $log->timelog(qq(=== Begin $module ===\n)
-        . Dumper($document)
-        . qq(\n=== End $module ===\n)
-    );
+    $log->header_dump(header => $module, message => $document);
 
     # XML::LibXML
-    $module = q(XML::LibXML);
-    $xml = $module->new();
-    my $root = $xml->load_xml(string => \$data);
-    #$document = $root->getDocumentElement(q(/));
-    #$log->timelog(qq(=== Begin $module ===\n)
-    #    . Dumper $document
-    #    . qq(\n=== End $module ===\n)
-    #);
+    #$module = q(XML::LibXML);
+    #my $dom = $module->new();
+    #$dom->load_xml(string => \$data);
+    #$xml = $dom->documentElement();
+    #$document = $xml->findnodes( '/idgames-response/content' );
+    #$log->header_dump(header => $module, message => $document);
 
     # XML::Parser - Tree mode
     $module = q(XML::Parser);
     $xml = $module->new( Style => q(Tree) );
     $document = $xml->parse($data);
-    $log->timelog(qq(=== Begin $module - Tree mode ===\n)
-        . Dumper($document)
-        . qq(\n=== End $module - Tree mode ===\n)
+    $log->header_dump(
+        header => $module . q( - Tree mode),
+        message => $document
     );
 
     # XML::Parser - Object mode
     $module = q(XML::Parser);
     $xml = $module->new( Style => q(Objects) );
     $document = $xml->parse($data);
-    $log->timelog(qq(=== Begin $module - Objects mode ===\n)
-        . Dumper($document)
-        . qq(\n=== End $module - Objects mode ===\n)
+    $log->header_dump(
+        header => $module . q( - Objects mode),
+        message => $document
     );
 
     #$log->timelog(qq(INFO: Running with XML::Fast));
@@ -356,7 +385,6 @@ $Data::Dumper::Terse = 1;
     #XML::Tiny;
     #XML::TreePP;
     #XML::XML2JSON;
-
 
 =head1 AUTHOR
 
@@ -384,13 +412,3 @@ under the same terms as Perl itself.
 
 # fin!
 # vim: set shiftwidth=4 tabstop=4
-
-__DATA__
-<?xml version="1.0" encoding="UTF-8"?>
-<idgames-response version="1.0"><content><id>1243</id><title></title><dir>utils/level_edit/</dir><filename>doomed42.zip</filename><size>201047</size><age>791452800</age><date>1995-01-30</date><author></author><email></email><description></description><credits></credits><base></base><buildtime></buildtime><editors></editors><bugs></bugs><textfile><![CDATA[Yes, the LONG awaited release of DoomEd, 4.2.
-
-Written by Geoff Allan, requires Windows 3.1 or above.
-
-Very solid editor, works with Doom 1 or Doom 2. Allows you to view 
-Heretic maps, but the Heretic lists aren't in here yet. Look for it soon.
-]]></textfile><rating>2.0000</rating><votes>7</votes><url>http://www.doomworld.com/idgames/?id=1243</url><idgamesurl>idgames://1243</idgamesurl><reviews><review><text>How would this be a "LONG awaited" release? Its a buggy peice of shit!</text><vote>0</vote></review><review><text>The automatic bug generator. -Giest118</text><vote>0</vote></review><review><text>+1</text><vote>5</vote></review></reviews></content></idgames-response>
