@@ -476,7 +476,7 @@ DATA
     $log->log(qq(\nElapsed times table:));
     foreach my $key ( sort(keys(%elapsed_times)) ) {
 format STDOUT =
-- @<<<<<<<<<<<<<<<<<<<<< -> @<<<<<<<<<<<<<<<<<<<
+- @<<<<<<<<<<<<<<<<<<<<< -> @.######
 $key, $elapsed_times{$key}
 .
         write();
