@@ -278,9 +278,9 @@ sub timelog {
     print $FH $timestamp . q(: ) . $msg . qq(\n);
 }
 
-=item header_dump(header => $header, message => $message)
+=item header_dump(header => $header, document => $document)
 
-Dump C<$message> with a nice header and footer.
+Dump C<$document> with a nice header and footer.
 
 =back
 
@@ -290,14 +290,14 @@ sub header_dump {
     my $self = shift;
     my %args = @_;
 
-    die q(header_dump: Missing 'message' argument)
-        unless (exists $args{message});
+    die q(header_dump: Missing 'document' argument)
+        unless (exists $args{document});
     die q(header_dump: Missing 'header' argument)
         unless (exists $args{header});
 
-    my $message = $args{message};
+    my $document = $args{document};
     my $header = $args{header};
-    $self->timelog(qq(=== Begin $header ===\n) . Dumper($message));
+    $self->timelog(qq(=== Begin $header ===\n) . Dumper($document));
     $self->timelog(qq(=== End $header ===\n));
 }
 
@@ -352,15 +352,16 @@ DATA
     $module = q(XML::Twig);
     $xml = $module->new();
     $document = $xml->parse($data);
-    $log->header_dump(header => $module, message => $document);
+    $log->header_dump(header => $module, document => $document);
 
     # XML::LibXML
-    #$module = q(XML::LibXML);
-    #my $dom = $module->new();
-    #$dom->load_xml(string => \$data);
-    #$xml = $dom->documentElement();
+    $module = q(XML::LibXML);
+    #$xml = $module->new();
+    $xml = $module->load_xml(string => \$data);
+    my $document = $xml->documentElement();
+    #$xml->load_xml(string => \$data);
     #$document = $xml->findnodes( '/idgames-response/content' );
-    #$log->header_dump(header => $module, message => $document);
+    $log->header_dump(header => $module, document => $document);
 
     # XML::Parser - Tree mode
     $module = q(XML::Parser);
@@ -368,7 +369,7 @@ DATA
     $document = $xml->parse($data);
     $log->header_dump(
         header => $module . q( - Tree mode),
-        message => $document
+        document => $document
     );
 
     # XML::Parser - Object mode
@@ -377,11 +378,23 @@ DATA
     $document = $xml->parse($data);
     $log->header_dump(
         header => $module . q( - Objects mode),
-        message => $document
+        document => $document
     );
 
-    #$log->timelog(qq(INFO: Running with XML::Fast));
+    #XML::Fast
+    $module = q(XML::Fast);
+    $log->header_dump( header => $module, document => xml2hash($data));
+
     #XML::Parser::EasyTree;
+    $module = q(XML::Parser);
+    $xml = $module->new( Style => q(EasyTree) );
+    $document = $xml->parse($data);
+    $log->header_dump(
+        header => $module . q( - EasyTree mode),
+        document => $document
+    );
+
+
     #XML::Tiny;
     #XML::TreePP;
     #XML::XML2JSON;
