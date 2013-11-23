@@ -444,7 +444,7 @@ DATA
     );
     $elapsed_times{$module . q(::Objects)} = $elapsed_time;
 
-    #XML::Fast
+    # XML::Fast
     $module = q(XML::Fast);
     $start_timer = $log->start_timer();
     my $hashed_xml = xml2hash($data),
