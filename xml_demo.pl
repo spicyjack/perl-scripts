@@ -299,7 +299,7 @@ sub header_dump {
     my $elapsed_time = $args{elapsed_time};
     $self->timelog(qq(=== Begin $header ===\n) . Dumper($document));
     $self->timelog(qq(=== End $header ===));
-    $self->timelog(qq(--> Elapsed time: $elapsed_time));
+    $self->timelog(qq(--> Elapsed time: $elapsed_time\n));
 }
 
 =item start_timer()
@@ -355,7 +355,7 @@ use XML::Fast;
 use XML::LibXML;
 use XML::Parser;
 use XML::Parser::EasyTree;
-use XML::Tiny;
+use XML::Tiny qw(parsefile);
 use XML::TreePP;
 use XML::Twig;
 use XML::XML2JSON;
@@ -407,7 +407,7 @@ DATA
     #$xml = $module->new();
     $start_timer = $log->start_timer();
     $xml = $module->load_xml(string => \$data);
-    my $document = $xml->documentElement();
+    $document = $xml->documentElement();
     #$xml->load_xml(string => \$data);
     #$document = $xml->findnodes( '/idgames-response/content' );
     $elapsed_time = $log->stop_timer(start => $start_timer);
@@ -456,7 +456,7 @@ DATA
     );
     $elapsed_times{$module} = $elapsed_time;
 
-    #XML::Parser::EasyTree;
+    # XML::Parser::EasyTree;
     $module = q(XML::Parser);
     $start_timer = $log->start_timer();
     $xml = $module->new( Style => q(EasyTree) );
@@ -469,10 +469,45 @@ DATA
     );
     $elapsed_times{$module . q(::EasyTree)} = $elapsed_time;
 
-    #XML::Tiny;
-    #XML::TreePP;
-    #XML::XML2JSON;
+    # XML::Tiny;
+    $module = q(XML::Tiny);
+    $start_timer = $log->start_timer();
+    $document = XML::Tiny::parsefile( q(_TINY_XML_STRING_) . $data);
+    $elapsed_time = $log->stop_timer(start => $start_timer);
+    $log->header_dump(
+        header       => $module,
+        document     => $document,
+        elapsed_time => $elapsed_time,
+    );
+    $elapsed_times{$module} = $elapsed_time;
 
+    # XML::TreePP;
+    $module = q(XML::TreePP);
+    $start_timer = $log->start_timer();
+    $xml = $module->new();
+    $document = $xml->parse($data);
+    $elapsed_time = $log->stop_timer(start => $start_timer);
+    $log->header_dump(
+        header       => $module,
+        document     => $document,
+        elapsed_time => $elapsed_time,
+    );
+    $elapsed_times{$module} = $elapsed_time;
+
+    # XML::XML2JSON;
+    $module = q(XML::XML2JSON);
+    $start_timer = $log->start_timer();
+    $xml = $module->new();
+    $document = $xml->convert($data);
+    $elapsed_time = $log->stop_timer(start => $start_timer);
+    $log->header_dump(
+        header       => $module,
+        document     => $document,
+        elapsed_time => $elapsed_time,
+    );
+    $elapsed_times{$module} = $elapsed_time;
+
+    # Show the elapsed times from all of the parsing modules
     $log->log(qq(\nElapsed times table:));
     foreach my $key ( sort(keys(%elapsed_times)) ) {
 format STDOUT =
