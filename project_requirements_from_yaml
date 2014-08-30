@@ -17,52 +17,131 @@ our $copyright = q|Copyright (c)2014 Brian Manning|;
  project_requirements_from_yaml [options]
 
  Script options:
+ -h|--help      Displays this help text
+ -v|--verbose   Verbose script output
  -y|--yaml      YAML file to read from
- -o|--output    Filename of the database to write to
+ -o|--output    Create a database file with this filename
                 Default is to write plaintext to STDOUT
+ -x|--overwrite Overwrite an existing database file
 
 You can view the full C<POD> documentation of this file by calling
 C<perldoc project_requirements_from_yaml>.
 
 =cut
 
+our @opts = (
+    # script options
+    q(verbose|v),
+    q(help|h),
+    q(yaml|y=s),
+    q(output|o=s),
+    q(overwrite|x),
+);
+
+=head1 DESCRIPTION
+
+Parses the contents of the input YAML file, and either outputs formatted
+plaintext to C<STDOUT>, or creates a database file and populates it with the
+data parsed from the YAML file.
+
+=cut
+
+### Pragmas
 use strict;
 use warnings;
 use 5.010;
 
+### System modules
+use File::Basename;
+use Getopt::Long;
+use Pod::Usage;
 use YAML::XS qw(LoadFile);
 use Data::Dumper;
+$Data::Dumper::Indent = 1;
+$Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Terse = 1;
 
-# create a YAML object using the DATA filehandle
-my $struct = LoadFile(q(project_requirements.yaml));
+    # for use in help/error output
+    my $my_name = basename($0);
 
-#say Dumper $struct;
-my $counter = 0;
-foreach my $block (@{$struct}) {
-    $counter++;
-    say sprintf(q(ID: %04u: ), $counter) . $block->{title};
-    say "  Desc:    " . $block->{desc};
-    say "  Section: " . $block->{section};
-    say "  Type:    " . $block->{type};
-    say "  Time:    " . $block->{half_days} . q| (eѕtimate, in half-days)| ;
-    my $actual_time;
-    if ( $block->{type} == 1 ) {
-        $actual_time = q|  (Type 1 tasks don't receive any time adjustments)|;
+    # arguments parsed by Getopts
+    my %args;
+    my $parser = Getopt::Long::Parser->new();
+    $parser->getoptions(\%args, @opts);
+
+    if ( exists $args{help} ) { pod2usage(-exitstatus => 1); }
+
+    say Dumper %args;
+    # create a YAML object using the DATA filehandle
+    # $struct should end up being a reference to an array of hashes
+    my $yaml;
+    if ( ! defined $args{yaml} ) {
+        warn qq(Error: --yaml file to parse was not specified\n);
+        die qq(Use '$my_name --help' to see script options\n);
     }
-    if ( $block->{type} == 2 ) {
-        $actual_time = q|  (Type 2 task: |
-            . $block->{half_days}
-            . q( half-days * 1.5 = )
-            . $block->{half_days} * 1.5
-            . q| half-days)|;
+    if ( -e $args{yaml} ) {
+        $yaml = LoadFile($args{yaml});
+    } else {
+        die q(Error: file ) . $args{yaml} . q( not found/unavailable);
     }
-    if ( $block->{type} == 3 ) {
-        $actual_time = q|  (Type 3 task: |
-            . $block->{half_days}
-            . q( half-days * 3 = )
-            . $block->{half_days} * 3
-            . q| half-days)|;
+
+    #say Dumper $yaml;
+    my $counter = 0;
+    foreach my $block (@{$yaml}) {
+        $counter++;
+        say sprintf(q(ID: %04u: ), $counter) . $block->{title};
+        say "  Desc:    " . $block->{desc};
+        say "  Section: " . $block->{section};
+        say "  Type:    " . $block->{type};
+        say "  Time:    " . $block->{half_days} . q| (eѕtimate, in half-days)|;
+        my $actual_time;
+        if ( $block->{type} == 1 ) {
+            $actual_time
+                = q|  (Type 1 tasks don't receive any time adjustments)|;
+        }
+        if ( $block->{type} == 2 ) {
+            $actual_time = q|  (Type 2 task: |
+                . $block->{half_days}
+                . q( half-days * 1.5 = )
+                . $block->{half_days} * 1.5
+                . q| half-days)|;
+        }
+        if ( $block->{type} == 3 ) {
+            $actual_time = q|  (Type 3 task: |
+                . $block->{half_days}
+                . q( half-days * 3 = )
+                . $block->{half_days} * 3
+                . q| half-days)|;
+        }
+        say $actual_time;
+        print qq(\n);
     }
-    say $actual_time;
-    print qq(\n);
-}
+
+=head1 AUTHOR
+
+Brian Manning, C<< <cpan at xaoc dot org> >>
+
+=head1 BUGS
+
+Please report any bugs or feature requests to the GitHub issue tracker for
+this project:
+
+C<< <https://github.com/spicyjack/perl-scripts/issues> >>.
+
+=head1 SUPPORT
+
+You can view documentation for this script with the C<perldoc> command.
+
+    perldoc project_requirements_from_yaml
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright (c) 2014 Brian Manning, all rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut
+
+# конец!
+# vim: set shiftwidth=4 tabstop=4:
