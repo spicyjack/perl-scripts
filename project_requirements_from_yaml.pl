@@ -1,6 +1,30 @@
 #!/usr/bin/env perl
 
-# Copyright (c)2014 by Brian Manning
+# For support with this file, please file an issue on the GitHub issue tracker
+# for this project: https://github.com/spicyjack/perl-scripts/issues
+
+=head1 NAME
+
+B<project_requirements_from_yaml.pl> - Display on STDOUT, or create a
+database, all of the project requirements given to the script via a YAML file.
+
+=cut
+
+our $copyright = q|Copyright (c)2014 Brian Manning|;
+
+=head1 SYNOPSIS
+
+ project_requirements_from_yaml [options]
+
+ Script options:
+ -y|--yaml      YAML file to read from
+ -o|--output    Filename of the database to write to
+                Default is to write plaintext to STDOUT
+
+You can view the full C<POD> documentation of this file by calling
+C<perldoc project_requirements_from_yaml>.
+
+=cut
 
 use strict;
 use warnings;
