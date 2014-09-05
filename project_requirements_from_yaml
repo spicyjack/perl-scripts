@@ -23,6 +23,7 @@ our $copyright = q|Copyright (c)2014 Brian Manning|;
  -y|--yaml      YAML file to read from
  -o|--output    Create a database file with this filename
                 Default is to write plaintext to STDOUT
+ -g|--digest    Digest mode; print only ID and title of requirements
  -x|--overwrite Overwrite an existing database file
 
 You can view the full C<POD> documentation of this file by calling
@@ -36,6 +37,7 @@ our @opts = (
     q(verbose|v),
     q(help|h),
     q(yaml|y=s),
+    q(digest|g),
     q(output|o=s),
     q(overwrite|x),
 );
@@ -52,6 +54,41 @@ data parsed from the YAML file.
 use strict;
 use warnings;
 use 5.010;
+
+### View for printing all information for the project requirements
+package App::Beastly::View::AllRequirements;
+use Moo;
+
+sub print_item {
+    my $self = shift;
+    my %args = @_;
+    my $item = $args{item};
+    my $total_items = $args{total_items};
+    my $actual_time = $args{actual_time};
+
+    say sprintf(q(ID: %04u: ), $total_items) . $item->{title};
+    say "  Desc:    " . $item->{desc};
+    say "  Created: " . $item->{created};
+    say "  Type:    " . $item->{type};
+    say "  Time:    " . $item->{half_days}
+        . q| (eѕtimate, in half-days)|;
+    print qq(\n);
+}
+
+### View for printing only the ID and title of each project requirement
+package App::Beastly::View::Digest;
+use Moo;
+
+sub print_item {
+    my $self = shift;
+    my %args = @_;
+    my $item = $args{item};
+    my $total_items = $args{total_items};
+    say sprintf(q(ID: %04u: ), $total_items) . $item->{title};
+}
+
+### Main package
+package main;
 
 ### System modules
 use File::Basename;
@@ -95,23 +132,26 @@ $Data::Dumper::Terse = 1;
         say Dumper $yaml;
         exit 0;
     }
+
+    my $view;
+    if ( $args{digest} ) {
+        $view = App::Beastly::View::Digest->new();
+    } else {
+        $view = App::Beastly::View::AllRequirements->new();
+    }
+
     my $total_items = 0;
     my $item_counter = 0;
     my $section_counter = 0;
     my $current_section;
     my $total_half_days = 0;
+    my $computed_time = 0;
+    my $actual_time = q();
+
     foreach my $item (@{$yaml}) {
         if ( ref($item) =~ q(HASH) ) {
             $item_counter++;
             $total_items++;
-            say sprintf(q(ID: %04u: ), $total_items) . $item->{title};
-            say "  Desc:    " . $item->{desc};
-            say "  Created: " . $item->{created};
-            say "  Type:    " . $item->{type};
-            say "  Time:    " . $item->{half_days}
-                . q| (eѕtimate, in half-days)|;
-            my $actual_time;
-            my $computed_time;
             if ( $item->{type} == 1 ) {
                 $actual_time
                     = q|  (Type 1 tasks don't receive any time adjustments)|;
@@ -133,14 +173,19 @@ $Data::Dumper::Terse = 1;
                     . $computed_time
                     . q| half-days)|;
             }
-            say $actual_time;
-            print qq(\n);
             # add the computed half-days to the total project time
             $total_half_days += $computed_time;
+            $view->print_item(
+                item => $item,
+                total_items => $total_items,
+                actual_time => $actual_time,
+            );
         } else {
             # if we've already parsed another section print a section "footer"
-            say qq(Total items in section $current_section: $item_counter);
-            print qq(\n);
+            if ( defined $current_section ) {
+                say qq(Total items in section $current_section: $item_counter);
+                print qq(\n);
+            }
             # then zero out the counters/section name, and start a new section
             $item_counter = 0;
             $current_section = $item;
