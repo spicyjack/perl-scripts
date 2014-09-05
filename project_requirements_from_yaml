@@ -17,6 +17,7 @@ our $copyright = q|Copyright (c)2014 Brian Manning|;
  project_requirements_from_yaml [options]
 
  Script options:
+ -d|--dump      Dump the YAML file after parsing, then exit
  -h|--help      Displays this help text
  -v|--verbose   Verbose script output
  -y|--yaml      YAML file to read from
@@ -31,6 +32,7 @@ C<perldoc project_requirements_from_yaml>.
 
 our @opts = (
     # script options
+    q(dump|d),
     q(verbose|v),
     q(help|h),
     q(yaml|y=s),
@@ -71,7 +73,11 @@ $Data::Dumper::Terse = 1;
 
     if ( exists $args{help} ) { pod2usage(-exitstatus => 1); }
 
-    say Dumper %args;
+    if ( $args{dump} ) {
+        say q(Dumping %args;);
+        say Dumper %args;
+    }
+
     # create a YAML object using the DATA filehandle
     # $struct should end up being a reference to an array of hashes
     my $yaml;
@@ -85,37 +91,67 @@ $Data::Dumper::Terse = 1;
         die q(Error: file ) . $args{yaml} . q( not found/unavailable);
     }
 
-    #say Dumper $yaml;
-    my $counter = 0;
-    foreach my $block (@{$yaml}) {
-        $counter++;
-        say sprintf(q(ID: %04u: ), $counter) . $block->{title};
-        say "  Desc:    " . $block->{desc};
-        say "  Section: " . $block->{section};
-        say "  Type:    " . $block->{type};
-        say "  Time:    " . $block->{half_days} . q| (eѕtimate, in half-days)|;
-        my $actual_time;
-        if ( $block->{type} == 1 ) {
-            $actual_time
-                = q|  (Type 1 tasks don't receive any time adjustments)|;
-        }
-        if ( $block->{type} == 2 ) {
-            $actual_time = q|  (Type 2 task: |
-                . $block->{half_days}
-                . q( half-days * 1.5 = )
-                . $block->{half_days} * 1.5
-                . q| half-days)|;
-        }
-        if ( $block->{type} == 3 ) {
-            $actual_time = q|  (Type 3 task: |
-                . $block->{half_days}
-                . q( half-days * 3 = )
-                . $block->{half_days} * 3
-                . q| half-days)|;
-        }
-        say $actual_time;
-        print qq(\n);
+    if ( $args{dump} ) {
+        say Dumper $yaml;
+        exit 0;
     }
+    my $total_items = 0;
+    my $item_counter = 0;
+    my $section_counter = 0;
+    my $current_section;
+    my $total_half_days = 0;
+    foreach my $item (@{$yaml}) {
+        if ( ref($item) =~ q(HASH) ) {
+            $item_counter++;
+            $total_items++;
+            say sprintf(q(ID: %04u: ), $total_items) . $item->{title};
+            say "  Desc:    " . $item->{desc};
+            say "  Created: " . $item->{created};
+            say "  Type:    " . $item->{type};
+            say "  Time:    " . $item->{half_days}
+                . q| (eѕtimate, in half-days)|;
+            my $actual_time;
+            my $computed_time;
+            if ( $item->{type} == 1 ) {
+                $actual_time
+                    = q|  (Type 1 tasks don't receive any time adjustments)|;
+                $computed_time = $item->{half_days};
+            }
+            if ( $item->{type} == 2 ) {
+                $computed_time = $item->{half_days} * 1.5;
+                $actual_time = q|  (Type 2 task: |
+                    . $item->{half_days}
+                    . q( half-days * 1.5 = )
+                    . $computed_time
+                    . q| half-days)|;
+            }
+            if ( $item->{type} == 3 ) {
+                $computed_time = $item->{half_days} * 3;
+                $actual_time = q|  (Type 3 task: |
+                    . $item->{half_days}
+                    . q( half-days * 3 = )
+                    . $computed_time
+                    . q| half-days)|;
+            }
+            say $actual_time;
+            print qq(\n);
+            # add the computed half-days to the total project time
+            $total_half_days += $computed_time;
+        } else {
+            # if we've already parsed another section print a section "footer"
+            say qq(Total items in section $current_section: $item_counter);
+            print qq(\n);
+            # then zero out the counters/section name, and start a new section
+            $item_counter = 0;
+            $current_section = $item;
+            say qq(==== SECTION: $current_section ====);
+        }
+    }
+    # print one last section "footer"
+    say qq(Total items in section $current_section: $item_counter);
+    print qq(\n);
+    say qq(Total half-days required for project: $total_half_days);
+    say qq(Total number of project items: $total_items);
 
 =head1 AUTHOR
 
