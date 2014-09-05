@@ -67,11 +67,11 @@ sub print_item {
     my $actual_time = $args{actual_time};
 
     say sprintf(q(ID: %04u: ), $total_items) . $item->{title};
-    say "  Desc:    " . $item->{desc};
-    say "  Created: " . $item->{created};
-    say "  Type:    " . $item->{type};
-    say "  Time:    " . $item->{half_days}
-        . q| (eѕtimate, in half-days)|;
+    say "  Desc:        " . $item->{desc};
+    say "  Created:     " . $item->{created};
+    say "  Type:        " . $item->{type};
+    say "  Time:        " . $item->{half_days} . q| (eѕtimate, in half-days)|;
+    say "  Actual time: " . $args{actual_time};
     print qq(\n);
 }
 
@@ -154,24 +154,24 @@ $Data::Dumper::Terse = 1;
             $total_items++;
             if ( $item->{type} == 1 ) {
                 $actual_time
-                    = q|  (Type 1 tasks don't receive any time adjustments)|;
+                    = q|(Type 1 tasks don't receive any time adjustments)|;
                 $computed_time = $item->{half_days};
             }
             if ( $item->{type} == 2 ) {
                 $computed_time = $item->{half_days} * 1.5;
-                $actual_time = q|  (Type 2 task: |
+                $actual_time = q|(Type 2 task) |
                     . $item->{half_days}
                     . q( half-days * 1.5 = )
                     . $computed_time
-                    . q| half-days)|;
+                    . q| half-days total|;
             }
             if ( $item->{type} == 3 ) {
                 $computed_time = $item->{half_days} * 3;
-                $actual_time = q|  (Type 3 task: |
+                $actual_time = q|(Type 3 task) |
                     . $item->{half_days}
                     . q( half-days * 3 = )
                     . $computed_time
-                    . q| half-days)|;
+                    . q| half-days total|;
             }
             # add the computed half-days to the total project time
             $total_half_days += $computed_time;
@@ -195,7 +195,8 @@ $Data::Dumper::Terse = 1;
     # print one last section "footer"
     say qq(Total items in section $current_section: $item_counter);
     print qq(\n);
-    say qq(Total half-days required for project: $total_half_days);
+    say qq(Total half-days required for project: )
+        . sprintf(q(%0.2f), $total_half_days);
     say qq(Total number of project items: $total_items);
 
 =head1 AUTHOR
