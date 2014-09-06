@@ -141,6 +141,7 @@ $Data::Dumper::Terse = 1;
     }
 
     my $total_items = 0;
+    my $total_sections = 0;
     my $item_counter = 0;
     my $section_counter = 0;
     my $current_section;
@@ -188,6 +189,7 @@ $Data::Dumper::Terse = 1;
             }
             # then zero out the counters/section name, and start a new section
             $item_counter = 0;
+            $total_sections++;
             $current_section = $item;
             say qq(==== SECTION: $current_section ====);
         }
@@ -198,6 +200,7 @@ $Data::Dumper::Terse = 1;
     say qq(Total half-days required for project: )
         . sprintf(q(%0.2f), $total_half_days);
     say qq(Total number of project items: $total_items);
+    say qq(Total number of project sections: $total_sections);
 
 =head1 AUTHOR
 
