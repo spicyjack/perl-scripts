@@ -1,0 +1,172 @@
+# Project requirements template
+
+### Section: Database ###
+- Database
+-
+ title: Do something with the database
+ desc: 
+    Description of doing something with the database
+ type: 1
+ created: 2014-08-30
+ half_days: 1
+
+### Section: CRUD ###
+- CRUD
+-
+ title: Do something with a CRUD request
+ desc: 
+    Description of doing something with a CRUD request
+ type: 1
+ created: 2014-08-30
+ half_days: 1
+
+### Section: Business Logic/Processing ###
+- Business Logic/Processing
+-
+ title: Do something with business logic/processing
+ desc: 
+    Describe how business logic decisions get made
+ type: 1
+ created: 2014-08-30
+ half_days: 1
+
+### Section: Reports and other outputs ###
+- Reports and other outputs
+-
+ title: Do something with reports and outputs
+ desc: 
+    Description of doing something with reports and other outputs
+ type: 1
+ created: 2014-08-30
+ half_days: 1
+
+### Section: External interfaces ###
+- External Interfaces
+-
+ title: Do something with external interfaces
+ desc: 
+    How to use data that's external to this project
+ type: 3
+ created: 2014-08-30
+ half_days: 4
+
+### Section: Internationalization ###
+- Internationalization
+-
+ title: How to internationalize the app
+ desc: 
+   Write the app to make strings in the UI easy to translate
+ type: 1
+ created: 2014-09-06
+ half_days: 1
+
+### Section: Accessability ###
+- Accessability
+-
+ title: Make the app accessable to people with disabilities
+ desc: 
+   Allow for different types of accessability of views in the app
+ type: 1
+ created: 2014-09-06
+ half_days: 1
+
+### Section: User administration ###
+- User Administration
+-
+ title: Administer users
+ desc: How to administer users in the app
+ type: 1
+ created: 2014-08-30
+ half_days: 1
+
+### Section: Billing ###
+- Billing
+- 
+ title: Bill users for usage
+ desc: 
+    Bill users for using the app
+ type: 1
+ created: 2014-09-06
+ half_days: 1
+
+### Section: Supported Platforms ###
+- Supported Platforms
+- 
+ title: Supported platform
+ desc: 
+    What platforms the app supports, either/both client and/or server
+ type: 1
+ created: 2014-09-06
+ half_days: 1
+
+### Section: Installation ###
+- Installation
+- 
+ title: How to install the app
+ desc: 
+    Detailed installation instructions
+ type: 1
+ created: 2014-09-06
+ half_days: 1
+
+### Section: Capacity ###
+- Capacity
+- 
+ title: App capacity
+ desc: Make the app handle X number of requests per hour on average
+ type: 1
+ created: 2014-09-06
+ half_days: 1
+
+### Section: Conversion ###
+- Conversion
+- 
+ title: Import data from other apps/systems
+ desc: 
+   Describe how data will be imported, and data will be verified once imported
+ type: 1
+ created: 2014-09-06
+ half_days: 1
+
+### Section: System testing ###
+- System testing
+- 
+ title: Test the system
+ desc: 
+   Describe how the system will be tested, and what the pass/fail inputs for
+   each test
+ type: 1
+ created: 2014-09-06
+ half_days: 1
+
+### Section: Documentation ###
+- Documentation
+- 
+ title: Installation docs
+ desc: 
+   Write docs for installing the app
+ type: 1
+ created: 2014-09-06
+ half_days: 1
+
+### Section: Training ###
+- Training
+- 
+ title: Usage presentation
+ desc: 
+   Write a presentation that describes how to use the app
+ type: 1
+ created: 2014-09-06
+ half_days: 1
+
+### Section: Use Cases ###
+- Use Cases
+- 
+ title: Write use cases for the app
+ desc: 
+   Write use cases, or little stories that explain a given piece of
+   functionality, for the app; 
+ type: 1
+ created: 2014-09-06
+ half_days: 1
+
