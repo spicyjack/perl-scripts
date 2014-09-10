@@ -154,9 +154,11 @@ $Data::Dumper::Terse = 1;
     if ( $args{digest} ) {
         $view = App::Beastly::View::Digest->new();
         say q(++++ Listing all issues in "digest" mode ++++);
+        print qq(\n);
     } elsif ( $args{type3} ) {
         $view = App::Beastly::View::Type3->new();
         say q(++++ Listing all type 3 issues in "digest" mode ++++);
+        print qq(\n);
     } else {
         $view = App::Beastly::View::AllRequirements->new();
     }
@@ -207,18 +209,19 @@ $Data::Dumper::Terse = 1;
         } else {
             # if we've already parsed another section print a section "footer"
             if ( defined $current_section ) {
-                say qq(Total items in section $current_section: $item_counter);
+                say qq(Total items in section "$current_section": )
+                    . $item_counter;
                 print qq(\n);
             }
             # then zero out the counters/section name, and start a new section
             $item_counter = 0;
             $total_sections++;
             $current_section = $item;
-            say qq(==== SECTION: $current_section ====);
+            say qq(---- Section: $current_section ----);
         }
     }
     # print one last section "footer"
-    say qq(Total items in section $current_section: $item_counter);
+    say qq(Total items in section "$current_section": $item_counter);
     print qq(\n);
     say qq(Total half-days required for project: )
         . sprintf(q(%0.2f), $total_half_days);
