@@ -38,6 +38,7 @@ our @opts = (
     q(help|h),
     q(yaml|y=s),
     q(digest|g),
+    q(type3|3),
     q(output|o=s),
     q(overwrite|x),
 );
@@ -88,6 +89,18 @@ sub print_item {
     say sprintf(q(ID %04u T%u: ), $total_items, $type) . $item->{title};
 }
 
+### View for printing only type 3 project requirements
+package App::Beastly::View::Type3;
+use Moo;
+
+sub print_item {
+    my $self = shift;
+    my %args = @_;
+    my $item = $args{item};
+    my $total_items = $args{total_items};
+    say sprintf(q(ID: %04u: ), $total_items) . $item->{title};
+}
+
 ### Main package
 package main;
 
@@ -135,8 +148,15 @@ $Data::Dumper::Terse = 1;
     }
 
     my $view;
+    if ( $args{digest} && $args{type3} ) {
+        die qq(ERROR: use either --digest or --type3, not both\n);
+    }
     if ( $args{digest} ) {
         $view = App::Beastly::View::Digest->new();
+        say q(++++ Listing all issues in "digest" mode ++++);
+    } elsif ( $args{type3} ) {
+        $view = App::Beastly::View::Type3->new();
+        say q(++++ Listing all type 3 issues in "digest" mode ++++);
     } else {
         $view = App::Beastly::View::AllRequirements->new();
     }
@@ -177,6 +197,8 @@ $Data::Dumper::Terse = 1;
             }
             # add the computed half-days to the total project time
             $total_half_days += $computed_time;
+            # if we're printing 'type 3' issues only, check here and skip
+            next if ( $args{type3} && $item->{type} != 3);
             $view->print_item(
                 item => $item,
                 total_items => $total_items,
