@@ -3,6 +3,13 @@
 # For support with this file, please file an issue on the GitHub issue tracker
 # for this project: https://github.com/spicyjack/perl-scripts/issues
 
+# TODO
+# - Create a new View object that just prints the totals from each section;
+# make it a Role that the other two View objects inherit
+# - Change the output format of Digest mode, print a header with each section,
+# then just the issue ID, issue type, and issue title after that, until the
+# next section gets printed
+
 =head1 NAME
 
 B<project_requirements_from_yaml.pl> - Display on STDOUT, or create a
