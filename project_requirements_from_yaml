@@ -83,8 +83,9 @@ sub print_item {
     my $self = shift;
     my %args = @_;
     my $item = $args{item};
+    my $type = $item->{type};
     my $total_items = $args{total_items};
-    say sprintf(q(ID: %04u: ), $total_items) . $item->{title};
+    say sprintf(q(ID %04u T%u: ), $total_items, $type) . $item->{title};
 }
 
 ### Main package
