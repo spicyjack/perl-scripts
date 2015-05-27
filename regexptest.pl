@@ -20,8 +20,18 @@ chomp($input);
 #my $regex = q(^\.[\/\w]*:$);
 #if ( $input =~ m#^([c-zC-Z]:/[a-zA-Z0-9_.-]+)# ) {
 #if ( $regex =~ s/^\s([a-zA-Z0-9\.,]+)\s+$/$1/g ) {
-my $regex = q(^[a-zA-Z]+$);
-if ( $input =~ /$regex/ ) {
+#my $regex = q(^[a-zA-Z]+$);
+
+# regex for finding Rex tasks/batch tasks
+# - multiline because of the '\x' modifier
+my $regex = qr/
+    ^task[ \t]* "([a-zA-Z0-9_]+)"\s{0,},
+    |^task[ \t]*q{1,2}\(([a-zA-Z0-9_-]+)\)\s{0,},
+    |^batch[ \t]*"([a-zA-Z0-9_-]+)"\s{0,},
+    |^batch[ \t]*q{1,2}\(([a-zA-Z0-9_-]+)\)\s{0,},
+    /x;
+#my $regex = qr/^task[ \t]*q{1,2}\(([a-zA-Z0-9_-])\),/;
+if ( $input =~ $regex ) {
     print qq(Worked!\n);
 } else {
     print qq(Did not work!\n);
