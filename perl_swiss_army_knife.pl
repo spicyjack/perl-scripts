@@ -32,6 +32,7 @@
 
 use strict;
 use warnings;
+use English;
 use ExtUtils::MakeMaker;
 use File::Find; # File::Find was first released with perl 5
 use Scalar::Util qw(tainted);
@@ -50,9 +51,10 @@ if ( exists $ENV{'REQUEST_METHOD'} ) {
 } # if ( exists $ENV{'REQUEST_METHOD'} )
 
 print "##################################################################\n";
-print "# Perl Executable Name (\$^X)                                     #\n";
+print "# Perl Executable Name and Version (\$^V/\$^X)                  #\n";
 print "##################################################################\n";
-print qq(Executable name: $^X\n\n);
+print qq(Executable name:    $EXECUTABLE_NAME\n);
+print qq(Executable version: $PERL_VERSION\n\n);
 
 print "##################################################################\n";
 print "# Perl Runtime Environment (\%ENV)                                #\n";
