@@ -51,7 +51,7 @@ if ( exists $ENV{'REQUEST_METHOD'} ) {
 } # if ( exists $ENV{'REQUEST_METHOD'} )
 
 print "##################################################################\n";
-print "# Perl Executable Name and Version (\$^V/\$^X)                  #\n";
+print "# Perl Executable Name and Version (\$^V/\$^X)                     #\n";
 print "##################################################################\n";
 print qq(Executable name:    $EXECUTABLE_NAME\n);
 print qq(Executable version: $PERL_VERSION\n\n);
