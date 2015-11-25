@@ -7,7 +7,7 @@ use Mojo::Util qw(dumper);
 # - Put your content in a file called 'data.txt'
 # - Call `cURL` with
 #
-# curl -i -X POST -F name=@large_image.jpg \
+# curl -i -X POST -F 528d3604356050ce3ee5776aca7a9098=@large_image.jpg \
 # http://localhost:3000/images/upload/54321/528d3604356050ce3ee5776aca7a9098;
 # echo
 
@@ -29,14 +29,21 @@ post q(/images/upload/:ro_number/:checksum) => sub {
 
   $log->debug(dumper($c->req->content));
   my $upload = $c->req->upload($checksum);
-  $log->debug(q(Upload filename is: ) . $upload->filename);
-  my $filename = $upload->filename;
-  $log->debug(qq(Moving file $filename to /tmp));
-  $upload->move_to(qq(/tmp/$ro_number.$filename));
-  $c->render(
-    status => 201,
-    text => qq({ "upload_successful": "$ro_number/$checksum" })
-  );
+  if ( defined $upload ) {
+    $log->debug(q(Upload filename is: ) . $upload->filename);
+    my $filename = $upload->filename;
+    $log->debug(qq(Moving file $filename to /tmp));
+    $upload->move_to(qq(/tmp/$ro_number.$filename));
+    $c->render(
+      status => 201,
+      text => qq({ "upload_successful": "$ro_number/$checksum" })
+    );
+  } else {
+    $c->render(
+      status => 500,
+      text => qq({ "upload_failed": "$ro_number/$checksum" })
+    );
+  }
 };
 
 app->start;
