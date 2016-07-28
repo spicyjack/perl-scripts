@@ -29,7 +29,7 @@ use Getopt::Long;
 use Pod::Usage;
 # $noreadpassword get checked below along with --stdin and --ranlength to make
 # sure that the script has enough information to run
-eval q(use Term::ReadPassword;);
+eval { use Term::ReadPassword; };
 my $noreadpassword;
 if ( $@ ) {
     $noreadpassword = 1;
@@ -83,10 +83,11 @@ my %diceware; # wordlist with numbers as the index
     # get the command line switches
     my $parser = new Getopt::Long::Parser;
     $parser->configure();
-    $parser->getoptions(q(h|longhelp|help) => \&ShowHelp,
+    $parser->getoptions(
+        q(h|longhelp|help) => \&ShowHelp,
         q(pr|perlrand|perlrandom) => \$perlrandom,
         q(n|num|number=i) => \$req_passphrases,
-          q(r|ranlength|rl=i) => \$ranlength,
+        q(r|ranlength|rl=i) => \$ranlength,
         q(randomdev|randev|rd=s) => \$random_dev,
         q(debug|D:i) => \$DEBUG,
         q(l|dl|list|dicelist|wordlist=s) => \$dicelist,
@@ -112,96 +113,97 @@ my %diceware; # wordlist with numbers as the index
 
     my $counter = 0;
 
-    open (LIST, "< $dicelist");
-    foreach my $line (<LIST>) {
+    open (my $fh_list, q(<),  $dicelist);
+    foreach my $line (<$fh_list>) {
          chomp($line);
         if ( $line =~ m/^[1-6]{5}/ ) {
             $counter++;
             my ($dicenum, $diceword) = split(/\t/, $line);
-            $diceware{$dicenum} = ucfirst($diceword);
+            $diceware{$dicenum} = $diceword;
             #print q(line # ) . sprintf(q(%03d), $counter) . q(:  ')
-            print q(number: ) . $dicenum . q(, word: ')
-                . $diceword . qq('\n) if ( defined $DEBUG && $DEBUG > 0 );
+            print qq(number: $dicenum, word: '$diceword'\n)
+                if ( defined $DEBUG && $DEBUG > 0 );
         } # if ( $line =~ m/^[1-6]{5}/ )
     } # foreach
+    close $fh_list;
     print qq(Read in $counter Diceware words\n) if ( defined $DEBUG );
 
-for (my $num_passphrases = 0; $num_passphrases < $req_passphrases ;
-        $num_passphrases++) {
-    # if ranlength is not set, read in the dice numbers from the user
-    my $dicein = q();
-    if ( ! $ranlength ) {
-        # maybe $stdin was set instead
-        if ( defined $stdin ) {
-            while(<STDIN>) {
-                $dicein .= $_;
-            }
-            $dicein =~ s/\s/ /g;
+    for (my $num_passphrases = 0;
+            $num_passphrases < $req_passphrases;
+            $num_passphrases++) {
+        # if ranlength is not set, read in the dice numbers from the user
+        my $dicein = q();
+        if ( ! $ranlength ) {
+            # maybe $stdin was set instead
+            if ( defined $stdin ) {
+                while(<STDIN>) {
+                    $dicein .= $_;
+                }
+                $dicein =~ s/\s/ /g;
+            } else {
+                # nope, grab the numberlist from the user
+                print q(Enter in the list of numbers to translate )
+                    . qq(into Diceware words:\n);
+                $dicein = read_password(q(diceware string: ), 0,0, 1);
+            } # if ( defined $stdin )
         } else {
-            # nope, grab the numberlist from the user
-            print q(Enter in the list of numbers to translate )
-                . qq(into Diceware words:\n);
-            $dicein = read_password(q(diceware string: ), 0,0, 1);
-        } # if ( defined $stdin )
-    } else {
-        my @bytes; # list of bytes generated randomly
-        if ( defined $perlrandom ) {
-            # generate random numbers via perl's built-in rand() function
-            srand();
-            for ( my $x = 1; $x < $ranlength * 5; $x++ ) {
-                push(@bytes, int(rand(6)) + 1);
-            } # for ( my $x = 1; $x > $ranlength * 5; $x++ )
-            $dicein = join(q(), @bytes);
-        } else {
-            # generate random numbers via the system's /dev/random device
-            open(RANDOM, q(<) . $random_dev);
-              my $rawrandom;
-            while ( length($dicein) < $ranlength * 5 ) {
-                # sysread(FILEHANDLE, $buffer, read_length)
-                sysread(RANDOM, $rawrandom, 1);
-                my $byte = sprintf("%u", unpack(q(C), $rawrandom));
-                if ( $byte < 252 ) {
-                    # to represent 6 possible values, we can divide 252 by 6,
-                    # and add one to the result to get the possibility of
-                    # values between 1 and 6 
-                    # append the value to the $dicein string
-                    $dicein .= int($byte/42) + 1;
-                } # if ( $byte < 252 )
-            } # while ($dicein < $ranlength)
-            close(RANDOM);
-        } # if ( defined $perlrand )
-    } # if ( ! $ranlength )
-    my $dicepassword;
-    my $original_in = $dicein;
-    # while $dicein has data
-    while ( length($dicein) > 4 ) {
-        # test a block of 5 bytes
-        # substr($scalar, offset, length)
-        my $teststring = substr($dicein, 0, 5);
-        if ( $teststring =~ m/[1-6]{5}/ ) {
-            # we got a match, 5 numbers in a row;
-            # add the diceware string to the password
-            # FIXME if there is more than one wordlist passed in, choose which
-            # wordlist to use here
-            $dicepassword .= $diceware{$teststring};
-            # and then shorten $dicein by 5 characters
-            $dicein = substr($dicein, 5);
-        } else {
-            # no match, shorten the $dicein string
-            $dicein = substr($dicein, 1);
-        } # if ( m/[1-6]{5}/ )
-    } # while ( length($dicein) > 0 )
+            my @bytes; # list of bytes generated randomly
+            if ( defined $perlrandom ) {
+                # generate random numbers via perl's built-in rand() function
+                srand();
+                for ( my $x = 1; $x < $ranlength * 5; $x++ ) {
+                    push(@bytes, int(rand(6)) + 1);
+                } # for ( my $x = 1; $x > $ranlength * 5; $x++ )
+                $dicein = join(q(), @bytes);
+            } else {
+                # generate random numbers via the system's /dev/random device
+                open(my $fh_random, q(<), $random_dev);
+                  my $rawrandom;
+                while ( length($dicein) < $ranlength * 5 ) {
+                    # sysread(FILEHANDLE, $buffer, read_length)
+                    sysread($fh_random, $rawrandom, 1);
+                    my $byte = sprintf("%u", unpack(q(C), $rawrandom));
+                    if ( $byte < 252 ) {
+                        # to represent 6 possible values, we can divide 252 by
+                        # 6, and add one to the result to get the possibility
+                        # of values between 1 and 6 append the value to the
+                        # $dicein string
+                        $dicein .= int($byte/42) + 1;
+                    } # if ( $byte < 252 )
+                } # while ($dicein < $ranlength)
+                close($fh_random);
+            } # if ( defined $perlrand )
+        } # if ( ! $ranlength )
+        my $dicepassword;
+        my $original_in = $dicein;
+        # while $dicein has data
+        while ( length($dicein) > 4 ) {
+            # test a block of 5 bytes
+            # substr($scalar, offset, length)
+            my $teststring = substr($dicein, 0, 5);
+            if ( $teststring =~ m/[1-6]{5}/ ) {
+                # we got a match, 5 numbers in a row;
+                # add the diceware string to the password
+                # FIXME if there is more than one wordlist passed in, choose
+                # which wordlist to use here
+                $dicepassword .= $diceware{$teststring};
+                # and then shorten $dicein by 5 characters
+                $dicein = substr($dicein, 5);
+            } else {
+                # no match, shorten the $dicein string
+                $dicein = substr($dicein, 1);
+            } # if ( m/[1-6]{5}/ )
+        } # while ( length($dicein) > 0 )
 
-    if ( defined $DEBUG ) {
-        # pretty print the output
-        print qq(input was: $original_in\n);
-        print qq(output is: $dicepassword\n);
-    } else {
-        # just print the generated password
-        print $dicepassword; # . qq(\n);
+        if ( defined $DEBUG ) {
+            # pretty print the output
+            print qq(input was: $original_in\n);
+            print qq(output is: $dicepassword\n);
+        } else {
+            # just print the generated password
+            print qq($dicepassword\n); # . qq(\n);
+        }
     }
-
-} # for (my $num_passphrases = 0; $req_passphrases == $num_passphrases;
 ### end main script ###
 
 sub ShowHelp {
@@ -232,5 +234,5 @@ Brian Manning
 
 =cut
 
-# vi: set sw=4 ts=4 cin:
+# vi: set sw=4 ts=4
 # end of line
