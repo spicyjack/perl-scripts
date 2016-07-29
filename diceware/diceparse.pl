@@ -21,6 +21,11 @@
 # - suppress warning for Term::ReadPassword if given a --quiet switch
 # - allow for multiple word lists, and add a way to choose a random
 # wordlist later on
+# - Split things up into different functions
+#   - Reading things: wordlists, diceware number lists
+#   - Getting random numbers: for use with wordlists, and for the program to
+#     use for determine actions for it to take
+#   - Presentation: outputting the list of generated numbers to the user
 
 use strict;
 use warnings;
