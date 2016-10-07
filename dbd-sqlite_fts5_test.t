@@ -13,7 +13,15 @@ BEGIN {
 }
 
 my $default_table_count = 2;
-my $expected_fts_tables = 7;
+# FTS version 4
+# my $expected_fts_tables = 7;
+# my $expected_fts_return = q(0E0);
+
+# FTS version 5
+# NOTE to enable Full-Text Search version 5 in DBD::SQLite, it needs to have
+# the flag '­DSQLITE_ENABLE_FTS5' to `@CC_DEFINE` in `Makefile.PL`
+my $expected_fts_tables = 6;
+my $expected_fts_return = 1;
 
 diag(qq|Testing DBD::SQLite version $DBD::SQLite::VERSION|);
 diag(qq(Perl $], $^X" ));
@@ -49,15 +57,16 @@ foreach my $table (@tables) {
 }
 
 my $db_init_sql = <<'DB_INIT';
--- CREATE VIRTUAL TABLE f USING fts5(x);
-CREATE VIRTUAL TABLE f USING fts4(x);
+CREATE VIRTUAL TABLE f USING fts5(x);
+-- CREATE VIRTUAL TABLE f USING fts4(x);
 INSERT INTO f(rowid, x) VALUES (1, 'A B C D x x x E F x');
 DB_INIT
 
 $log->debug(qq(Creating Full-Text search database virtual table));
 $log->debug($db_init_sql);
 my $result = $dbh->do($db_init_sql);
-is($result, q(0E0), q(Initialziation of database returned '0E0' value));
+is($result, $expected_fts_return,
+   qq(Initialziation of database returned '$expected_fts_return' value));
 
 # get information about the table(s) after adding FTS virtual table
 @tables = $dbh->tables();
