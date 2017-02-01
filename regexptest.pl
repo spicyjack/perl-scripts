@@ -31,10 +31,22 @@ my $regex = qr/
     |^batch[ \t]*q{1,2}\(([a-zA-Z0-9_-]+)\)\s{0,},
     /x;
 #my $regex = qr/^task[ \t]*q{1,2}\(([a-zA-Z0-9_-])\),/;
+
+# for matching text...
 if ( $input =~ $regex ) {
     print qq(Worked!\n);
 } else {
     print qq(Did not work!\n);
 } # if ( $input =~
+
+# for substituting text...
+#my $regex = qr/.*#(\d+);.*/;
+#if ( $input =~ s/$regex/$1/ ) {
+#    print qq(Worked! \$input is now '$input' \n);
+#} else {
+#    print qq(Did not work! \$input is still $input\n);
+#} # if ( $input =~
+
 print "regex: '$regex' input: '$input'\n";
+
 
