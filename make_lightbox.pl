@@ -1,5 +1,8 @@
 #!/usr/bin/perl -w
 
+use warnings;
+use strict;
+
 # created 11/22/00 for makeing web pages out of directories of pictures
 # (C) 1999 by Brian Manning <brian@sunset-cliffs.org>
 #
@@ -53,11 +56,13 @@ EOHEAD
 print OUT $head;
 
 foreach my $filename (@filedir) {
+   next if ( $filename =~ /\.sm\.jpg/g );
    print "File: $filename\n";
    my $sm_name = $filename;
    $sm_name =~ s/\.jpg$/.sm.jpg/;
-      print "- Resizing $filename to $sm_name\n";
-my $img_link = <<EOIMG;
+   print "- Resizing $filename to $sm_name\n";
+   qx(convert -resize 300 $filename $sm_name);
+   my $img_link = <<EOIMG;
       <a href="$filename" data-lightbox="pix"
          data-tіtle="Click anywhere outside the image or the X to the right to close.">
          <img src="$sm_name" alt="" /></a>
