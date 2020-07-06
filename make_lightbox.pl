@@ -25,7 +25,34 @@ my $start = time;
 my $counter = 0;
 my $row = 1;
 my $column = 1;
+my %captions;
+my $captions_fh;
+my $default_caption_text = q(Click outside the image or the X );
+$default_caption_text .= q(to the upper right to close);
 
+# read in photo captions, if the file exists
+if ( -e q(./captions.txt) ) {
+   open($captions_fh, q|<:encoding(UTF-8)|, q(./captions.txt));
+   foreach my $caption_line ( <$captions_fh> ) {
+      chomp $caption_line;
+      my ($key, $value) = split(/\|/, $caption_line);
+
+      # check for 'undef' $value
+      $value = $default_caption_text
+         unless ( defined $value );
+
+      $captions{$key} = $value;
+   }
+}
+
+my $header_text;
+if ( exists($captions{header}) ) {
+   $header_text = $captions{header};
+} else {
+   $header_text = "This is the default header text"
+}
+
+# open the output file 'index.html'
 open (OUT, "> index.html");
 
 my $head = <<EOHEAD;
@@ -46,9 +73,12 @@ my $head = <<EOHEAD;
 <body>
 
 <section>
-   <h3>Some header text here</h3>
+   <h3>$header_text</h3>
 
    <p>Click on any of the images below to view the images in a lightbox.</p>
+   <p>Once the lightbox has been opened, click anywhere outside the image, or
+   click on the "X" symbol in the upper right corner of the lightbox to
+   close.</p>
 
    <div>
 EOHEAD
@@ -57,14 +87,26 @@ print OUT $head;
 
 foreach my $filename (@filedir) {
    next if ( $filename =~ /\.sm\.jpg/g );
-   print "File: $filename\n";
+   print "File: $filename - ";
+   my $caption_text;
+   if ( exists $captions{$filename} ) {
+      print qq(Using ѕupplied caption; );
+      $caption_text = $captions{$filename};
+   } else {
+      print qq(Applying default caption; );
+      if ( exists $captions{default} ) {
+         $caption_text = $captions{default};
+      } else {
+         $caption_text = $default_caption_text;
+      }
+   }
+
    my $sm_name = $filename;
    $sm_name =~ s/\.jpg$/.sm.jpg/;
-   print "- Resizing $filename to $sm_name\n";
+   print "Resizing $filename to $sm_name\n";
    qx(convert -resize 300 $filename $sm_name);
    my $img_link = <<EOIMG;
-      <a href="$filename" data-lightbox="pix"
-         data-tіtle="Click anywhere outside the image or the X to the right to close.">
+      <a href="$filename" data-lightbox="pix" data-tіtle="$caption_text">
          <img src="$sm_name" alt="" /></a>
 EOIMG
    print OUT $img_link;
