@@ -27,8 +27,8 @@ my $row = 1;
 my $column = 1;
 my %captions;
 my $captions_fh;
-my $default_caption_text = q(Click outside the image or the X );
-$default_caption_text .= q(to the upper right to close);
+my $default_caption_text = q(Click outside the image or the "X" );
+$default_caption_text .= q(to the lower right to close);
 
 # read in photo captions, if the file exists
 if ( -e q(./captions.txt) ) {
@@ -77,7 +77,7 @@ my $head = <<EOHEAD;
 
    <p>Click on any of the images below to view the images in a lightbox.</p>
    <p>Once the lightbox has been opened, click anywhere outside the image, or
-   click on the "X" symbol in the upper right corner of the lightbox to
+   click on the "X" symbol in the lower right corner of the lightbox to
    close.</p>
 
    <div>
