@@ -106,7 +106,7 @@ foreach my $filename (@filedir) {
    print "Resizing $filename to $sm_name\n";
    qx(convert -resize 300 $filename $sm_name);
    my $img_link = <<EOIMG;
-      <a href="$filename" data-lightbox="pix" data-tіtle="$caption_text">
+      <a href="$filename" data-lightbox="pix" data-title="$caption_text">
          <img src="$sm_name" alt="" /></a>
 EOIMG
    print OUT $img_link;
