@@ -47,6 +47,5 @@ if ( $input =~ $regex ) {
 #    print qq(Did not work! \$input is still $input\n);
 #} # if ( $input =~
 
-print "regex: '$regex' input: '$input'\n";
-
-
+print "regex: '$regex'\n";
+print "input: '$input'\n";
